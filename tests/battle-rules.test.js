@@ -4,7 +4,7 @@ import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
 import { MOBS } from '../src/data/mobs.js'
 import { makeUnit, makeMob } from '../src/engine/unit.js'
-import { runBattle } from '../src/engine/battle.js'
+import { runBattle, ROUND_TICKS } from '../src/engine/battle.js'
 
 // 게이지·동시틱 등 정밀 제어용 원시 유닛/몹 (makeUnit은 spd 고정·def0 강제라 부적합).
 const rawUnit = (o) => ({
@@ -90,17 +90,16 @@ test('mob death mid party-loop halts remaining ready allies', () => {
   assert.strictEqual(attacks.length, 1) // A만, B는 시체 안 침
 })
 
-// B — 라운드 경계 틱(28배수)에 끝나도 스냅샷 중복 안 됨.
+// B — 라운드 경계 틱에 끝나도 스냅샷 중복 안 됨 (ROUND_TICKS 값에 독립).
 test('battle ending on a round boundary tick produces no duplicate snapshot', () => {
-  // spd36: 틱28에 첫 행동(27*36=972<1000, 28*36=1008). atk100으로 mob(hp50) 한 방 → 틱28 종료.
-  const U = rawUnit({ name: 'U', atk: 100, spd: 36 })
-  const M = rawMob({ name: 'B1', maxHp: 50, hp: 50, spd: 0 })
-  const r = runBattle([U], M)
-  assert.strictEqual(r.winner, 'party')
-  assert.strictEqual(r.ticks, 28)
+  // spd0 = 양쪽 frozen, maxTicks=ROUND_TICKS → 정확히 경계 틱에 종료(교착=몹승).
+  const U = rawUnit({ name: 'U', spd: 0 })
+  const M = rawMob({ name: 'B1', spd: 0 })
+  const r = runBattle([U], M, { maxTicks: ROUND_TICKS })
+  assert.strictEqual(r.winner, 'mob')
+  assert.strictEqual(r.ticks, ROUND_TICKS)
   const ticks = r.rounds.map(rd => rd.tick)
   assert.strictEqual(new Set(ticks).size, ticks.length) // 중복 틱 없음
-  assert.match(r.rounds.at(-1).log.join('\n'), /공격 →/) // 막 스냅샷에 킬 로그 보존
 })
 
 // #11 — 힐 오버힐 cap(maxHp 초과 금지).

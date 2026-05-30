@@ -17,7 +17,7 @@ export function selectMobTarget(party) {
 }
 
 const THRESHOLD = 1000
-const ROUND_TICKS = 28
+export const ROUND_TICKS = 100 // 표시용 라운드 묶음(틱). 전투 계산 영향 0.
 const DEFAULT_MAX_TICKS = 20000
 
 function actUnit(u, party, mob, log) {
