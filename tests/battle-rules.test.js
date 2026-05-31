@@ -8,8 +8,9 @@ import { runBattle, ROUND_TICKS } from '../src/engine/battle.js'
 
 // 게이지·동시틱 등 정밀 제어용 원시 유닛/몹 (makeUnit은 spd 고정·def0 강제라 부적합).
 const rawUnit = (o) => ({
-  name: 'U', maxHp: 100, hp: 100, atk: 1, type: 'phys',
-  spd: 1, role: 'dps', taunt: false, heal: 0, def: 0, gauge: 0, ...o,
+  name: 'U', maxHp: 100, hp: 100, atk: 1,
+  spd: 1, role: 'dps', taunt: false, heal: 0, def: 0, gauge: 0,
+  skills: [{ id: 'melee_strike', name: '평타', kind: 'attack', range: 'melee' }], ...o,
 })
 const rawMob = (o) => ({
   name: 'M', maxHp: 100, hp: 100, atk: 0, def: 0, spd: 0,
@@ -112,4 +113,18 @@ test('heal does not overheal above maxHp', () => {
   for (const rd of r.rounds) {
     for (const u of rd.party) assert.ok(u.hp <= 95, `hp ${u.hp} <= 95`)
   }
+})
+
+// step3a — 행동이 role 아닌 skill.kind로 분기. role:'dps'인데 힐 스킬이면 힐한다.
+test('action dispatches on skill.kind, not role', () => {
+  const healer = rawUnit({
+    name: 'H', role: 'dps', heal: 10, hp: 50, maxHp: 100, spd: 1000,
+    skills: [{ id: 'basic_heal', name: '평타', kind: 'heal', range: null }],
+  })
+  const wounded = rawUnit({ name: 'W', hp: 30, maxHp: 100, spd: 0 }) // 최저HP, 행동 안 함
+  const M = rawMob({ name: 'M', maxHp: 100, hp: 100, spd: 0 })       // 몹도 행동 안 함
+  const r = runBattle([healer, wounded], M, { maxTicks: 1 })
+  const log = logsOf(r).join('\n')
+  assert.match(log, /H 회복 → W/)         // role:'dps'지만 힐 스킬 → 힐 수행
+  assert.strictEqual(r.rounds.at(-1).mob.hp, 100) // 몹 안 맞음(공격 안 함)
 })

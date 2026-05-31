@@ -20,8 +20,14 @@ const THRESHOLD = 1000
 export const ROUND_TICKS = 100 // 표시용 라운드 묶음(틱). 전투 계산 영향 0.
 const DEFAULT_MAX_TICKS = 20000
 
+// 행동할 스킬 선택. 지금은 항상 첫 스킬. step5에서 마나/쿨/우선순위 canUse가 여기 얹힘.
+function selectSkill(u) {
+  return u.skills[0]
+}
+
 function actUnit(u, party, mob, log) {
-  if (u.role === 'heal') {
+  const skill = selectSkill(u)
+  if (skill.kind === 'heal') {
     const target = lowestHpAlly(party)
     if (target) {
       target.hp = Math.min(target.maxHp, target.hp + u.heal)
@@ -29,7 +35,7 @@ function actUnit(u, party, mob, log) {
     }
     return
   }
-  // dps/tank → 몹 공격
+  // kind === 'attack' → 몹 공격. skill.range는 step3b 근접회피가 이 지점에서 소비.
   const dmg = damage(u.atk, mob.def)
   mob.hp -= dmg
   log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
