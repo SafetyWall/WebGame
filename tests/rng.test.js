@@ -31,3 +31,13 @@ test('shuffle returns a new array that is a permutation', () => {
   assert.deepStrictEqual([...s].sort(), [...arr].sort()) // 같은 원소
   assert.deepStrictEqual(arr, [1, 2, 3, 4, 5])           // 원본 불변
 })
+
+test('snapshot + makeRng(snapshot) continues an identical sequence', () => {
+  const a = makeRng(123)
+  a.next(); a.next()                       // 수열 진행
+  const restored = makeRng(a.snapshot())   // 현 상태로 재생성
+  const x1 = a.next(), x2 = a.next()
+  const y1 = restored.next(), y2 = restored.next()
+  assert.strictEqual(x1, y1)
+  assert.strictEqual(x2, y2)
+})

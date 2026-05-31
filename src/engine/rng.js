@@ -11,6 +11,7 @@ export function makeRng(seed) {
   }
   return {
     next,
+    snapshot: () => s,
     int: (n) => Math.floor(next() * n),
     pick: (arr) => arr[Math.floor(next() * arr.length)],
     shuffle: (arr) => {
