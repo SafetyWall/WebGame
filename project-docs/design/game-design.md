@@ -40,7 +40,7 @@
 5. 보상: 승리=골드(향후 유물), 패배=**런 리셋**.
 6. 반복. 목표 스테이지 = 시작값 5.
 
-> 구현 진척은 [TODOS](../TODOS.md) / [CHANGELOG](../CHANGELOG.md). (현재: 코어 루프 + 절차적 조우 생성 + 전직·슬롯확장 + localStorage 영속 = 플레이 가능. 다음 = step5 스킬.)
+> 구현 진척은 [TODOS](../TODOS.md) / [CHANGELOG](../CHANGELOG.md). (현재: 코어 루프 + 절차적 조우 생성 + 전직·슬롯확장 + localStorage 영속 + 직업별 스킬(마나/쿨·effect) = 플레이 가능. 다음 = step5b 스킬 우선순위 UI / step6 상호작용 동사.)
 
 ## 4. 성장 경제 (깊이 1차 출처)
 

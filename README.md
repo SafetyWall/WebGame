@@ -11,7 +11,7 @@ node --test        # 테스트
 플레이(웹): GitHub Pages. 명령 상세(시뮬·배포 등) → [project-docs/runbook.md](project-docs/runbook.md).
 
 ## 상태
-**플레이 가능** — 인터랙티브 런 루프(영입/강화/선발 → 자동전투 → 진행 / 패배 리셋). 전투 엔진 + 몹 트레잇 RPS + 절차적 조우 생성 완료. → [CHANGELOG](project-docs/CHANGELOG.md) / [TODOS](project-docs/TODOS.md).
+**플레이 가능** — 인터랙티브 런 루프(영입/강화/전직/슬롯확장/선발 → 자동전투 → 진행 / 패배 리셋, localStorage 영속). 전투 엔진 + 몹 트레잇 RPS + 절차적 조우 생성 + 직업별 스킬(마나/쿨 발동·effect 지속) 완료. → [CHANGELOG](project-docs/CHANGELOG.md) / [TODOS](project-docs/TODOS.md).
 
 ## 문서
 - **기획** (게임 디자인) → [project-docs/design/game-design.md](project-docs/design/game-design.md)
