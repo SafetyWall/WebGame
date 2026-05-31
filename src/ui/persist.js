@@ -2,7 +2,11 @@
 const KEY = 'partyrpg.save.v1'   // 버전키: 스키마 변경 시 v 숫자 bump
 
 export function save(state, rngState, storage = localStorage) {
-  storage.setItem(KEY, JSON.stringify({ v: 1, state, rng: rngState }))
+  try {
+    storage.setItem(KEY, JSON.stringify({ v: 1, state, rng: rngState }))
+  } catch {
+    // 쿼터초과·프라이빗모드(setItem throw) → 영속은 best-effort, 인메모리 런은 계속
+  }
 }
 
 export function load(storage = localStorage) {

@@ -36,3 +36,8 @@ test('clear removes the save', () => {
   clear(st)
   assert.strictEqual(load(st), null)
 })
+
+test('save swallows a throwing storage (quota / private mode) — best-effort', () => {
+  const throwing = { setItem: () => { throw new Error('QuotaExceededError') }, getItem: () => null, removeItem: () => {} }
+  assert.doesNotThrow(() => save({ gold: 5 }, 1, throwing))   // 클릭루프 크래시 금지
+})
