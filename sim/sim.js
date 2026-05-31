@@ -17,16 +17,21 @@ const PARTIES = {
 const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1)
 const stageKeys = Object.keys(STAGES).map(Number)
 
-console.log('=== 조우 시뮬 (스테이지×시드 trial, 전투 결정론) ===')
-for (const [pname, jobKeys] of Object.entries(PARTIES)) {
-  const cells = stageKeys.map((stage) => {
-    let wins = 0
-    for (const seed of SEEDS) {
-      const party = jobKeys.map((j) => makeUnit(JOBS[j]))
-      const mob = makeMob(generateEncounter(stage, makeRng(seed)))
-      if (runBattle(party, mob).winner === 'party') wins++
-    }
-    return `S${stage} ${wins}/${SEEDS.length}`
-  })
-  console.log(`${pname.padEnd(7)} ${cells.join('  ')}`)
+// 발동스킬은 레벨이 올라야(전직 후 강화) 마나/쿨 변동성이 드러남 → L1·L3 비교.
+function winsAt(jobKeys, stage, level) {
+  let wins = 0
+  for (const seed of SEEDS) {
+    const party = jobKeys.map((j) => makeUnit(JOBS[j], level))
+    const mob = makeMob(generateEncounter(stage, makeRng(seed)))
+    if (runBattle(party, mob).winner === 'party') wins++
+  }
+  return wins
+}
+
+for (const level of [1, 3]) {
+  console.log(`=== 조우 시뮬 L${level} (스테이지×시드 trial, 전투+마나/쿨 결정론) ===`)
+  for (const [pname, jobKeys] of Object.entries(PARTIES)) {
+    const cells = stageKeys.map((stage) => `S${stage} ${winsAt(jobKeys, stage, level)}/${SEEDS.length}`)
+    console.log(`${pname.padEnd(7)} ${cells.join('  ')}`)
+  }
 }
