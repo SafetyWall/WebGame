@@ -8,6 +8,8 @@ const PARTIES = {
   '균형':   ['warrior', 'mage', 'guardian', 'priest'],
   '딜몰빵': ['mage', 'mage', 'warrior'],
   '탱힐':   ['guardian', 'guardian', 'priest'],
+  '원거리': ['mage', 'mage', 'mage'],
+  '근접':   ['warrior', 'warrior', 'warrior'],
 }
 
 console.log('=== 베이스 시뮬 (평타, 결정론) ===')
