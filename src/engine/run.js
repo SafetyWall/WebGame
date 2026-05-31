@@ -13,6 +13,8 @@ export const UPGRADE_COST = 4
 export const MAX_LEVEL = 5
 export const MAX_STAGE = Math.max(...Object.keys(STAGES).map(Number))
 export const reward = (stage) => 4 + stage
+export const PROMOTE_COST = 5
+export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest']
 
 export function newRun(rng) {
   return {
@@ -37,6 +39,13 @@ export function upgrade(s, i) {
   if (!u || s.gold < UPGRADE_COST || u.level >= MAX_LEVEL) return s
   const roster = s.roster.map((r, j) => (j === i ? { ...r, level: r.level + 1 } : r))
   return { ...s, gold: s.gold - UPGRADE_COST, roster }
+}
+
+export function changeJob(s, i, job) {
+  const u = s.roster[i]
+  if (!u || u.job !== 'novice' || !PROMOTE_TARGETS.includes(job) || s.gold < PROMOTE_COST) return s
+  const roster = s.roster.map((r, j) => (j === i ? { ...r, job } : r))   // 레벨 유지, 직업만 변경
+  return { ...s, gold: s.gold - PROMOTE_COST, roster }
 }
 
 export function toggleParty(s, i) {

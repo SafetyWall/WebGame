@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -104,4 +104,21 @@ test('next is a no-op at the final stage (terminal)', () => {
 test('fight only runs in prep phase (no double-resolve)', () => {
   const s = { ...newRun(makeRng(3)), phase: 'result' }
   assert.strictEqual(fight(s), s) // result 국면 → no-op
+})
+
+test('changeJob: novice → warrior for 5 gold, level preserved', () => {
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 3 }], party: [0], gold: 5 }
+  const r = changeJob(s, 0, 'warrior')
+  assert.strictEqual(r.roster[0].job, 'warrior')
+  assert.strictEqual(r.roster[0].level, 3)   // 레벨 유지
+  assert.strictEqual(r.gold, 0)
+})
+
+test('changeJob refused: non-novice, gold<5, invalid job (same ref)', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 1 }, { job: 'novice', level: 1 }], gold: 5 }
+  assert.strictEqual(changeJob(base, 0, 'mage'), base)        // 비노비스
+  const poor = { ...base, gold: 4 }
+  assert.strictEqual(changeJob(poor, 1, 'mage'), poor)        // 골드부족
+  assert.strictEqual(changeJob(base, 1, 'cleric'), base)      // 잘못된 job
+  assert.strictEqual(changeJob(base, 9, 'mage'), base)        // 없는 인덱스
 })
