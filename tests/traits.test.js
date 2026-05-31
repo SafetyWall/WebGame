@@ -2,6 +2,9 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { TRAITS } from '../src/data/traits.js'
 import { applyRules } from '../src/engine/traits.js'
+import { JOBS } from '../src/data/jobs.js'
+import { makeUnit } from '../src/engine/unit.js'
+import { runBattle } from '../src/engine/battle.js'
 
 const TRIGGERS = ['incomingDamage', 'postIncomingDamage', 'turnStart']
 const OPS = ['mult', 'add', 'heal', 'reflect']
@@ -119,4 +122,28 @@ test('makeMob resolves trait ids into shared TRAITS defs', () => {
 
 test('makeMob defaults to empty traits when mob has none', () => {
   assert.deepStrictEqual(makeMob(MOBS.slime).traits, [])
+})
+
+const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
+
+test('melee_evade reduces a melee attacker damage by 30% (floor, min 1)', () => {
+  // 전사 atk22 vs 가시거북 def8 → base 14, ×0.7=9.8 → floor 9
+  const r = runBattle([makeUnit(JOBS.warrior)], makeMob(MOBS.turtle), { maxTicks: 200 })
+  assert.match(logsOf(r).join('\n'), /전사 공격 → 가시거북 \(-9\)/)
+})
+
+test('melee_evade does not reduce a ranged (mage) attacker damage', () => {
+  // 마법사 atk32 vs def8 → 24, range=ranged → 미감소
+  const r = runBattle([makeUnit(JOBS.mage)], makeMob(MOBS.turtle), { maxTicks: 200 })
+  assert.match(logsOf(r).join('\n'), /마법사 공격 → 가시거북 \(-24\)/)
+})
+
+test('snapshot includes mob trait names', () => {
+  const r = runBattle([makeUnit(JOBS.warrior)], makeMob(MOBS.turtle), { maxTicks: 200 })
+  assert.deepStrictEqual(r.rounds.at(-1).mob.traits, ['근접회피'])
+})
+
+test('mobs without traits report empty trait list in snapshot', () => {
+  const r = runBattle([makeUnit(JOBS.warrior)], makeMob(MOBS.slime), { maxTicks: 50 })
+  assert.deepStrictEqual(r.rounds.at(-1).mob.traits, [])
 })

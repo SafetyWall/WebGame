@@ -1,4 +1,5 @@
 // ATB 평타 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
+import { applyRules } from './traits.js'
 
 export function damage(atk, def) {
   return Math.max(1, atk - def)
@@ -35,13 +36,17 @@ function actUnit(u, party, mob, log) {
     }
     return
   }
-  // kind === 'attack' → 몹 공격. skill.range는 step3b 근접회피가 이 지점에서 소비.
-  const dmg = damage(u.atk, mob.def)
+  // kind === 'attack' → 몹 공격. 트레잇 규칙이 들어오는 데미지를 수정(근접회피 등).
+  const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
+  let dmg = applyRules('incomingDamage', damage(u.atk, mob.def), ctx, mob)
+  dmg = Math.max(1, Math.floor(dmg))
   mob.hp -= dmg
+  applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
   log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
 }
 
 function actMob(mob, party, log) {
+  applyRules('turnStart', 0, {}, mob) // 자가회복 등 side-effect (현재 라이브 몹 미부착)
   if (mob.aoe) {
     const base = Math.floor(mob.atk * mob.aoeRatio)
     const ref = party.find(u => u.hp > 0)
@@ -69,7 +74,7 @@ export function runBattle(party, mob, opts = {}) {
   const snapshot = (t) => ({
     tick: t,
     party: party.map(u => ({ name: u.name, hp: Math.max(0, u.hp), maxHp: u.maxHp })),
-    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp },
+    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, traits: (mob.traits || []).map(t => t.name) },
     log,
   })
   const finish = (winner) => {
