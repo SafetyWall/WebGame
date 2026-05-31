@@ -5,13 +5,13 @@
 
 ## 빠른 시작
 ```bash
+serve.bat          # 로컬 서버 + 브라우저 자동오픈 → 직접 플레이 (= npm run serve)
 node --test        # 테스트
-node sim/sim.js     # 밸런스 시뮬
 ```
-플레이: GitHub Pages 배포(아래). 명령 상세 → [project-docs/runbook.md](project-docs/runbook.md).
+플레이(웹): GitHub Pages. 명령 상세(시뮬·배포 등) → [project-docs/runbook.md](project-docs/runbook.md).
 
 ## 상태
-베이스 ATB 평타 전투 엔진 + 시뮬 + UI 골격 완료(테스트 25). 다음 = 질적 속성(RPS). → [CHANGELOG](project-docs/CHANGELOG.md) / [TODOS](project-docs/TODOS.md).
+**플레이 가능** — 인터랙티브 런 루프(영입/강화/선발 → 자동전투 → 진행 / 패배 리셋). 전투 엔진 + 몹 트레잇 RPS + 절차적 조우 생성 완료. → [CHANGELOG](project-docs/CHANGELOG.md) / [TODOS](project-docs/TODOS.md).
 
 ## 문서
 - **기획** (게임 디자인) → [project-docs/design/game-design.md](project-docs/design/game-design.md)
