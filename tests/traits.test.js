@@ -145,3 +145,18 @@ test('mobs without traits report empty trait list in snapshot', () => {
   const r = runBattle([makeUnit(JOBS.warrior)], makeMob(MOBS.slime), { maxTicks: 50 })
   assert.deepStrictEqual(r.rounds.at(-1).mob.traits, [])
 })
+
+test('every trait has a valid rarity', () => {
+  const RARITIES = ['일반', '희귀', '영웅', '전설']
+  for (const t of Object.values(TRAITS)) {
+    assert.ok(RARITIES.includes(t.rarity), `${t.id} rarity: ${t.rarity}`)
+  }
+})
+
+test('trait rarities match the assigned roster', () => {
+  assert.strictEqual(TRAITS.melee_evade.rarity, '일반')
+  assert.strictEqual(TRAITS.ranged_resist.rarity, '일반')
+  assert.strictEqual(TRAITS.self_heal.rarity, '희귀')
+  assert.strictEqual(TRAITS.damage_reflect.rarity, '희귀')
+  assert.strictEqual(TRAITS.melee_immune.rarity, '영웅')
+})
