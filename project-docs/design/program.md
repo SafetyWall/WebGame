@@ -18,12 +18,13 @@ src/data/stages.js      # 스테이지별 몹레벨 + 특성 슬롯
 src/engine/unit.js      # 직업/몹 → 전투용 인스턴스 팩토리(스킬/트레잇 resolve)
 src/engine/battle.js    # 틱루프·데미지·타게팅·교착. 순수, DOM 0. ← 핵심 단위
 src/engine/traits.js    # 트레잇 규칙 인터프리터 applyRules
-src/engine/rng.js       # 시드 PRNG(mulberry32) — 조우 랜덤용
+src/engine/rng.js       # 시드 PRNG(mulberry32) — 조우 랜덤용(+snapshot=영속용 상태 읽기)
 src/engine/encounter.js # 절차적 조우 생성 generateEncounter(stage, rng)
 src/engine/run.js       # 런 상태기계(순수): 영입/강화/선발/전투/진행/리셋
 src/ui/render.js        # 전투결과 → HTML 문자열 (순수, 테스트 가능)
 src/ui/game.js          # 게임 화면 renderGame(state) prep/result (순수, data-action)
-src/ui/main.js          # 부트: 런상태 보유 + 이벤트 위임 + 재렌더 (DOM 의존)
+src/ui/main.js          # 부트: 런상태 보유 + 이벤트 위임 + 재렌더 + 영속 복원/저장 (DOM 의존)
+src/ui/persist.js       # localStorage 런 영속 save/load/clear(버전키, storage 주입가능, 순수)
 sim/sim.js              # node 헤드리스 시뮬(스테이지×시드 trial)
 tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 고정 몹)
 ```
@@ -37,7 +38,8 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 - **행동 = `selectSkill(u)=u.skills[0]` → `skill.kind` 분기** (attack→몹 데미지, heal→최저HP아군 +heal). `role`은 서술 라벨일 뿐(분기는 kind+taunt). step5에서 마나/쿨/우선순위 `canUse`가 `selectSkill`에 얹힘.
 - **트레잇 = 규칙엔진.** `applyRules(trigger, value, ctx, mob)`(engine/traits.js, 순수)가 mob.traits를 priority 오름차순 적용(value-변환 mult/add, side-effect heal/reflect, `exclusive` 중단). battle.js 3 지점: `incomingDamage`(받는 데미지 변환 — 근접회피), `postIncomingDamage`(반사), `turnStart`(자가회복, actMob 진입). 트레잇 없는 몹 = no-op → 거동 불변. 데미지 적용: `t=applyRules('incomingDamage',base,…)` → `dmg = t===0 ? 0 : max(1,floor(t))`(트레잇이 0으로 만들면 **진짜 면역**, 그 외 최소1 = 회피≠면역).
 - **조우 생성 = 시드 결정론.** `makeRng(seed)`(engine/rng.js, mulberry32) → `generateEncounter(stage, rng)`(engine/encounter.js): 풀 랜덤 몹 × `levelCurve(stage.level)×mul`(반올림) + 스테이지 슬롯별 distinct 랜덤 특성 → makeMob 평면 스펙. 같은 (stage,seed)=같은 조우. UI(main.js)가 `Math.random`로 시드 주입(엔진은 시드만 받아 순수).
-- **런 상태기계 = 순수**(engine/run.js). `RunState{ phase:'prep'|'result', gold, stage, slots, roster:[{job,level}], party:[idx], encounter, lastResult }`. 액션 = newRun/recruit/upgrade/toggleParty/fight/next/restart (새 상태 반환, no-op=같은 ref). 골드 경제(영입4·강화4·보상 4+stage), fight→prep만·승=gold+보상·outcome win/loss/clear, next=최종스테이지서 terminal. rng는 newRun/next만(조우 생성), fight는 결정론. UI(game.js/main.js)가 렌더+이벤트위임으로 구동(전투 자동, 결정은 준비단계).
+- **런 상태기계 = 순수**(engine/run.js). `RunState{ phase:'prep'|'result', gold, stage, slots, roster:[{job,level}], party:[idx], encounter, lastResult }`. 액션 = newRun/recruit/upgrade/changeJob/expandSlot/toggleParty/fight/next/restart (새 상태 반환, no-op=같은 ref). 골드 경제(영입4·강화4·**전직5·슬롯확장 체증** `slotCost(slots)=5+4*(slots-3)`, 보상 4+stage), fight→prep만·승=gold+보상·outcome win/loss/clear, next=최종스테이지서 terminal. **전직(changeJob)** = 노비스만 → `PROMOTE_TARGETS`(전사/마법사/가디언/사제), 비가역(결과 비노비스 → 재전직 거부)·레벨 유지. **슬롯확장(expandSlot)** = 하드상한 없음(체증이 자율균형). rng는 newRun/next만(조우 생성), fight는 결정론. UI(game.js/main.js)가 렌더+이벤트위임으로 구동(전투 자동, 결정은 준비단계).
+- **런 영속 = UI 레이어**(ui/persist.js, 엔진 순수 불변). 매 액션 후 `save(state, rng.snapshot())` → localStorage(버전키 `partyrpg.save.v1`), 부팅 시 `load()` 있으면 state+rng 복원(`makeRng(snapshot)`로 조우 수열 재개), 없으면 새 런. 손상·구버전 저장 → null → 새 런(크래시 없음). storage 주입가능(테스트 = Map shim).
 
 ## 틱 구현 ([game-design.md](game-design.md) §5 규칙의 구현)
 - 매 틱: 살아있는 유닛 `gauge += spd`; `≥1000`이면 1회 행동 후 `gauge -= 1000`(**carry — 0 리셋 아님**).
