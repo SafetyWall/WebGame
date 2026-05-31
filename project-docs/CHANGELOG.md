@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-05-31
+- **플레이어블 코어 경제 루프 (step4 첫 슬라이스).** 직접 플레이 가능 — 인터랙티브 단일 페이지: 준비(영입4·강화4·출전선발) → 자동 전투 → 승=골드(4+stage)+다음 스테이지 / 패=패배화면→다시시작 / 최종 스테이지 승=클리어. 직업 레벨별 명시 스탯 테이블(levels{1..5}, level1=베이스) + `makeUnit(job, level)`. 순수 런 상태기계 `engine/run.js`(newRun/recruit/upgrade/toggleParty/fight/next/restart, terminal·prep-only 가드). `ui/game.js` renderGame(prep/result) + `main.js` 이벤트 위임. 인메모리(새로고침=새 런). 전투 자동·결정론 유지. 테스트 71→**92**.
 - **조우 생성 시스템.** 시드 PRNG(`engine/rng.js`, mulberry32) → `generateEncounter(stage, rng)`: 풀에서 랜덤 몹 × `levelCurve(level)×계수` + 스테이지 슬롯별 distinct 랜덤 특성. flat `MOBS` → 레벨형 `MONSTERS`(계수)+`curve`+`stages` 교체, 트레잇에 rarity. 면역(mult0)=진짜 0뎀 floor 수정. 전투는 결정론 유지(조우만 시드 랜덤) → sim = 스테이지×시드 trial 분포. 엔진 테스트는 `tests/_fixtures.js`로 밸런스 데이터 디커플. 테스트 54→**71**. (밸런스 수치 placeholder — 시뮬상 3유닛 파티가 S4+ 전멸, 튜닝 대상.)
 - **step3b — 몹 트레잇 = 범용 규칙엔진.** 트레잇 = 선언적 규칙 `{trigger, cond, op, value, priority, exclusive}`. 인터프리터 `applyRules`가 priority 오름차순 파이프라인 적용(mult/add 변환, heal/reflect side-effect, exclusive 중단). 어휘 전체(3 trigger·4 op·2 cond) 구현 + §7.2 5종 정의, **라이브 부착 = 근접회피(가시거북, 근접 −30%)만**. RPS 레버 작동 확인(sim: 가시거북 vs 원거리 500틱 vs 근접 1334틱; 오우거 광역엔 원거리 패 — 반대 카운터). 결정론·트레잇 없는 몹 거동 불변.
 - 테스트 31→**54 통과**. 6-task TDD + task별 2단 리뷰 + reflect 0-클램프 수정 + 최종 전체 리뷰.
