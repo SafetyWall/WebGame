@@ -5,3 +5,9 @@ node_modules/
 # superpowers 작업용 임시 산출물(스펙·플랜) — repo에 안 넣음
 docs/superpowers/
 .gstack/
+
+# 디버그 임시 스크립트/산출물
+_dbg.*
+_chk.*
+_t.txt
+_tap.txt
