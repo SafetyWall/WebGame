@@ -1,5 +1,7 @@
-// ATB 평타 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
+// ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, hasTaunt } from './effects.js'
+import { MANA_MAX } from '../data/skills.js'
 
 export function damage(atk, def) {
   return Math.max(1, atk - def)
@@ -12,7 +14,7 @@ export function lowestHpAlly(party) {
 }
 
 export function selectMobTarget(party) {
-  const taunt = party.find(u => u.hp > 0 && u.taunt)
+  const taunt = party.find(u => u.hp > 0 && hasTaunt(u))
   if (taunt) return taunt
   return lowestHpAlly(party)
 }
@@ -21,46 +23,81 @@ const THRESHOLD = 1000
 export const ROUND_TICKS = 100 // 표시용 라운드 묶음(틱). 전투 계산 영향 0.
 const DEFAULT_MAX_TICKS = 20000
 
-// 행동할 스킬 선택. 지금은 항상 첫 스킬. step5에서 마나/쿨/우선순위 canUse가 여기 얹힘.
-function selectSkill(u) {
-  return u.skills[0]
+function canUse(u, skill, tick) {
+  return u.mana >= skill.cost && tick >= (u.cooldowns[skill.id] ?? 0)
 }
 
-function actUnit(u, party, mob, log) {
-  const skill = selectSkill(u)
+// 우선순위 톱다운: 지금 쓸 수 있는 첫 스킬, 없으면 마지막(평타, 항상 cost0·cd0).
+export function selectSkill(u, tick) {
+  for (const skill of u.skills) if (canUse(u, skill, tick)) return skill
+  return u.skills[u.skills.length - 1]
+}
+
+// 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, lowestHpAlly=힐대상.
+function applySkillEffects(skill, u, mob, healTarget, tick) {
+  for (const spec of skill.effects) {
+    const target = spec.target === 'self' ? u : spec.target === 'enemy' ? mob : healTarget
+    if (!target) continue
+    const inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
+    if (spec.type === 'hot') {
+      inst.value = Math.floor(u.heal * spec.valueRatio)
+      inst.interval = spec.interval
+      inst.nextTick = tick + spec.interval
+    } else {
+      inst.value = spec.value
+    }
+    applyEffect(target, inst)
+  }
+}
+
+function actUnit(u, party, mob, tick, log) {
+  const skill = selectSkill(u, tick)
+  u.mana = Math.min(MANA_MAX, u.mana + skill.manaGain - skill.cost)
+  if (skill.cost > 0) u.cooldowns[skill.id] = tick + skill.cd
+
   if (skill.kind === 'heal') {
     const target = lowestHpAlly(party)
     if (target) {
-      target.hp = Math.min(target.maxHp, target.hp + u.heal)
-      log.push(`${u.name} 회복 → ${target.name} (+${u.heal})`)
+      if (skill.power > 0) {
+        const amt = Math.floor(u.heal * skill.power)
+        target.hp = Math.min(target.maxHp, target.hp + amt)
+        log.push(`${u.name} 회복 → ${target.name} (+${amt})`)
+      }
+      applySkillEffects(skill, u, mob, target, tick)
     }
     return
   }
-  // kind === 'attack' → 몹 공격. 트레잇 규칙이 들어오는 데미지를 수정(근접회피 등).
-  const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
-  // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 평타 최소 1 유지(회피≠면역).
-  const t = applyRules('incomingDamage', damage(u.atk, mob.def), ctx, mob)
-  const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
-  mob.hp -= dmg
-  applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
-  log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
+  // kind === 'attack' → 몹 공격. effect 배율(자기 주는뎀·몹 받는뎀) + 트레잇이 데미지 수정.
+  if (skill.power > 0) {
+    const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
+    const base = damage(Math.floor(u.atk * skill.power), mob.def)
+    const afterMult = base * dmgDealtMult(u) * dmgTakenMult(mob)
+    // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 최소 1 유지(회피≠면역).
+    const t = applyRules('incomingDamage', afterMult, ctx, mob)
+    const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
+    mob.hp -= dmg
+    applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
+    log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
+  }
+  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick)
 }
 
-function actMob(mob, party, log) {
+function actMob(mob, party, tick, log) {
   applyRules('turnStart', 0, {}, mob) // 자가회복 등 side-effect (현재 라이브 몹 미부착)
   if (mob.aoe) {
     const base = Math.floor(mob.atk * mob.aoeRatio)
-    const ref = party.find(u => u.hp > 0)
     for (const u of party) {
-      if (u.hp > 0) u.hp -= damage(base, u.def)
+      if (u.hp > 0) u.hp -= Math.max(1, Math.floor(damage(base, u.def) * dmgTakenMult(u)))
     }
-    // 로그는 실제 적용값 기준(하드코딩 0 금지 — 드리프트 방지). 현재 전원 def=0이라 동일.
-    log.push(`${mob.name} 광역 (개당 -${damage(base, ref ? ref.def : 0)})`)
+    // 로그는 실제 적용값 기준(살아있는 첫 아군 기준 표기). dmgTakenMult 반영.
+    const ref = party.find(u => u.hp > 0)
+    const shown = ref ? Math.max(1, Math.floor(damage(base, ref.def) * dmgTakenMult(ref))) : damage(base, 0)
+    log.push(`${mob.name} 광역 (개당 -${shown})`)
     return
   }
   const target = selectMobTarget(party)
   if (target) {
-    const dmg = damage(mob.atk, target.def)
+    const dmg = Math.max(1, Math.floor(damage(mob.atk, target.def) * dmgTakenMult(target)))
     target.hp -= dmg
     log.push(`${mob.name} 공격 → ${target.name} (-${dmg})`)
   }
@@ -79,7 +116,7 @@ export function runBattle(party, mob, opts = {}) {
     log,
   })
   const finish = (winner) => {
-    // 라운드 경계 틱(tick%28==0)에 끝나면 위에서 이미 푸시됨 → 같은 틱 중복 방지
+    // 라운드 경계 틱에 끝나면 위에서 이미 푸시됨 → 같은 틱 중복 방지
     const last = rounds[rounds.length - 1]
     if (!last || last.tick !== tick) rounds.push(snapshot(tick))
     return { winner, rounds, ticks: tick }
@@ -87,22 +124,24 @@ export function runBattle(party, mob, opts = {}) {
 
   while (tick < maxTicks) {
     tick++
+    // ① effect: HoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 HoT proc 보장.
+    for (const u of party) { tickHoT(u, tick, log); expireEffects(u, tick) }
+    tickHoT(mob, tick, log); expireEffects(mob, tick)
     // ② 게이지 증가 (살아있는 유닛만)
     for (const u of party) if (u.hp > 0) u.gauge += u.spd
     if (mob.hp > 0) mob.gauge += mob.spd
     // ③ 행동: 파티 먼저(배열 순), 그다음 몹.
-    // 동시틱 처리 = 파티 우선(의도된 결정, 2026-05-30 사용자 확정). 같은 틱에 양쪽 1000
-    // 도달 + 파티가 치명타면 몹은 반격 못 함. ATB 속도순 아님 — 단순성 위해 고정.
+    // 동시틱 처리 = 파티 우선(의도된 결정, 2026-05-30 사용자 확정).
     for (const u of party) {
       if (u.hp > 0 && u.gauge >= THRESHOLD) {
         u.gauge -= THRESHOLD
-        actUnit(u, party, mob, log)
+        actUnit(u, party, mob, tick, log)
         if (mob.hp <= 0) break
       }
     }
     if (mob.hp > 0 && mob.gauge >= THRESHOLD) {
       mob.gauge -= THRESHOLD
-      actMob(mob, party, log)
+      actMob(mob, party, tick, log)
     }
     // 라운드 스냅샷 (표시 단위)
     if (tick % ROUND_TICKS === 0) { rounds.push(snapshot(tick)); log = [] }

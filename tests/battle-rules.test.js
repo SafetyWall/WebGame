@@ -9,12 +9,13 @@ import { runBattle, ROUND_TICKS } from '../src/engine/battle.js'
 // 게이지·동시틱 등 정밀 제어용 원시 유닛/몹 (makeUnit은 spd 고정·def0 강제라 부적합).
 const rawUnit = (o) => ({
   name: 'U', maxHp: 100, hp: 100, atk: 1,
-  spd: 1, role: 'dps', taunt: false, heal: 0, def: 0, gauge: 0,
-  skills: [{ id: 'melee_strike', name: '평타', kind: 'attack', range: 'melee' }], ...o,
+  spd: 1, role: 'dps', heal: 0, def: 0, gauge: 0,
+  skills: [{ id: 'melee_strike', name: '평타', kind: 'attack', range: 'melee', power: 1, manaGain: 0, cost: 0, cd: 0, effects: [] }],
+  mana: 0, cooldowns: {}, effects: [], ...o,
 })
 const rawMob = (o) => ({
   name: 'M', maxHp: 100, hp: 100, atk: 0, def: 0, spd: 0,
-  aoe: false, aoeRatio: 0.6, gauge: 0, isMob: true, ...o,
+  aoe: false, aoeRatio: 0.6, gauge: 0, isMob: true, effects: [], ...o,
 })
 const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
 
@@ -30,12 +31,13 @@ test('aoe applies floor(atk*ratio) and logs the applied value', () => {
 
 // #5 — 몹 단일공격이 실전에서 도발 탱으로 라우팅되는지(콜사이트 통합).
 test('mob single-target routes to taunt tank inside a real battle', () => {
-  const party = [makeUnit(JOBS.guardian), makeUnit(JOBS.mage)]
+  const g = makeUnit(JOBS.guardian); g.mana = 100   // 첫 행동에 도발 발동
+  const party = [g, makeUnit(JOBS.mage)]
   const mob = makeMob(SLIME) // aoe:false
-  const r = runBattle(party, mob)
+  const r = runBattle(party, mob, { maxTicks: 400 })
   const log = logsOf(r).join('\n')
-  assert.match(log, /→ 가디언/)      // 몹이 탱 때림
-  assert.doesNotMatch(log, /→ 마법사/) // 탱 살아있는 동안 딜러 안 맞음
+  assert.match(log, /→ 가디언/)   // 도발 발동 후 몹이 탱 때림
+  // doesNotMatch(/→ 마법사/)는 삭제 — 도발 발동 전 1~2틱 노출 가능. 도발 작동=가디언 피격으로 검증.
 })
 
 // #6 — 진짜 교착: 유닛이 행동하지만 못 이김 → maxTicks 도달 → 몹 승.
@@ -119,7 +121,7 @@ test('heal does not overheal above maxHp', () => {
 test('action dispatches on skill.kind, not role', () => {
   const healer = rawUnit({
     name: 'H', role: 'dps', heal: 10, hp: 50, maxHp: 100, spd: 1000,
-    skills: [{ id: 'basic_heal', name: '평타', kind: 'heal', range: null }],
+    skills: [{ id: 'basic_heal', name: '평타', kind: 'heal', range: null, power: 1, manaGain: 0, cost: 0, cd: 0, effects: [] }],
   })
   const wounded = rawUnit({ name: 'W', hp: 30, maxHp: 100, spd: 0 }) // 최저HP, 행동 안 함
   const M = rawMob({ name: 'M', maxHp: 100, hp: 100, spd: 0 })       // 몹도 행동 안 함
