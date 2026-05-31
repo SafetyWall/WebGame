@@ -22,10 +22,11 @@ tests/*.test.js         # node:test
 
 ## 엔진 계약 (battle.js)
 - `runBattle(party, mob, opts={maxTicks}) → { winner:'party'|'mob', rounds, ticks }`. **순수함수, 부수효과 0.** ui·sim 공용.
-  - `rounds[]` = `{ tick, party:[{name,hp,maxHp}], mob:{name,hp,maxHp}, log:[...] }` 스냅샷.
-- `makeUnit(job) → unit`, `makeMob(mob) → 몹`. 런타임 가변 `hp`·`gauge` 부여. **플레이어 유닛 def=0.** `makeUnit`이 `job.skills`(id 배열)를 `SKILLS` 공유 def로 resolve해 `unit.skills` 부착(clone 아님 — 가변상태[쿨/마나]는 step5에 유닛으로).
+  - `rounds[]` = `{ tick, party:[{name,hp,maxHp}], mob:{name,hp,maxHp,traits:[name...]}, log:[...] }` 스냅샷.
+- `makeUnit(job) → unit`, `makeMob(mob) → 몹`. 런타임 가변 `hp`·`gauge` 부여. **플레이어 유닛 def=0.** `makeUnit`이 `job.skills`(id 배열)를 `SKILLS` 공유 def로 resolve해 `unit.skills` 부착(clone 아님 — 가변상태[쿨/마나]는 step5에 유닛으로). `makeMob`도 `mob.traits`(id 배열)를 `TRAITS` 공유 def로 resolve(없으면 `[]`).
 - `damage(atk, def) = max(1, atk-def)`. `lowestHpAlly`, `selectMobTarget` export(테스트용).
 - **행동 = `selectSkill(u)=u.skills[0]` → `skill.kind` 분기** (attack→몹 데미지, heal→최저HP아군 +heal). `role`은 서술 라벨일 뿐(분기는 kind+taunt). step5에서 마나/쿨/우선순위 `canUse`가 `selectSkill`에 얹힘.
+- **트레잇 = 규칙엔진.** `applyRules(trigger, value, ctx, mob)`(engine/traits.js, 순수)가 mob.traits를 priority 오름차순 적용(value-변환 mult/add, side-effect heal/reflect, `exclusive` 중단). battle.js 3 지점: `incomingDamage`(받는 데미지 변환 — 근접회피), `postIncomingDamage`(반사), `turnStart`(자가회복, actMob 진입). 트레잇 없는 몹 = no-op → 거동 불변.
 
 ## 틱 구현 ([game-design.md](game-design.md) §5 규칙의 구현)
 - 매 틱: 살아있는 유닛 `gauge += spd`; `≥1000`이면 1회 행동 후 `gauge -= 1000`(**carry — 0 리셋 아님**).
@@ -41,12 +42,13 @@ tests/*.test.js         # node:test
 
 ## 데이터 구조 (수치 placeholder — 코드 수정 없이 튜닝)
 - `JOBS{ key: { name, hp, atk, spd, role, skills:[id...], [taunt], [heal] } }`
-- `MOBS{ key: { name, hp, atk, def, spd, aoe, [aoeRatio] } }`
+- `MOBS{ key: { name, hp, atk, def, spd, aoe, [aoeRatio], [traits:[id...]] } }`
 - `SKILLS{ id: { id, name, kind:'attack'|'heal', range:'melee'|'ranged'|null } }` — 평타도 스킬. 위력은 유닛 스탯(attack→atk, heal→heal), 스킬엔 power 없음.
-- `range` 근/원 이진 태그 = step3b 근접회피(근접 받는뎀 −30%)가 첫 소비자. 현재 부착만, 미소비. (phys/magic `type`은 효과 0이라 제거 → 스킬 모델이 대체.)
+- `TRAITS{ id: { id, name, trigger, cond?, op, value, priority?, exclusive? } }` — 몹 트레잇 규칙. trigger∈{incomingDamage,postIncomingDamage,turnStart}, op∈{mult,add,heal,reflect}, cond 매처(attackerRange/attackerKind). §7.2 5종 정의(근접회피/근접면역/원거리저항/자가회복/데미지반사), **라이브 부착 = melee_evade(근접 −30%)만**.
+- `range` 근/원 이진 태그 = 근접회피(`cond:{attackerRange:'melee'}`)가 소비. (phys/magic `type`은 효과 0이라 step3a에서 제거 → 스킬 모델이 대체.)
 
 ## 테스트 전략
-`node:test` 31개. 핀된 규칙: 데이터 형태 / 유닛 팩토리 / damage·타게팅 / 전투(승·결정론·힐·스냅샷) / 교착 / 광역 적용값 / 도발 실전 라우팅 / 게이지 carry / 동시틱 파티우선 / 몹사망 break / 힐 cap / 라운드경계 중복방지 / 스킬 데이터 형태 / makeUnit 스킬 resolve(공유 def 참조) / skill.kind 분기(role 아님).
+`node:test` 54개. 핀된 규칙: 데이터 형태 / 유닛 팩토리 / damage·타게팅 / 전투(승·결정론·힐·스냅샷) / 교착 / 광역 적용값 / 도발 실전 라우팅 / 게이지 carry / 동시틱 파티우선 / 몹사망 break / 힐 cap / 라운드경계 중복방지 / 스킬 데이터 형태 / makeUnit 스킬 resolve / skill.kind 분기 / 트레잇 규칙엔진(op·trigger·cond·priority·exclusive·reflect 0클램프) / makeMob 트레잇 resolve / 근접회피 통합(근접 −30%·원거리 풀딜) / 스냅샷 트레잇명.
 
 ## 설계 원칙 — 확장성 우선 (시스템 레벨)
 시스템(스킬·버프/디버프·발동 효과 트리거·데미지 파이프라인·이벤트 훅)은 **확장 가능하게 견고히** 짠다 — 토대가 약하면 기능 얹을 때마다 갈아엎게 됨. 단 **단일 스킬·단일 옵션을 위한 추상화는 과설계라 금지.** 경계: 시스템=구조적으로 / 개별 기능 디테일=YAGNI OK. 기능은 작게 단계적으로 추가하되 매 시스템은 처음부터 튼튼하게. (베이스 평타 엔진은 의도적으로 단순 — RPS·스킬·버프가 들어올 때 위 시스템들을 견고히 설계.)
