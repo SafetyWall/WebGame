@@ -11,12 +11,29 @@ test('makeUnit copies job stats into runtime unit', () => {
   assert.strictEqual(u.maxHp, 115)
   assert.strictEqual(u.gauge, 0)
   assert.strictEqual(u.def, 0)         // 플레이어 def 없음 → 0
-  assert.strictEqual(u.taunt, false)   // 비탱은 false
 })
 
-test('makeUnit preserves taunt and heal', () => {
-  assert.strictEqual(makeUnit(JOBS.guardian).taunt, true)
+test('makeUnit no longer carries a static taunt field (도발=스킬)', () => {
+  assert.strictEqual(makeUnit(JOBS.guardian).taunt, undefined)
   assert.strictEqual(makeUnit(JOBS.priest).heal, 30)
+})
+
+test('makeUnit: 전투 가변상태 mana/cooldowns/effects 초기화', () => {
+  const u = makeUnit(JOBS.mage, 1)
+  assert.strictEqual(u.mana, 0)
+  assert.deepStrictEqual(u.cooldowns, {})
+  assert.deepStrictEqual(u.effects, [])
+})
+
+test('makeUnit: skills resolve(우선순위 보존)', () => {
+  const u = makeUnit(JOBS.warrior, 1)
+  assert.strictEqual(u.skills[0].id, 'warrior_cleave')
+  assert.strictEqual(u.skills[1].id, 'melee_strike')
+})
+
+test('makeMob: effects 빈 배열', () => {
+  const m = makeMob({ name: '몹', hp: 100, atk: 10, spd: 5 })
+  assert.deepStrictEqual(m.effects, [])
 })
 
 test('makeMob sets runtime hp/gauge and def default', () => {
