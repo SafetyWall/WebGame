@@ -69,6 +69,13 @@ test('prep: 전직 버튼은 골드부족 시 숨김', () => {
   assert.doesNotMatch(html, /data-action="promote"/)
 })
 
+test('prep preview: aoe 보스 조우는 광역 라벨 표기', () => {
+  const base = newRun(makeRng(1))
+  const s = { ...base, encounter: { ...base.encounter, name: '오우거', aoe: true, boss: true, traits: [] } }
+  const html = renderGame(s)
+  assert.match(html, /광역/)
+})
+
 test('prep: 노비스는 강화 버튼 없음(전직만 가능)', () => {
   const html = renderGame(newRun(makeRng(1)))      // roster 노비스×2
   assert.doesNotMatch(html, /data-action="upgrade"/)

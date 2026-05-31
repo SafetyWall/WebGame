@@ -41,6 +41,21 @@ test('renderBattle omits the bracket when mob has no traits', () => {
   assert.doesNotMatch(html, /\[\]/)
 })
 
+test('renderRounds shows 광역 label for an aoe mob (alongside traits)', () => {
+  const html = renderRounds([
+    { tick: 1, party: [], mob: { name: '오우거', hp: 1, maxHp: 1, traits: ['데미지반사'], aoe: true }, log: [] },
+  ])
+  assert.match(html, /광역/)
+  assert.match(html, /데미지반사/)
+})
+
+test('renderRounds omits 광역 for a non-aoe mob', () => {
+  const html = renderRounds([
+    { tick: 1, party: [], mob: { name: '슬라임', hp: 1, maxHp: 1, traits: [], aoe: false }, log: [] },
+  ])
+  assert.doesNotMatch(html, /광역/)
+})
+
 test('renderRounds renders rounds without the 결과 head', () => {
   const html = renderRounds([
     { tick: 5, party: [{ name: '전사', hp: 10, maxHp: 20 }], mob: { name: '슬라임', hp: 0, maxHp: 30, traits: [] }, log: ['x'] },

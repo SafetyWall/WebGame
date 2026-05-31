@@ -29,6 +29,14 @@ test('aoe applies floor(atk*ratio) and logs the applied value', () => {
   assert.match(logsOf(r).join('\n'), /광역 \(개당 -16\)/)
 })
 
+// 스냅샷에 aoe 플래그 노출(렌더가 광역 라벨 표기에 사용).
+test('snapshot exposes mob.aoe flag', () => {
+  const r = runBattle([makeUnit(JOBS.guardian)], makeMob(OGRE), { maxTicks: 170 })
+  assert.strictEqual(r.rounds.at(-1).mob.aoe, true)
+  const r2 = runBattle([makeUnit(JOBS.guardian)], makeMob(SLIME), { maxTicks: 50 })
+  assert.strictEqual(r2.rounds.at(-1).mob.aoe, false)
+})
+
 // #5 — 몹 단일공격이 실전에서 도발 탱으로 라우팅되는지(콜사이트 통합).
 test('mob single-target routes to taunt tank inside a real battle', () => {
   const g = makeUnit(JOBS.guardian); g.mana = 100   // 첫 행동에 도발 발동

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { levelCurve } from '../src/data/curve.js'
-import { MONSTERS } from '../src/data/monsters.js'
+import { MONSTERS, BOSSES } from '../src/data/monsters.js'
 import { STAGES } from '../src/data/stages.js'
 
 const RARITIES = ['일반', '희귀', '영웅', '전설']
@@ -22,6 +22,25 @@ test('MONSTERS entries have name and mul for every stat', () => {
     for (const s of ['hp', 'atk', 'def', 'spd']) {
       assert.ok(Number.isFinite(m.mul[s]), `${k}.mul.${s}`)
     }
+  }
+})
+
+test('일반 MONSTERS는 고정 특성/aoe/bonus 없음(보스 아님)', () => {
+  for (const [k, m] of Object.entries(MONSTERS)) {
+    assert.ok(!m.aoe, `${k} no aoe`)
+    assert.ok(!m.fixed, `${k} no fixed`)
+    assert.ok(!m.bonus, `${k} no bonus`)
+    assert.ok(!m.boss, `${k} not boss`)
+  }
+})
+
+test('BOSSES entries = name/mul + boss:true + 고정특성(aoe|fixed) 보유', () => {
+  assert.ok(Object.keys(BOSSES).length >= 1, '보스 1종 이상')
+  for (const [k, b] of Object.entries(BOSSES)) {
+    assert.ok(b.name, `${k} name`)
+    for (const s of ['hp', 'atk', 'def', 'spd']) assert.ok(Number.isFinite(b.mul[s]), `${k}.mul.${s}`)
+    assert.strictEqual(b.boss, true, `${k} boss flag`)
+    assert.ok(b.aoe || (Array.isArray(b.fixed) && b.fixed.length), `${k} 고정특성(aoe 또는 fixed)`)
   }
 })
 

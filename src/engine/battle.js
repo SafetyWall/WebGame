@@ -112,7 +112,7 @@ export function runBattle(party, mob, opts = {}) {
   const snapshot = (t) => ({
     tick: t,
     party: party.map(u => ({ name: u.name, hp: Math.max(0, u.hp), maxHp: u.maxHp })),
-    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, traits: (mob.traits || []).map(t => t.name) },
+    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, aoe: Boolean(mob.aoe), traits: (mob.traits || []).map(t => t.name) },
     log,
   })
   const finish = (winner) => {

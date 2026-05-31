@@ -44,3 +44,22 @@ test('stage 1 attaches no traits', () => {
   const e = generateEncounter(1, makeRng(99))
   assert.deepStrictEqual(e.traits, [])
 })
+
+test('일반 조우는 일반 풀에서만(보스 아님, aoe 없음)', () => {
+  const normalNames = Object.values(MONSTERS).map(m => m.name)
+  for (let seed = 1; seed <= 20; seed++) {
+    const e = generateEncounter(3, makeRng(seed))
+    assert.ok(normalNames.includes(e.name), `seed${seed}: ${e.name} 일반풀`)
+    assert.strictEqual(e.aoe, false)
+    assert.strictEqual(e.boss, false)
+  }
+})
+
+test('보스 조우(명시 monId): 고정 aoe + 추가(bonus) 트레잇 슬롯 + boss 플래그', () => {
+  // stage3 슬롯=['일반'], 오우거 bonus=['희귀'] → 트레잇 2개(일반+희귀), aoe true, boss true
+  const e = generateEncounter(3, makeRng(1), 'ogre')
+  assert.strictEqual(e.name, '오우거')
+  assert.strictEqual(e.aoe, true)
+  assert.strictEqual(e.boss, true)
+  assert.strictEqual(e.traits.length, 2)
+})

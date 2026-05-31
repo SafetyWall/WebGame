@@ -9,8 +9,11 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 
 function renderPrep(s) {
   const e = s.encounter
-  const et = e.traits.length ? ` <span class="traits">[${e.traits.map((id) => esc(TRAITS[id].name)).join(', ')}]</span>` : ''
-  const preview = `<div class="preview">다가올 적: <span class="mob">${esc(e.name)}</span> HP${e.hp} ATK${e.atk} DEF${e.def} SPD${e.spd}${et}</div>`
+  // 고정 능력(광역)을 슬롯 트레잇과 한 대괄호에 같이 표기.
+  const labels = [...(e.aoe ? ['광역'] : []), ...e.traits.map((id) => TRAITS[id].name)]
+  const et = labels.length ? ` <span class="traits">[${labels.map(esc).join(', ')}]</span>` : ''
+  const name = e.boss ? `👑 ${esc(e.name)}` : esc(e.name)
+  const preview = `<div class="preview">다가올 적: <span class="mob${e.boss ? ' boss' : ''}">${name}</span> HP${e.hp} ATK${e.atk} DEF${e.def} SPD${e.spd}${et}</div>`
   const full = s.party.length >= s.slots
   const roster = s.roster.map((r, i) => {
     const j = JOBS[r.job]
