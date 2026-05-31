@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
 import { MOBS } from '../src/data/mobs.js'
+import { SKILLS } from '../src/data/skills.js'
 
 test('JOBS has 5 jobs with required fields', () => {
   const keys = Object.keys(JOBS)
@@ -27,4 +28,14 @@ test('MOBS entries have combat fields', () => {
     assert.ok(Number.isFinite(m.def))
     assert.ok(Number.isFinite(m.spd))
   }
+})
+
+test('each job references at least one valid skill id', () => {
+  for (const k of Object.keys(JOBS)) {
+    const j = JOBS[k]
+    assert.ok(Array.isArray(j.skills) && j.skills.length >= 1, `${k} skills`)
+    for (const id of j.skills) assert.ok(SKILLS[id], `${k} skill ${id} exists`)
+  }
+  assert.deepStrictEqual(JOBS.mage.skills, ['ranged_strike'])
+  assert.deepStrictEqual(JOBS.priest.skills, ['basic_heal'])
 })
