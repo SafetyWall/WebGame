@@ -26,3 +26,24 @@ test('makeMob sets runtime hp/gauge and def default', () => {
   assert.strictEqual(m.gauge, 0)
   assert.strictEqual(m.def, 3)
 })
+
+test('makeUnit defaults to level 1 = base stats', () => {
+  const u = makeUnit(JOBS.warrior)
+  assert.strictEqual(u.level, 1)
+  assert.strictEqual(u.hp, 115)
+  assert.strictEqual(u.atk, 22)
+  assert.strictEqual(u.spd, 9)
+})
+
+test('makeUnit at higher level scales hp/atk (spd fixed)', () => {
+  const u = makeUnit(JOBS.warrior, 3)
+  assert.strictEqual(u.level, 3)
+  assert.strictEqual(u.hp, 166)
+  assert.strictEqual(u.atk, 31)
+  assert.strictEqual(u.spd, 9) // spd 레벨 불변
+})
+
+test('priest heal scales with level', () => {
+  assert.strictEqual(makeUnit(JOBS.priest, 1).heal, 30)
+  assert.strictEqual(makeUnit(JOBS.priest, 3).heal, 43)
+})

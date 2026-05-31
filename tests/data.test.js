@@ -3,16 +3,17 @@ import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
 import { SKILLS } from '../src/data/skills.js'
 
-test('JOBS has 5 jobs with required fields', () => {
+test('JOBS has 5 jobs with required fields (per-level stats)', () => {
   const keys = Object.keys(JOBS)
   assert.strictEqual(keys.length, 5)
   for (const k of keys) {
     const j = JOBS[k]
-    assert.ok(j.name, `${k} has name`)
-    assert.ok(Number.isFinite(j.hp), `${k} hp`)
-    assert.ok(Number.isFinite(j.atk), `${k} atk`)
+    assert.ok(j.name, `${k} name`)
     assert.ok(Number.isFinite(j.spd), `${k} spd`)
     assert.ok(['dps', 'tank', 'heal'].includes(j.role), `${k} role`)
+    assert.ok(j.levels && j.levels[1], `${k} levels[1]`)
+    assert.ok(Number.isFinite(j.levels[1].hp), `${k} levels[1].hp`)
+    assert.ok(Number.isFinite(j.levels[1].atk), `${k} levels[1].atk`)
   }
   assert.strictEqual(JOBS.guardian.taunt, true)
   assert.strictEqual(JOBS.priest.role, 'heal')

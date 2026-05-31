@@ -3,17 +3,19 @@ import { SKILLS } from '../data/skills.js'
 import { TRAITS } from '../data/traits.js'
 let _id = 0
 
-export function makeUnit(job) {
+export function makeUnit(job, level = 1) {
+  const s = job.levels[level]
   return {
     id: ++_id,
     name: job.name,
-    maxHp: job.hp,
-    hp: job.hp,
-    atk: job.atk,
+    level,
+    maxHp: s.hp,
+    hp: s.hp,
+    atk: s.atk,
     spd: job.spd,
     role: job.role,
     taunt: Boolean(job.taunt),
-    heal: job.heal || 0,
+    heal: s.heal || 0,
     skills: job.skills.map(id => SKILLS[id]), // id → 공유 def 참조. 가변상태(쿨/마나)는 step5에 유닛으로.
     def: 0,            // 플레이어 유닛은 방어 없음
     gauge: 0,
