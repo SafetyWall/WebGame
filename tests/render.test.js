@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { renderBattle } from '../src/ui/render.js'
+import { renderBattle, renderRounds } from '../src/ui/render.js'
 
 test('renderBattle returns html string with outcome and names', () => {
   const result = {
@@ -39,4 +39,13 @@ test('renderBattle omits the bracket when mob has no traits', () => {
   }
   const html = renderBattle(result)
   assert.doesNotMatch(html, /\[\]/)
+})
+
+test('renderRounds renders rounds without the 결과 head', () => {
+  const html = renderRounds([
+    { tick: 5, party: [{ name: '전사', hp: 10, maxHp: 20 }], mob: { name: '슬라임', hp: 0, maxHp: 30, traits: [] }, log: ['x'] },
+  ])
+  assert.doesNotMatch(html, /결과:/)
+  assert.match(html, /전사/)
+  assert.match(html, /라운드 1/)
 })
