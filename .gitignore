@@ -4,3 +4,4 @@ node_modules/
 
 # superpowers 작업용 임시 산출물(스펙·플랜) — repo에 안 넣음
 docs/superpowers/
+.gstack/
