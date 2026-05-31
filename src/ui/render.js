@@ -10,7 +10,10 @@ export function renderBattle(result) {
     const party = r.party
       .map(u => `<span class="hp">${esc(u.name)} ${u.hp}/${u.maxHp}</span>`)
       .join(' | ')
-    const mob = `<span class="mob">${esc(r.mob.name)} ${r.mob.hp}/${r.mob.maxHp}</span>`
+    const traits = (r.mob.traits && r.mob.traits.length)
+      ? ` <span class="traits">[${r.mob.traits.map(esc).join(', ')}]</span>`
+      : ''
+    const mob = `<span class="mob">${esc(r.mob.name)} ${r.mob.hp}/${r.mob.maxHp}</span>${traits}`
     const log = r.log.map(l => `<div class="log">${esc(l)}</div>`).join('')
     return `<section><h3>라운드 ${i + 1} (틱 ${r.tick})</h3><div>${party}</div><div>${mob}</div>${log}</section>`
   }).join('')
