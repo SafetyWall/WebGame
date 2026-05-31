@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
-import { MOBS } from '../src/data/mobs.js'
+import { SLIME, OGRE } from './_fixtures.js'
 import { makeUnit, makeMob } from '../src/engine/unit.js'
 import { runBattle, ROUND_TICKS } from '../src/engine/battle.js'
 
@@ -22,7 +22,7 @@ const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
 test('aoe applies floor(atk*ratio) and logs the applied value', () => {
   // 가디언(spd5) vs 오우거(spd6, aoe). maxTicks 170: 오우거만 1회 행동(틱167), 가디언 미행동.
   const party = [makeUnit(JOBS.guardian)]
-  const mob = makeMob(MOBS.ogre)
+  const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 170 })
   assert.strictEqual(r.rounds.at(-1).party[0].hp, 260 - 16) // 244
   assert.match(logsOf(r).join('\n'), /광역 \(개당 -16\)/)
@@ -31,7 +31,7 @@ test('aoe applies floor(atk*ratio) and logs the applied value', () => {
 // #5 — 몹 단일공격이 실전에서 도발 탱으로 라우팅되는지(콜사이트 통합).
 test('mob single-target routes to taunt tank inside a real battle', () => {
   const party = [makeUnit(JOBS.guardian), makeUnit(JOBS.mage)]
-  const mob = makeMob(MOBS.slime) // aoe:false
+  const mob = makeMob(SLIME) // aoe:false
   const r = runBattle(party, mob)
   const log = logsOf(r).join('\n')
   assert.match(log, /→ 가디언/)      // 몹이 탱 때림
@@ -41,7 +41,7 @@ test('mob single-target routes to taunt tank inside a real battle', () => {
 // #6 — 진짜 교착: 유닛이 행동하지만 못 이김 → maxTicks 도달 → 몹 승.
 test('active stalemate (units act but cannot win) -> mob wins at maxTicks', () => {
   const party = [makeUnit(JOBS.priest)] // 힐러는 몹 공격 안 함 → 못 죽임
-  const mob = makeMob(MOBS.ogre)
+  const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 3000 })
   assert.strictEqual(r.winner, 'mob')
   assert.strictEqual(r.ticks, 3000)
@@ -71,7 +71,7 @@ test('gauge carry: overflow is preserved, not reset to zero', () => {
 // #9 — 스냅샷 로그내용 / 플러시 / hp clamp.
 test('snapshot: log content, final flush, hp clamp', () => {
   const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.priest)]
-  const mob = makeMob(MOBS.slime)
+  const mob = makeMob(SLIME)
   const r = runBattle(party, mob)
   assert.strictEqual(r.winner, 'party')
   assert.match(logsOf(r).join('\n'), /전사 공격 → 슬라임 \(-19\)/) // 내용+데미지 정확
@@ -107,7 +107,7 @@ test('battle ending on a round boundary tick produces no duplicate snapshot', ()
 test('heal does not overheal above maxHp', () => {
   // 사제 단독: 풀피에서 자가힐 → maxHp(95) 초과 안 함.
   const party = [makeUnit(JOBS.priest)]
-  const mob = makeMob(MOBS.ogre)
+  const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 150 }) // 틱143 힐, 틱167 몹공격 전
   assert.match(logsOf(r).join('\n'), /회복/)
   for (const rd of r.rounds) {

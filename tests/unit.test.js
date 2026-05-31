@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
-import { MOBS } from '../src/data/mobs.js'
+import { SLIME } from './_fixtures.js'
 import { makeUnit, makeMob } from '../src/engine/unit.js'
 
 test('makeUnit copies job stats into runtime unit', () => {
@@ -20,7 +20,7 @@ test('makeUnit preserves taunt and heal', () => {
 })
 
 test('makeMob sets runtime hp/gauge and def default', () => {
-  const m = makeMob(MOBS.slime)
+  const m = makeMob(SLIME)
   assert.strictEqual(m.hp, 200)
   assert.strictEqual(m.maxHp, 200)
   assert.strictEqual(m.gauge, 0)
