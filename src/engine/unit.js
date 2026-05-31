@@ -1,5 +1,6 @@
 // 직업/몹 데이터(불변)를 전투용 인스턴스(가변 hp/gauge)로 변환.
 import { SKILLS } from '../data/skills.js'
+import { TRAITS } from '../data/traits.js'
 let _id = 0
 
 export function makeUnit(job) {
@@ -29,6 +30,7 @@ export function makeMob(mob) {
     spd: mob.spd,
     aoe: Boolean(mob.aoe),
     aoeRatio: mob.aoeRatio || 0.6,
+    traits: (mob.traits || []).map(id => TRAITS[id]), // id → 공유 def. 없으면 []
     gauge: 0,
     isMob: true,
   }

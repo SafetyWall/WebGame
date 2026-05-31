@@ -108,3 +108,15 @@ test('empty or missing traits leaves value unchanged', () => {
   assert.strictEqual(applyRules('incomingDamage', 10, {}, mobWith([])), 10)
   assert.strictEqual(applyRules('incomingDamage', 10, {}, { name: 'M', hp: 1, maxHp: 1 }), 10) // traits undefined
 })
+
+import { MOBS } from '../src/data/mobs.js'
+import { makeMob } from '../src/engine/unit.js'
+
+test('makeMob resolves trait ids into shared TRAITS defs', () => {
+  const m = makeMob({ name: 'T', hp: 100, atk: 10, def: 0, spd: 5, traits: ['melee_evade'] })
+  assert.strictEqual(m.traits[0], TRAITS.melee_evade) // 공유 def 참조(clone 아님)
+})
+
+test('makeMob defaults to empty traits when mob has none', () => {
+  assert.deepStrictEqual(makeMob(MOBS.slime).traits, [])
+})
