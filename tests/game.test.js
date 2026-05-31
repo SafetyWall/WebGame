@@ -68,3 +68,15 @@ test('prep: 전직 버튼은 골드부족 시 숨김', () => {
   const html = renderGame(s)
   assert.doesNotMatch(html, /data-action="promote"/)
 })
+
+test('prep: 노비스는 강화 버튼 없음(전직만 가능)', () => {
+  const html = renderGame(newRun(makeRng(1)))      // roster 노비스×2
+  assert.doesNotMatch(html, /data-action="upgrade"/)
+})
+
+test('prep: 비노비스는 강화 버튼 노출, 전직 버튼 없음', () => {
+  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0], gold: 5 }
+  const html = renderGame(s)
+  assert.match(html, /data-action="upgrade"/)
+  assert.doesNotMatch(html, /data-action="promote"/)
+})

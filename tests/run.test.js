@@ -24,11 +24,13 @@ test('recruit adds a novice for 4 gold; refused when gold < 4', () => {
   assert.strictEqual(s2, s)
 })
 
-test('upgrade raises a unit level for 4 gold; refused at gold<4 and at MAX_LEVEL', () => {
-  const s = upgrade(fresh(), 0)         // novice L1→L2, 5→1 gold
-  assert.strictEqual(s.roster[0].level, 2)
-  assert.strictEqual(s.gold, 1)
-  assert.strictEqual(upgrade(s, 0), s)  // gold 1 < 4 → no-op
+test('upgrade: 노비스는 강화 불가(전직만), 비노비스는 레벨+1', () => {
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }, { job: 'warrior', level: 1 }], party: [0, 1], gold: 5 }
+  assert.strictEqual(upgrade(s, 0), s)   // 노비스 강화 거부(전직해야 성장) → same ref
+  const r = upgrade(s, 1)                // 전사 L1→L2, 5→1 gold
+  assert.strictEqual(r.roster[1].level, 2)
+  assert.strictEqual(r.gold, 1)
+  assert.strictEqual(upgrade(r, 1), r)   // gold 1 < 4 → no-op
 })
 
 test('toggleParty adds/removes; refuses over slots', () => {
@@ -106,21 +108,23 @@ test('fight only runs in prep phase (no double-resolve)', () => {
   assert.strictEqual(fight(s), s) // result 국면 → no-op
 })
 
-test('changeJob: novice → warrior for 5 gold, level preserved', () => {
-  const s = { ...fresh(), roster: [{ job: 'novice', level: 3 }], party: [0], gold: 5 }
+test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), 5골드', () => {
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 5 }
   const r = changeJob(s, 0, 'warrior')
   assert.strictEqual(r.roster[0].job, 'warrior')
-  assert.strictEqual(r.roster[0].level, 3)   // 레벨 유지
+  assert.strictEqual(r.roster[0].level, 2)   // 전직 = 레벨업(자동 +1)
   assert.strictEqual(r.gold, 0)
 })
 
-test('changeJob refused: non-novice, gold<5, invalid job (same ref)', () => {
-  const base = { ...fresh(), roster: [{ job: 'warrior', level: 1 }, { job: 'novice', level: 1 }], gold: 5 }
+test('changeJob refused: 비노비스/골드부족/잘못된job/없는인덱스/전직레벨아님 (same ref)', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 2 }, { job: 'novice', level: 1 }], gold: 5 }
   assert.strictEqual(changeJob(base, 0, 'mage'), base)        // 비노비스
   const poor = { ...base, gold: 4 }
   assert.strictEqual(changeJob(poor, 1, 'mage'), poor)        // 골드부족
   assert.strictEqual(changeJob(base, 1, 'cleric'), base)      // 잘못된 job
   assert.strictEqual(changeJob(base, 9, 'mage'), base)        // 없는 인덱스
+  const l2 = { ...fresh(), roster: [{ job: 'novice', level: 2 }], gold: 5 }
+  assert.strictEqual(changeJob(l2, 0, 'mage'), l2)            // 전직레벨(1) 아님
 })
 
 test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {

@@ -21,7 +21,7 @@ function renderPrep(s) {
       : full
         ? `<button disabled title="슬롯 꽉참">출전</button>`
         : `<button data-action="toggle" data-i="${i}">출전</button>`
-    const up = (s.gold >= UPGRADE_COST && r.level < MAX_LEVEL) ? ` <button data-action="upgrade" data-i="${i}">강화(${UPGRADE_COST})</button>` : ''
+    const up = (r.job !== 'novice' && s.gold >= UPGRADE_COST && r.level < MAX_LEVEL) ? ` <button data-action="upgrade" data-i="${i}">강화(${UPGRADE_COST})</button>` : ''
     const promo = (r.job === 'novice' && s.gold >= PROMOTE_COST)
       ? ' ' + PROMOTE_TARGETS.map((job) => `<button data-action="promote" data-i="${i}" data-job="${job}">→${esc(JOBS[job].name)}(${PROMOTE_COST})</button>`).join(' ')
       : ''

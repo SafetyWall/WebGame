@@ -24,9 +24,9 @@ test('save → load round-trips state and rng', () => {
 test('load returns null for empty, version mismatch, corrupt', () => {
   const st = shim()
   assert.strictEqual(load(st), null)                                          // empty
-  st.setItem('partyrpg.save.v1', JSON.stringify({ v: 2, state: {}, rng: 0 }))
-  assert.strictEqual(load(st), null)                                          // version
-  st.setItem('partyrpg.save.v1', '{not json')
+  st.setItem('partyrpg.save.v2', JSON.stringify({ v: 1, state: {}, rng: 0 }))
+  assert.strictEqual(load(st), null)                                          // version mismatch (구 v1)
+  st.setItem('partyrpg.save.v2', '{not json')
   assert.strictEqual(load(st), null)                                          // corrupt
 })
 

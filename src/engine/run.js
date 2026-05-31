@@ -15,6 +15,7 @@ export const MAX_STAGE = Math.max(...Object.keys(STAGES).map(Number))
 export const reward = (stage) => 4 + stage
 export const PROMOTE_COST = 5
 export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest']
+export const PROMOTE_LEVEL = 1   // 노비스 전직 레벨(고정). 이 레벨엔 강화 불가 — 전직만(전직=레벨업).
 
 export function newRun(rng) {
   return {
@@ -36,15 +37,18 @@ export function recruit(s) {
 
 export function upgrade(s, i) {
   const u = s.roster[i]
-  if (!u || s.gold < UPGRADE_COST || u.level >= MAX_LEVEL) return s
+  // 노비스는 강화 불가 — 성장 = 전직(전직 레벨에서 강제). 비노비스만 레벨업.
+  if (!u || u.job === 'novice' || s.gold < UPGRADE_COST || u.level >= MAX_LEVEL) return s
   const roster = s.roster.map((r, j) => (j === i ? { ...r, level: r.level + 1 } : r))
   return { ...s, gold: s.gold - UPGRADE_COST, roster }
 }
 
+// 전직 = 노비스만, 전직 레벨(PROMOTE_LEVEL)에서만. 비가역. 레벨 자동 +1(전직=그 레벨의 레벨업).
 export function changeJob(s, i, job) {
   const u = s.roster[i]
-  if (!u || u.job !== 'novice' || !PROMOTE_TARGETS.includes(job) || s.gold < PROMOTE_COST) return s
-  const roster = s.roster.map((r, j) => (j === i ? { ...r, job } : r))   // 레벨 유지, 직업만 변경
+  if (!u || u.job !== 'novice' || u.level !== PROMOTE_LEVEL) return s
+  if (!PROMOTE_TARGETS.includes(job) || s.gold < PROMOTE_COST) return s
+  const roster = s.roster.map((r, j) => (j === i ? { ...r, job, level: r.level + 1 } : r))
   return { ...s, gold: s.gold - PROMOTE_COST, roster }
 }
 
