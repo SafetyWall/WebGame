@@ -92,6 +92,18 @@ test('reflect op damages attacker by floor(damage * value)', () => {
   assert.strictEqual(attacker.hp, 45) // 50 - floor(17*0.3)=5
 })
 
+test('reflect clamps attacker hp at 0 (never negative)', () => {
+  const attacker = { name: 'A', hp: 3 }
+  const mob = mobWith([{ trigger: 'postIncomingDamage', op: 'reflect', value: 0.5 }])
+  applyRules('postIncomingDamage', 0, { attacker, damage: 20 }, mob) // floor(20*0.5)=10 > 3
+  assert.strictEqual(attacker.hp, 0) // -7 아니라 0
+})
+
+test('reflect is a no-op when ctx has no attacker', () => {
+  const mob = mobWith([{ trigger: 'postIncomingDamage', op: 'reflect', value: 0.3 }])
+  assert.strictEqual(applyRules('postIncomingDamage', 9, { damage: 9 }, mob), 9) // throw 없음, value 그대로
+})
+
 test('empty or missing traits leaves value unchanged', () => {
   assert.strictEqual(applyRules('incomingDamage', 10, {}, mobWith([])), 10)
   assert.strictEqual(applyRules('incomingDamage', 10, {}, { name: 'M', hp: 1, maxHp: 1 }), 10) // traits undefined

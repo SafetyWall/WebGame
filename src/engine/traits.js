@@ -15,7 +15,7 @@ function applyOp(rule, value, ctx, mob) {
     case 'add':  return value + rule.value
     case 'heal': mob.hp = Math.min(mob.maxHp, mob.hp + rule.value); return value
     case 'reflect':
-      if (ctx.attacker) ctx.attacker.hp -= Math.floor(ctx.damage * rule.value)
+      if (ctx.attacker) ctx.attacker.hp = Math.max(0, ctx.attacker.hp - Math.floor(ctx.damage * rule.value))
       return value
     default: return value
   }
