@@ -175,3 +175,31 @@ test('melee_evade keeps a 1-damage hit at min 1 (evade ≠ immune)', () => {
   const r = runBattle([atk1], mob, { maxTicks: 200 })
   assert.match(logsOf(r).join('\n'), /→ Y \(-1\)/)
 })
+
+test('ranged_immune = 원거리 0뎀 (영웅, melee_immune의 거울)', () => {
+  const t = TRAITS.ranged_immune
+  assert.strictEqual(t.rarity, '영웅')
+  assert.strictEqual(t.trigger, 'incomingDamage')
+  assert.deepStrictEqual(t.cond, { attackerRange: 'ranged' })
+  assert.strictEqual(t.op, 'mult')
+  assert.strictEqual(t.value, 0)
+})
+
+test('ranged_immune: 마법사(원거리) 0뎀, 전사(근접)는 통함', () => {
+  const m1 = makeMob({ name: 'X', hp: 100000, atk: 0, def: 0, spd: 0, traits: ['ranged_immune'] })
+  const r1 = runBattle([makeUnit(JOBS.mage)], m1, { maxTicks: 200 })
+  assert.match(logsOf(r1).join('\n'), /마법사 공격 → X \(-0\)/)
+  const m2 = makeMob({ name: 'Y', hp: 100000, atk: 0, def: 0, spd: 0, traits: ['ranged_immune'] })
+  const r2 = runBattle([makeUnit(JOBS.warrior)], m2, { maxTicks: 200 })
+  assert.match(logsOf(r2).join('\n'), /전사 공격 → Y \(-22\)/)
+})
+
+test('전설 트레잇 존재 (regeneration = turnStart heal)', () => {
+  const legendaries = Object.values(TRAITS).filter(t => t.rarity === '전설')
+  assert.ok(legendaries.length >= 1, '전설 1종 이상')
+  const regen = TRAITS.regeneration
+  assert.strictEqual(regen.rarity, '전설')
+  assert.strictEqual(regen.trigger, 'turnStart')
+  assert.strictEqual(regen.op, 'heal')
+  assert.ok(regen.value > 0)
+})

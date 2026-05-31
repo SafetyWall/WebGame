@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { generateEncounter } from '../src/engine/encounter.js'
+import { generateEncounter, conflicts } from '../src/engine/encounter.js'
 import { makeRng } from '../src/engine/rng.js'
 import { MONSTERS } from '../src/data/monsters.js'
 import { TRAITS } from '../src/data/traits.js'
@@ -62,4 +62,22 @@ test('보스 조우(명시 monId): 고정 aoe + 추가(bonus) 트레잇 슬롯 +
   assert.strictEqual(e.aoe, true)
   assert.strictEqual(e.boss, true)
   assert.strictEqual(e.traits.length, 2)
+})
+
+test('상호배제(conflicts): 한 범위 완전봉쇄 + 다른 범위 방어 동시 금지', () => {
+  assert.strictEqual(conflicts(['melee_immune'], 'ranged_resist'), true)   // 풀근접봉쇄 + 원거리방어
+  assert.strictEqual(conflicts(['melee_immune'], 'ranged_immune'), true)
+  assert.strictEqual(conflicts(['ranged_immune'], 'melee_evade'), true)    // 풀원거리봉쇄 + 근접방어
+  assert.strictEqual(conflicts(['melee_evade'], 'ranged_resist'), false)   // 부분+부분 = 양쪽 클리어 가능 → OK
+  assert.strictEqual(conflicts(['melee_immune'], 'melee_evade'), false)    // 같은 범위(원거리 안 막음) → OK
+  assert.strictEqual(conflicts(['self_heal'], 'melee_immune'), false)      // 비방어 트레잇 무관
+})
+
+test('보스 dragon: 고정 trait(regeneration) + aoe + 전딜봉쇄 조합 안 만듦', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const e = generateEncounter(3, makeRng(seed), 'dragon')
+    assert.ok(e.traits.includes('regeneration'), `seed${seed} fixed regeneration`)
+    assert.strictEqual(e.aoe, true)
+    assert.ok(!(e.traits.includes('melee_immune') && e.traits.includes('ranged_immune')), `seed${seed} 양면역 금지`)
+  }
 })

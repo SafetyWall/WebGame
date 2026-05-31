@@ -78,6 +78,17 @@ test('gauge carry: overflow is preserved, not reset to zero', () => {
   assert.strictEqual(r.rounds.at(-1).mob.hp, 998) // 2히트 = carry. 리셋이면 999.
 })
 
+// 반사 killing-blow — 반사 데미지로 공격자가 0이 되면 사망(추가 행동 없음, 파티 전멸).
+test('reflect killing-blow: attacker reduced to 0 dies and stops acting', () => {
+  const A = rawUnit({ name: 'A', hp: 5, atk: 20, spd: 1000 })
+  const M = rawMob({ name: 'M', hp: 100000, spd: 0,
+    traits: [{ trigger: 'postIncomingDamage', op: 'reflect', value: 0.5 }] }) // floor(20*0.5)=10 ≥ 5
+  const r = runBattle([A], M, { maxTicks: 50 })
+  assert.strictEqual(r.winner, 'mob')                                   // 자멸 → 전멸
+  assert.strictEqual(logsOf(r).filter(l => /A 공격 →/.test(l)).length, 1) // 한 번 치고 죽음
+  assert.strictEqual(r.rounds.at(-1).party[0].hp, 0)
+})
+
 // #9 — 스냅샷 로그내용 / 플러시 / hp clamp.
 test('snapshot: log content, final flush, hp clamp', () => {
   const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.priest)]

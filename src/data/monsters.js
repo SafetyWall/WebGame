@@ -9,4 +9,6 @@ export const MONSTERS = {
 // 스테이지 배치(STAGES.boss)는 아직 미정 — 정의만 둠. generateEncounter(stage, rng, monId)로 호출 가능.
 export const BOSSES = {
   ogre:   { name: '오우거', boss: true, mul: { hp: 2.0, atk: 1.6, def: 1.2, spd: 0.9 }, aoe: true, bonus: ['희귀'] },
+  // 드래곤 = 고정 재생(전설) + 광역. bonus 영웅×2지만 면역끼리 상호배제라 실제론 1개만 채워짐(전딜봉쇄 차단).
+  dragon: { name: '드래곤', boss: true, mul: { hp: 3.0, atk: 2.0, def: 1.5, spd: 1.1 }, aoe: true, fixed: ['regeneration'], bonus: ['영웅', '영웅'] },
 }
