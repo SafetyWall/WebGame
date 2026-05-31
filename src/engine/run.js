@@ -46,6 +46,7 @@ export function toggleParty(s, i) {
 }
 
 export function fight(s) {
+  if (s.phase !== 'prep') return s     // 준비 국면에서만 전투(결과 국면 재실행 → 보상 중복 방지)
   if (s.party.length === 0) return s
   const units = s.party.map((i) => makeUnit(JOBS[s.roster[i].job], s.roster[i].level))
   const r = runBattle(units, makeMob(s.encounter))
@@ -58,6 +59,7 @@ export function fight(s) {
 }
 
 export function next(s, rng) {
+  if (s.stage >= MAX_STAGE) return s   // 최종 스테이지 = 종착, next 거부(STAGES[6] 크래시 방지)
   const stage = s.stage + 1
   return { ...s, phase: 'prep', stage, encounter: generateEncounter(stage, rng), lastResult: null }
 }

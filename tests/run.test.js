@@ -94,3 +94,14 @@ test('deterministic: same seed + same actions → same state', () => {
   const b = recruit(newRun(makeRng(7)))
   assert.deepStrictEqual(a, b)
 })
+
+test('next is a no-op at the final stage (terminal)', () => {
+  const rng = makeRng(3)
+  const s = { ...newRun(rng), stage: MAX_STAGE }
+  assert.strictEqual(next(s, rng), s) // 같은 ref, 크래시 없음
+})
+
+test('fight only runs in prep phase (no double-resolve)', () => {
+  const s = { ...newRun(makeRng(3)), phase: 'result' }
+  assert.strictEqual(fight(s), s) // result 국면 → no-op
+})
