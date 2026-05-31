@@ -47,3 +47,7 @@ test('priest heal scales with level', () => {
   assert.strictEqual(makeUnit(JOBS.priest, 1).heal, 30)
   assert.strictEqual(makeUnit(JOBS.priest, 3).heal, 43)
 })
+
+test('makeUnit throws a clear error for an undefined level', () => {
+  assert.throws(() => makeUnit(JOBS.warrior, 99), /no stats for .* level 99/)
+})

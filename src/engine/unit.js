@@ -5,6 +5,7 @@ let _id = 0
 
 export function makeUnit(job, level = 1) {
   const s = job.levels[level]
+  if (!s) throw new RangeError(`makeUnit: no stats for ${job.name} level ${level}`)
   return {
     id: ++_id,
     name: job.name,
