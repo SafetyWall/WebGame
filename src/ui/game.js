@@ -3,6 +3,8 @@
 import { renderRounds } from './render.js'
 import { JOBS } from '../data/jobs.js'
 import { TRAITS } from '../data/traits.js'
+import { SKILLS } from '../data/skills.js'
+import { normalizeSkillOrder } from '../engine/unit.js'
 import { MAX_LEVEL, RECRUIT_COST, UPGRADE_COST, PROMOTE_COST, PROMOTE_TARGETS, slotCost } from '../engine/run.js'
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
@@ -28,7 +30,16 @@ function renderPrep(s) {
     const promo = (r.job === 'novice' && s.gold >= PROMOTE_COST)
       ? ' ' + PROMOTE_TARGETS.map((job) => `<button data-action="promote" data-i="${i}" data-job="${job}">→${esc(JOBS[job].name)}(${PROMOTE_COST})</button>`).join(' ')
       : ''
-    return `<li class="${inParty ? 'in-party' : ''}">${esc(j.name)} Lv${r.level} <span class="hp">HP${lv.hp}</span> ATK${lv.atk} ${tog}${up}${promo}</li>`
+    // 스킬 우선순위 재배열(스킬 2개+). 위에서부터 "쓸 수 있는 첫 스킬" → ▲▼로 순서 조정.
+    const order = normalizeSkillOrder(j, r.skillOrder)
+    const skillsUi = j.skills.length >= 2
+      ? `<div class="skills">우선순위: ${order.map((sid, k) => {
+          const upBtn = k > 0 ? `<button data-action="reorder" data-i="${i}" data-skill="${sid}" data-dir="-1">▲</button>` : ''
+          const dnBtn = k < order.length - 1 ? `<button data-action="reorder" data-i="${i}" data-skill="${sid}" data-dir="1">▼</button>` : ''
+          return `<span class="skill">${k + 1}.${esc(SKILLS[sid].name)}${upBtn}${dnBtn}</span>`
+        }).join(' ')}</div>`
+      : ''
+    return `<li class="${inParty ? 'in-party' : ''}">${esc(j.name)} Lv${r.level} <span class="hp">HP${lv.hp}</span> ATK${lv.atk} ${tog}${up}${promo}${skillsUi}</li>`
   }).join('')
   const recruitBtn = s.gold >= RECRUIT_COST ? `<button data-action="recruit">영입(${RECRUIT_COST})</button>` : ''
   const sc = slotCost(s.slots)

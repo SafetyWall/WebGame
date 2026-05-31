@@ -56,6 +56,19 @@ test('prep: 노비스에 전직 버튼, 골드충분 시 슬롯확장 버튼 노
   assert.match(html, /슬롯확장\(5\)/)             // slotCost(3)=5
 })
 
+test('prep: 다중 스킬 유닛에 스킬 재배열 버튼(reorder) 노출', () => {
+  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0], gold: 0 }
+  const html = renderGame(s)
+  assert.match(html, /data-action="reorder"/)
+  assert.match(html, /data-skill="warrior_cleave"/)
+  assert.match(html, /data-skill="melee_strike"/)
+})
+
+test('prep: 단일 스킬(노비스)엔 재배열 버튼 없음', () => {
+  const html = renderGame(newRun(makeRng(1)))   // 노비스(평타만)
+  assert.doesNotMatch(html, /data-action="reorder"/)
+})
+
 test('prep: 풀파티면 미출전 유닛 출전버튼 disabled', () => {
   const base = newRun(makeRng(1))
   const s = { ...base, slots: 1, party: [0] }      // slot 1, 1명 출전 = 꽉 참, idx1 대기

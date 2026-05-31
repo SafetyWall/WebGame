@@ -31,6 +31,21 @@ test('makeUnit: skills resolve(우선순위 보존)', () => {
   assert.strictEqual(u.skills[1].id, 'melee_strike')
 })
 
+test('makeUnit: skillOrder 재배열 반영(우선순위 override)', () => {
+  const u = makeUnit(JOBS.warrior, 1, ['melee_strike', 'warrior_cleave'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['melee_strike', 'warrior_cleave'])
+})
+
+test('makeUnit: skillOrder 보정 — 무효 id 무시 + 누락 직업스킬 append', () => {
+  const u = makeUnit(JOBS.warrior, 1, ['melee_strike', 'bogus'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['melee_strike', 'warrior_cleave'])
+})
+
+test('makeUnit: skillOrder 없으면 직업 기본 순서', () => {
+  const u = makeUnit(JOBS.mage, 1, null)
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['mage_nuke', 'ranged_strike'])
+})
+
 test('makeMob: effects 빈 배열', () => {
   const m = makeMob({ name: '몹', hp: 100, atk: 10, spd: 5 })
   assert.deepStrictEqual(m.effects, [])

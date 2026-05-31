@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -131,6 +131,27 @@ test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {
   assert.strictEqual(slotCost(3), 5)
   assert.strictEqual(slotCost(4), 9)
   assert.strictEqual(slotCost(5), 13)
+})
+
+test('reorderSkill: 스킬 우선순위 위/아래 이동, 경계/무효는 no-op(same ref)', () => {
+  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2 }], party: [0] }
+  const r = reorderSkill(s, 0, 'melee_strike', -1)            // 평타를 위로
+  assert.deepStrictEqual(r.roster[0].skillOrder, ['melee_strike', 'warrior_cleave'])
+  assert.strictEqual(reorderSkill(r, 0, 'melee_strike', -1), r) // 이미 맨 위 → no-op
+  assert.strictEqual(reorderSkill(s, 0, 'bogus', -1), s)        // 없는 스킬
+  assert.strictEqual(reorderSkill(s, 9, 'melee_strike', -1), s) // 없는 인덱스
+})
+
+test('fight가 roster.skillOrder를 전투에 반영(순서 다르면 결과 다름)', () => {
+  const enc = { name: '더미', hp: 100000, atk: 0, def: 0, spd: 0, aoe: false, boss: false, traits: [] }
+  const base = { ...fresh(), party: [0], encounter: enc }
+  const def = fight({ ...base, roster: [{ job: 'warrior', level: 5 }] })                                         // 기본순(갑옷부수기 우선)
+  const plain = fight({ ...base, roster: [{ job: 'warrior', level: 5, skillOrder: ['melee_strike', 'warrior_cleave'] }] }) // 평타 우선
+  const dlog = def.lastResult.rounds.flatMap(r => r.log).join('\n')
+  const plog = plain.lastResult.rounds.flatMap(r => r.log).join('\n')
+  assert.notStrictEqual(dlog, plog)        // 우선순위 override가 전투를 바꿈 = skillOrder 전달됨
+  assert.match(dlog, /\(-74\)/)            // 기본: 갑옷부수기(floor(44×1.7)=74) 발동
+  assert.doesNotMatch(plog, /\(-74\)/)     // 평타우선: 발동 안 함(평타만)
 })
 
 test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () => {
