@@ -105,6 +105,19 @@ test('battle ending on a round boundary tick produces no duplicate snapshot', ()
   assert.strictEqual(new Set(ticks).size, ticks.length) // 중복 틱 없음
 })
 
+// 방어적 가드 — 빈 파티 / 전원 사망 입력 = 전투 성립 안 함 → 즉시 몹 승(틱0).
+test('empty party = immediate mob win at tick 0 (vacuous guard)', () => {
+  const r = runBattle([], rawMob({ name: 'M' }))
+  assert.strictEqual(r.winner, 'mob')
+  assert.strictEqual(r.ticks, 0)
+})
+
+test('all-dead party = immediate mob win at tick 0', () => {
+  const r = runBattle([rawUnit({ name: 'D', hp: 0 })], rawMob({ name: 'M' }))
+  assert.strictEqual(r.winner, 'mob')
+  assert.strictEqual(r.ticks, 0)
+})
+
 // #11 — 힐 오버힐 cap(maxHp 초과 금지).
 test('heal does not overheal above maxHp', () => {
   // 사제 단독: 풀피에서 자가힐 → maxHp(95) 초과 안 함.

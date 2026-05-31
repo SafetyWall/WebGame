@@ -122,6 +122,9 @@ export function runBattle(party, mob, opts = {}) {
     return { winner, rounds, ticks: tick }
   }
 
+  // 빈/전멸 파티 = 전투 성립 안 함 → 즉시 몹 승(틱0). run.fight가 빈 파티를 막지만 엔진 계약도 명시.
+  if (party.length === 0 || party.every(u => u.hp <= 0)) return finish('mob')
+
   while (tick < maxTicks) {
     tick++
     // ① effect: HoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 HoT proc 보장.
