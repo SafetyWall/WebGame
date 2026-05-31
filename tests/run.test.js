@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -121,4 +121,19 @@ test('changeJob refused: non-novice, gold<5, invalid job (same ref)', () => {
   assert.strictEqual(changeJob(poor, 1, 'mage'), poor)        // 골드부족
   assert.strictEqual(changeJob(base, 1, 'cleric'), base)      // 잘못된 job
   assert.strictEqual(changeJob(base, 9, 'mage'), base)        // 없는 인덱스
+})
+
+test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {
+  assert.strictEqual(slotCost(3), 5)
+  assert.strictEqual(slotCost(4), 9)
+  assert.strictEqual(slotCost(5), 13)
+})
+
+test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () => {
+  const s = { ...fresh(), gold: 5, slots: 3 }
+  const r = expandSlot(s)
+  assert.strictEqual(r.slots, 4)
+  assert.strictEqual(r.gold, 0)
+  const poor = { ...fresh(), gold: 4, slots: 3 }
+  assert.strictEqual(expandSlot(poor), poor)
 })

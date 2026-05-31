@@ -48,6 +48,14 @@ export function changeJob(s, i, job) {
   return { ...s, gold: s.gold - PROMOTE_COST, roster }
 }
 
+export const slotCost = (slots) => 5 + 4 * (slots - 3)   // 체증: 3→4=5, 4→5=9, 5→6=13 (하드상한 없음)
+
+export function expandSlot(s) {
+  const cost = slotCost(s.slots)
+  if (s.gold < cost) return s
+  return { ...s, gold: s.gold - cost, slots: s.slots + 1 }
+}
+
 export function toggleParty(s, i) {
   if (s.party.includes(i)) return { ...s, party: s.party.filter((x) => x !== i) }
   if (s.party.length >= s.slots) return s
