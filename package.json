@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "sim": "node sim/sim.js"
+    "sim": "node sim/sim.js",
+    "serve": "node serve.js"
   }
 }

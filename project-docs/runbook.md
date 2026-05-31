@@ -14,10 +14,11 @@
 
 ## 실행
 ```bash
-# 헤드리스 시뮬 (밸런스 측정)
-node sim/sim.js
+node sim/sim.js          # 헤드리스 시뮬(밸런스 측정) — = npm run sim
+node serve.js [port]     # 로컬 정적 서버(기본 8080) + 브라우저 자동오픈 — = npm run serve
 ```
-- 브라우저 플레이: GitHub Pages URL(아래 배포). `file://` 더블클릭은 ES모듈 CORS로 막힘 → Pages 또는 로컬 정적서버(미구현, 필요시 추가).
+- **브라우저 플레이(로컬):** `serve.bat` 더블클릭 또는 `npm run serve` → `http://localhost:8080` 자동 오픈. `file://` 직접 열기는 ES모듈 CORS로 막힘(http 서빙 필수). 서버는 의존성 0(node 내장만), 127.0.0.1 바인드(LAN 노출 안 함). 종료 = 콘솔창 닫기/Ctrl+C. 브라우저 자동오픈 끄려면 `NO_OPEN=1`(서버만).
+- **브라우저 플레이(배포):** GitHub Pages → `https://safetywall.github.io/WebGame/`. **push해야 반영**(Pages 자동 재빌드).
 
 ## 테스트
 ```bash
