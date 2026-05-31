@@ -65,7 +65,7 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 - `range` 근/원 이진 태그 = 근접회피(`cond:{attackerRange:'melee'}`)가 소비. (phys/magic `type`은 효과 0이라 step3a에서 제거 → 스킬 모델이 대체.)
 
 ## 테스트 전략
-`node:test` 147개. 핀된 규칙: 데이터 형태 / 유닛 팩토리(레벨 스케일·잘못된 level RangeError) / damage·타게팅 / 전투(승·결정론·힐·스냅샷) / 교착 / 광역 / 도발 / 게이지 carry / 동시틱 / 몹사망 break / 힐 cap / 라운드경계 / 스킬 resolve·skill.kind / 트레잇 규칙엔진(op·trigger·cond·priority·exclusive·reflect 0클램프) / 근접회피 통합 / 시드 PRNG / 레벨커브·몹계수·스테이지 / 조우 생성(결정론·스탯·distinct·레어도) / 면역 0뎀·회피≠면역 / **런 상태기계(newRun·영입·강화·선발·전투 승패clear·next terminal·prep-only fight·결정론) / 게임 렌더(prep/result) / effect(refresh·만료·HoT·배율·taunt) / 스킬발동(우선순위 canUse·자원·배율합성·도발·HoT통합)**. 엔진 동작 테스트는 `tests/_fixtures.js` 고정 몹 사용(밸런스 데이터 디커플). 노비스 평타파티 = step4와 결정론 동일(마나/effect 무관). UI 이벤트(main.js)는 수동 실측(serve.bat).
+`node:test` 134개. 핀된 규칙: 데이터 형태 / 유닛 팩토리(레벨 스케일·잘못된 level RangeError) / damage·타게팅 / 전투(승·결정론·힐·스냅샷) / 교착 / 광역 / 도발 / 게이지 carry / 동시틱 / 몹사망 break / 힐 cap / 라운드경계 / 스킬 resolve·skill.kind / 트레잇 규칙엔진(op·trigger·cond·priority·exclusive·reflect 0클램프) / 근접회피 통합 / 시드 PRNG / 레벨커브·몹계수·스테이지 / 조우 생성(결정론·스탯·distinct·레어도) / 면역 0뎀·회피≠면역 / **런 상태기계(newRun·영입·강화·선발·전투 승패clear·next terminal·prep-only fight·결정론) / 게임 렌더(prep/result) / effect(refresh·만료·HoT·배율·taunt) / 스킬발동(우선순위 canUse·자원·배율합성·도발·HoT통합)**. 엔진 동작 테스트는 `tests/_fixtures.js` 고정 몹 사용(밸런스 데이터 디커플). 노비스 평타파티 = step4와 결정론 동일(마나/effect 무관). UI 이벤트(main.js)는 수동 실측(serve.bat).
 
 ## 설계 원칙 — 확장성 우선 (시스템 레벨)
 시스템(스킬·버프/디버프·발동 효과 트리거·데미지 파이프라인·이벤트 훅)은 **확장 가능하게 견고히** 짠다 — 토대가 약하면 기능 얹을 때마다 갈아엎게 됨. 단 **단일 스킬·단일 옵션을 위한 추상화는 과설계라 금지.** 경계: 시스템=구조적으로 / 개별 기능 디테일=YAGNI OK. 기능은 작게 단계적으로 추가하되 매 시스템은 처음부터 튼튼하게. (베이스 평타 엔진은 의도적으로 단순 — RPS·스킬·버프가 들어올 때 위 시스템들을 견고히 설계.)

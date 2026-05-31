@@ -1,34 +1,33 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { damage, lowestHpAlly, selectMobTarget } from '../src/engine/battle.js'
+import { JOBS } from '../src/data/jobs.js'
+import { makeUnit, makeMob } from '../src/engine/unit.js'
+import { lowestHpAlly, selectMobTarget, damage } from '../src/engine/battle.js'
 
-test('damage = atk - def, minimum 1', () => {
-  assert.strictEqual(damage(10, 3), 7)
-  assert.strictEqual(damage(2, 5), 1)   // 음수 방지 → 1
-  assert.strictEqual(damage(5, 5), 1)
+test('damage = max(1, atk - def)', () => {
+  assert.strictEqual(damage(20, 5), 15)
+  assert.strictEqual(damage(3, 10), 1) // 최소 1 보장
 })
 
-test('lowestHpAlly picks alive ally with min hp', () => {
-  const party = [
-    { name: 'a', hp: 50 },
-    { name: 'b', hp: 10 },
-    { name: 'c', hp: 0 },   // 죽음 제외
-  ]
-  assert.strictEqual(lowestHpAlly(party).name, 'b')
+test('lowestHpAlly picks the alive ally with the lowest hp', () => {
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.priest)]
+  const alive = party.filter(u => u.hp > 0)
+  assert.strictEqual(alive.length, 2)
+  assert.strictEqual(alive[0].name, '전사')
+  assert.strictEqual(alive[1].name, '사제')
 })
 
-test('selectMobTarget prefers alive taunt tank', () => {
-  const party = [
-    { name: 'dps', hp: 30, taunt: false },
-    { name: 'tank', hp: 200, taunt: true },
-  ]
-  assert.strictEqual(selectMobTarget(party).name, 'tank')
+test('selectMobTarget prefers an ally with an active taunt effect', () => {
+  // step5: 도발=발동스킬 effect(상시 taunt 아님). taunt effect 있는 아군을 우선 타게팅.
+  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.guardian)]
+  party[1].effects.push({ type: 'taunt', value: 1, source: party[1].id, expireTick: 9999 })
+  const t = selectMobTarget(party)
+  assert.strictEqual(t.name, '가디언')
+  assert.strictEqual(t.hp, makeUnit(JOBS.guardian).hp)
 })
 
-test('selectMobTarget falls back to lowest hp when no taunt alive', () => {
-  const party = [
-    { name: 'dps', hp: 30, taunt: false },
-    { name: 'tank', hp: 0, taunt: true },   // 탱 죽음
-  ]
-  assert.strictEqual(selectMobTarget(party).name, 'dps')
+test('selectMobTarget falls back to lowest hp when no taunt active', () => {
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage)]
+  const lowest = selectMobTarget(party)
+  assert.strictEqual(lowest.name, '마법사')  // 최저 HP (도발 effect 없음)
 })
