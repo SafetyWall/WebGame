@@ -1,0 +1,7 @@
+skillsLen=2
+s0id=mage_nuke
+s1id=ranged_strike
+s0_is_dbg_nuke=true
+s0_is_dbg_ranged=false
+unit_uses_same_SKILLS=true
+job_skills_join=mage_nuke,ranged_strike

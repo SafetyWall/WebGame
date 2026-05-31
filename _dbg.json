@@ -1,0 +1,22 @@
+{
+ "jobMageSkills": [
+  "mage_nuke",
+  "ranged_strike"
+ ],
+ "hasMageNuke": true,
+ "mageNukeDef": {
+  "id": "mage_nuke",
+  "name": "파이어볼",
+  "kind": "attack",
+  "range": "ranged",
+  "power": 2.2,
+  "manaGain": 0,
+  "cost": 50,
+  "cd": 400,
+  "effects": []
+ },
+ "resolvedSkillIds": [
+  "mage_nuke",
+  "ranged_strike"
+ ]
+}

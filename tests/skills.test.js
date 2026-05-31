@@ -22,9 +22,10 @@ test('attack skills carry a melee/ranged tag; heal skill has null range', () => 
 
 test('makeUnit resolves job.skills ids into shared SKILLS defs', () => {
   const mage = makeUnit(JOBS.mage)
-  assert.strictEqual(mage.skills[0], SKILLS.ranged_strike) // 공유 def 참조(clone 아님)
-  assert.strictEqual(mage.skills[0].range, 'ranged')
-  assert.strictEqual(makeUnit(JOBS.priest).skills[0].kind, 'heal')
+  // 우선순위 배열: [0]=발동(파이어볼), 마지막=평타(원거리). 둘 다 공유 def 참조(clone 아님).
+  assert.strictEqual(mage.skills[0], SKILLS.mage_nuke)
+  assert.strictEqual(mage.skills[mage.skills.length - 1], SKILLS.ranged_strike)
+  assert.strictEqual(makeUnit(JOBS.priest).skills[0], SKILLS.priest_hot)
 })
 
 test('makeUnit no longer carries phys/magic type', () => {
