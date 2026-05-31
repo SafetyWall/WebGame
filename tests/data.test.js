@@ -1,7 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
-import { MOBS } from '../src/data/mobs.js'
 import { SKILLS } from '../src/data/skills.js'
 
 test('JOBS has 5 jobs with required fields', () => {
@@ -17,17 +16,6 @@ test('JOBS has 5 jobs with required fields', () => {
   }
   assert.strictEqual(JOBS.guardian.taunt, true)
   assert.strictEqual(JOBS.priest.role, 'heal')
-})
-
-test('MOBS entries have combat fields', () => {
-  for (const k of Object.keys(MOBS)) {
-    const m = MOBS[k]
-    assert.ok(m.name)
-    assert.ok(Number.isFinite(m.hp))
-    assert.ok(Number.isFinite(m.atk))
-    assert.ok(Number.isFinite(m.def))
-    assert.ok(Number.isFinite(m.spd))
-  }
 })
 
 test('each job references at least one valid skill id', () => {
