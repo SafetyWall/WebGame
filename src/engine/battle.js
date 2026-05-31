@@ -38,8 +38,9 @@ function actUnit(u, party, mob, log) {
   }
   // kind === 'attack' → 몹 공격. 트레잇 규칙이 들어오는 데미지를 수정(근접회피 등).
   const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
-  let dmg = applyRules('incomingDamage', damage(u.atk, mob.def), ctx, mob)
-  dmg = Math.max(1, Math.floor(dmg))
+  // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 평타 최소 1 유지(회피≠면역).
+  const t = applyRules('incomingDamage', damage(u.atk, mob.def), ctx, mob)
+  const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
   mob.hp -= dmg
   applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
   log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)

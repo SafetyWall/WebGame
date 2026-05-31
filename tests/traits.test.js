@@ -160,3 +160,18 @@ test('trait rarities match the assigned roster', () => {
   assert.strictEqual(TRAITS.damage_reflect.rarity, '희귀')
   assert.strictEqual(TRAITS.melee_immune.rarity, '영웅')
 })
+
+test('melee_immune nullifies melee damage to exactly 0', () => {
+  // 전사 평타가 근접면역(mult 0) 몹에 0뎀. mob spd0 → 반격 없음.
+  const mob = makeMob({ name: 'X', hp: 100, atk: 0, def: 0, spd: 0, traits: ['melee_immune'] })
+  const r = runBattle([makeUnit(JOBS.warrior)], mob, { maxTicks: 200 })
+  assert.match(logsOf(r).join('\n'), /전사 공격 → X \(-0\)/)
+})
+
+test('melee_evade keeps a 1-damage hit at min 1 (evade ≠ immune)', () => {
+  // atk1 평타 → base damage 1; evade ×0.7=0.7 → floor 0 → t≠0 → max(1)=1.
+  const atk1 = { ...makeUnit(JOBS.warrior), atk: 1 }
+  const mob = makeMob({ name: 'Y', hp: 100, atk: 0, def: 0, spd: 0, traits: ['melee_evade'] })
+  const r = runBattle([atk1], mob, { maxTicks: 200 })
+  assert.match(logsOf(r).join('\n'), /→ Y \(-1\)/)
+})
