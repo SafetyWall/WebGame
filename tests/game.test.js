@@ -47,3 +47,24 @@ test('result view has a single h2 (no duplicate 결과: header)', () => {
   assert.match(html, /100틱/)                      // 틱수는 배너에 흡수
   assert.match(html, /라운드 1/)                   // 라운드 로그는 유지
 })
+
+test('prep: 노비스에 전직 버튼, 골드충분 시 슬롯확장 버튼 노출', () => {
+  const html = renderGame(newRun(makeRng(1)))     // gold5 slots3, roster 노비스×2
+  assert.match(html, /data-action="promote"/)
+  assert.match(html, /data-job="warrior"/)
+  assert.match(html, /data-action="expand"/)
+  assert.match(html, /슬롯확장\(5\)/)             // slotCost(3)=5
+})
+
+test('prep: 풀파티면 미출전 유닛 출전버튼 disabled', () => {
+  const base = newRun(makeRng(1))
+  const s = { ...base, slots: 1, party: [0] }      // slot 1, 1명 출전 = 꽉 참, idx1 대기
+  const html = renderGame(s)
+  assert.match(html, /<button disabled[^>]*>출전<\/button>/)
+})
+
+test('prep: 전직 버튼은 골드부족 시 숨김', () => {
+  const s = { ...newRun(makeRng(1)), gold: 4 }     // 4 < PROMOTE_COST 5
+  const html = renderGame(s)
+  assert.doesNotMatch(html, /data-action="promote"/)
+})
