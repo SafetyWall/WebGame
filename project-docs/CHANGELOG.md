@@ -1,6 +1,13 @@
 # CHANGELOG
 
 ## 2026-06-01
+- **몬스터 보스/일반 분리 + 전직 리워크 + 트레잇 확장 + 스킬 우선순위 UI(step5b) + 방어가드.** 5-task TDD, 테스트 132→**157**.
+  - **전직 리워크.** 전직 = 레벨업. 노비스는 전직 레벨(`PROMOTE_LEVEL=1`)에서만 전직하고 **강화 불가**(성장=전직). 전직 시 레벨 자동 +1(노비스 L1 → 1차직업 L2). `changeJob`이 `level !== PROMOTE_LEVEL`이면 거부, `upgrade`가 노비스 거부. game.js 노비스 강화버튼 숨김. persist v1→**v2**(의미변경으로 구 세이브 폐기).
+  - **몬스터 보스/일반 분리.** `MONSTERS`(일반=슬라임/가시거북, 고정특성 없음) / `BOSSES`(보스, 고정능력 `aoe`|`fixed` + `bonus` 추가 트레잇 슬롯). 오우거→보스(광역은 일반몹엔 사기). `generateEncounter(stage, rng, monId?)` — 일반은 랜덤 풀, 보스는 monId 명시(자동 스테이지 배치는 미정). **고정 특성(광역) 표기**: 스냅샷 `mob.aoe` 노출 + render/game이 트레잇과 한 대괄호에 `[광역, …]`, 보스 👑 표식. 드래곤 보스 추가(고정 재생 + 광역).
+  - **트레잇 확장.** `ranged_immune`(영웅, melee_immune 거울=원거리 0뎀) + `regeneration`(전설, turnStart heal — 전설 tier 채움) + 방어트레잇 `defends`(range/full) 메타. **상호배제 `conflicts()`**(§7.2): 한 범위 완전봉쇄 + 다른 범위 방어 동시 부착 금지(전딜봉쇄→클리어불가 차단), 조우 생성 draw 루프가 후보 필터. 반사 killing-blow(반사로 공격자 0→사망) 테스트 핀.
+  - **step5b — 플레이어 스킬 우선순위 재배열 UI.** roster `skillOrder` + `normalizeSkillOrder`(무효 id 무시·누락 직업스킬 append 보정) + `makeUnit(job, level, skillOrder?)` + `run.reorderSkill(▲▼, 무료)` + game.js 우선순위 버튼(스킬 2개+). fight가 skillOrder 전달.
+  - **방어가드.** 빈/전멸 파티 입력 = `runBattle` 진입 시 즉시 몹 승(틱0, 루프 진입 전 단락).
+  - 밸런스 튜닝은 요청대로 **미수행**. step6 동사·마법사 재설계·step7~10·**보스 스테이지 배치**는 디자인 결정(brainstorm) 필요로 보류.
 - **step5 — 스킬 시스템(마나/쿨 발동 + effect 지속).** 직업당 스킬 1개: 마법사 파이어볼(2.2배딜)·전사 갑옷부수기(증뎀 디버프+딜)·사제 치유의기도(HoT)·가디언 도발(지속어글+방버프)+방패치기(보스 약뎀감). **노비스=평타만**(전직해야 스킬). **마나/쿨 게이팅**: 평타=마나 generator, 발동스킬=마나 소비, `selectSkill(u,tick)`=우선순위 톱다운 `canUse`(마나≥cost & tick≥readyTick), 없으면 평타 fallback. **effect 시스템** 신규 `engine/effects.js`(몹 트레잇과 평행 순수모듈): `dmgTaken`/`dmgDealt`/`taunt`/`hot` 4종, refresh 스택(`(type,source)` 덮어쓰기·다른 source 곱), expireTick 만료, HoT interval. 데미지 합성 = `damage(atk×power) × dmgDealtMult × dmgTakenMult × applyRules(트레잇)`. 가디언 상시도발→스킬 effect 전환(타게팅 `hasTaunt`). 버프=받는뎀 배율%(def 미도입). 틱루프 ①effect(tickHoT→expireEffects) 단계 신설. 결정론·순수 유지(노비스 평타파티 char-identical). 스킬 테스트는 더미몹(spd0·고HP)으로 1행동 격리해 데미지·마나·쿨·effect 부여를 직접 검증(승패 프록시 아님). sim L1/L3 비교 추가(L3 S5 9~22/30 분포·조합별 갈림). 테스트 105→**132**. 7-task TDD. (밸런스 정밀튜닝·step5b 우선순위 UI는 잔여.)
 
 ## 2026-05-31
