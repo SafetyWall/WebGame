@@ -35,3 +35,15 @@ test('result clear view shows clear and a restart button', () => {
   assert.match(html, /클리어/)
   assert.match(html, /data-action="restart"/)
 })
+
+test('result view has a single h2 (no duplicate 결과: header)', () => {
+  const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2,
+    lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [
+      { tick: 50, party: [{ name: '전사', hp: 5, maxHp: 115 }], mob: { name: '슬라임', hp: 0, maxHp: 30, traits: [] }, log: ['끝'] },
+    ] } }
+  const html = renderGame(s)
+  assert.doesNotMatch(html, /결과:/)               // renderBattle head 안 씀
+  assert.strictEqual((html.match(/<h2>/g) || []).length, 1)   // 배너 하나만
+  assert.match(html, /100틱/)                      // 틱수는 배너에 흡수
+  assert.match(html, /라운드 1/)                   // 라운드 로그는 유지
+})

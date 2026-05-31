@@ -1,6 +1,6 @@
 // 게임 화면 렌더(순수 HTML 문자열, data-action 속성). phase로 prep/result 분기.
 // 전투 로그는 기존 renderBattle 재사용. 버튼 게이팅 상수는 run.js에서 import.
-import { renderBattle } from './render.js'
+import { renderRounds } from './render.js'
 import { JOBS } from '../data/jobs.js'
 import { TRAITS } from '../data/traits.js'
 import { MAX_LEVEL, RECRUIT_COST, UPGRADE_COST } from '../engine/run.js'
@@ -29,16 +29,15 @@ ${preview}
 
 function renderResult(s) {
   const { outcome, reward, ticks, rounds } = s.lastResult
-  const banner = outcome === 'clear' ? `<h2>🎉 스테이지 ${s.stage} 클리어 — 게임 클리어!</h2>`
-    : outcome === 'win' ? `<h2>스테이지 ${s.stage} 승리! 골드 +${reward}</h2>`
-    : `<h2>패배… 런 종료</h2>`
+  const banner = outcome === 'clear' ? `<h2>🎉 스테이지 ${s.stage} 클리어 — 게임 클리어! (${ticks}틱)</h2>`
+    : outcome === 'win' ? `<h2>스테이지 ${s.stage} 승리! 골드 +${reward} (${ticks}틱)</h2>`
+    : `<h2>패배… 런 종료 (${ticks}틱)</h2>`
   const btn = outcome === 'loss' ? `<button data-action="restart">다시 시작</button>`
     : outcome === 'clear' ? `<button data-action="restart">새 런</button>`
     : `<button data-action="next">다음 스테이지</button>`
-  const log = renderBattle({ winner: outcome === 'loss' ? 'mob' : 'party', ticks, rounds })
   return `${banner}
 <div class="actions">${btn}</div>
-${log}`
+${renderRounds(rounds)}`
 }
 
 export function renderGame(s) {
