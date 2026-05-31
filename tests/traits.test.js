@@ -3,7 +3,8 @@ import assert from 'node:assert'
 import { TRAITS } from '../src/data/traits.js'
 import { applyRules } from '../src/engine/traits.js'
 import { JOBS } from '../src/data/jobs.js'
-import { makeUnit } from '../src/engine/unit.js'
+import { MOBS } from '../src/data/mobs.js'
+import { makeUnit, makeMob } from '../src/engine/unit.js'
 import { runBattle } from '../src/engine/battle.js'
 
 const TRIGGERS = ['incomingDamage', 'postIncomingDamage', 'turnStart']
@@ -111,9 +112,6 @@ test('empty or missing traits leaves value unchanged', () => {
   assert.strictEqual(applyRules('incomingDamage', 10, {}, mobWith([])), 10)
   assert.strictEqual(applyRules('incomingDamage', 10, {}, { name: 'M', hp: 1, maxHp: 1 }), 10) // traits undefined
 })
-
-import { MOBS } from '../src/data/mobs.js'
-import { makeMob } from '../src/engine/unit.js'
 
 test('makeMob resolves trait ids into shared TRAITS defs', () => {
   const m = makeMob({ name: 'T', hp: 100, atk: 10, def: 0, spd: 5, traits: ['melee_evade'] })
