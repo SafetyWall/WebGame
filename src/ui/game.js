@@ -44,11 +44,21 @@ function renderPrep(s) {
   const recruitBtn = s.gold >= RECRUIT_COST ? `<button data-action="recruit">영입(${RECRUIT_COST})</button>` : ''
   const sc = slotCost(s.slots)
   const expandBtn = s.gold >= sc ? `<button data-action="expand">슬롯확장(${sc})</button>` : ''
+  // 출전 순서(=앞열) — party 배열 순서가 줄. 맨앞 = 몹 타겟. ▲▼로 재배열.
+  const orderItems = s.party.map((idx, pos) => {
+    const jn = JOBS[s.roster[idx].job].name
+    const up = pos > 0 ? `<button data-action="reorderParty" data-i="${idx}" data-dir="-1">▲</button>` : ''
+    const dn = pos < s.party.length - 1 ? `<button data-action="reorderParty" data-i="${idx}" data-dir="1">▼</button>` : ''
+    const front = pos === 0 ? ' <span class="front">🛡️앞열</span>' : ''
+    return `<li>${pos + 1}. ${esc(jn)}${front}${up}${dn}</li>`
+  }).join('')
+  const partyOrder = s.party.length ? `<div class="party-order">출전 순서(앞→뒤): <ol>${orderItems}</ol></div>` : ''
   const count = `<span class="party-count${full ? ' full' : ''}">출전 ${s.party.length}/${s.slots}</span>`
   const fightBtn = s.party.length >= 1 ? `<button data-action="fight">전투!</button>` : '<span>출전 유닛을 선택하세요</span>'
   return `<h2>스테이지 ${s.stage} · 골드 ${s.gold} · 슬롯 ${s.slots}</h2>
 ${preview}
 <ul class="roster">${roster}</ul>
+${partyOrder}
 <div class="actions">${recruitBtn} ${expandBtn} ${count} ${fightBtn}</div>`
 }
 
