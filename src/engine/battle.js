@@ -13,10 +13,13 @@ export function lowestHpAlly(party) {
   return alive.reduce((a, b) => (b.hp < a.hp ? b : a), alive[0])
 }
 
+// 몹 타겟 = 앞열(party 배열 순서) 첫 생존자. 도발 있으면 도발자 중 앞열.
+// 위협도 스코어 시스템 Phase1 = 위치 factor만. lowestHpAlly는 힐 타겟 전용(actUnit/스킬 effect).
 export function selectMobTarget(party) {
-  const taunt = party.find(u => u.hp > 0 && hasTaunt(u))
-  if (taunt) return taunt
-  return lowestHpAlly(party)
+  const alive = party.filter(u => u.hp > 0)
+  if (alive.length === 0) return null
+  const taunters = alive.filter(hasTaunt)
+  return (taunters.length ? taunters : alive)[0]
 }
 
 const THRESHOLD = 1000

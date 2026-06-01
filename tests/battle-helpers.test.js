@@ -26,8 +26,26 @@ test('selectMobTarget prefers an ally with an active taunt effect', () => {
   assert.strictEqual(t.hp, makeUnit(JOBS.guardian).hp)
 })
 
-test('selectMobTarget falls back to lowest hp when no taunt active', () => {
+test('selectMobTarget targets the front-most (party-order first) ally when no taunt', () => {
   const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage)]
-  const lowest = selectMobTarget(party)
-  assert.strictEqual(lowest.name, '마법사')  // 최저 HP (도발 effect 없음)
+  assert.strictEqual(selectMobTarget(party).name, '전사')  // 앞열 = 배열 첫
+})
+
+test('selectMobTarget skips a dead front unit to the next alive', () => {
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage)]
+  party[0].hp = 0
+  assert.strictEqual(selectMobTarget(party).name, '마법사')
+})
+
+test('selectMobTarget with multiple taunters picks the front-most taunter', () => {
+  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.warrior)]
+  party[1].effects.push({ type: 'taunt', value: 1, source: party[1].id, expireTick: 9999 })
+  party[2].effects.push({ type: 'taunt', value: 1, source: party[2].id, expireTick: 9999 })
+  assert.strictEqual(selectMobTarget(party).name, '가디언')  // 앞열 도발자
+})
+
+test('selectMobTarget returns null for empty or all-dead party', () => {
+  assert.strictEqual(selectMobTarget([]), null)
+  const p = [makeUnit(JOBS.warrior)]; p[0].hp = 0
+  assert.strictEqual(selectMobTarget(p), null)
 })
