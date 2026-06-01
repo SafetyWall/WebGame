@@ -22,6 +22,7 @@ app.addEventListener('click', (ev) => {
     case 'promote': state = run.changeJob(state, i, btn.dataset.job); break
     case 'expand':  state = run.expandSlot(state); break
     case 'reorder': state = run.reorderSkill(state, i, btn.dataset.skill, Number(btn.dataset.dir)); break
+    case 'reorderParty': state = run.reorderParty(state, i, Number(btn.dataset.dir)); break
     case 'toggle':  state = run.toggleParty(state, i); break
     case 'fight':   state = run.fight(state); break
     case 'next':    state = run.next(state, rng); break

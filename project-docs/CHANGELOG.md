@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-06-01
+- **앞열 타겟팅 (위협도 시스템 Phase 1).** 몹 타겟팅 `lowestHpAlly`(최저체력 포커싱 → 마법사 일방 즉사) → **앞열(party 배열 순서) 첫 생존자** 타격. 도발 override 유지(도발자 중 앞열), `lowestHpAlly`는 힐 타겟 전용으로 분리. `reorderParty(s,i,dir)` + prep UI "출전 순서(앞→뒤)" ▲▼ 재배열 + 🛡️앞열 표식 → 탱 앞·마법사 뒤로 보호(자동전투의 어그로 통제 = 편성). RNG 미도입 = 결정론 유지(디자인 기둥 §2). sim: 균형파티(전사 앞 소킹) S5 승률 L1 15→25·L3 25→30 상승. 테스트 157→**164**. 4-task TDD. (설계: `docs/superpowers/specs/2026-06-01-targeting-threat-system-design.md`. Phase 2=위협도 스코어 일반화+몹 타겟 트레잇은 후속.)
 - **몬스터 보스/일반 분리 + 전직 리워크 + 트레잇 확장 + 스킬 우선순위 UI(step5b) + 방어가드.** 5-task TDD, 테스트 132→**157**.
   - **전직 리워크.** 전직 = 레벨업. 노비스는 전직 레벨(`PROMOTE_LEVEL=1`)에서만 전직하고 **강화 불가**(성장=전직). 전직 시 레벨 자동 +1(노비스 L1 → 1차직업 L2). `changeJob`이 `level !== PROMOTE_LEVEL`이면 거부, `upgrade`가 노비스 거부. game.js 노비스 강화버튼 숨김. persist v1→**v2**(의미변경으로 구 세이브 폐기).
   - **몬스터 보스/일반 분리.** `MONSTERS`(일반=슬라임/가시거북, 고정특성 없음) / `BOSSES`(보스, 고정능력 `aoe`|`fixed` + `bonus` 추가 트레잇 슬롯). 오우거→보스(광역은 일반몹엔 사기). `generateEncounter(stage, rng, monId?)` — 일반은 랜덤 풀, 보스는 monId 명시(자동 스테이지 배치는 미정). **고정 특성(광역) 표기**: 스냅샷 `mob.aoe` 노출 + render/game이 트레잇과 한 대괄호에 `[광역, …]`, 보스 👑 표식. 드래곤 보스 추가(고정 재생 + 광역).

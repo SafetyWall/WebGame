@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, reorderParty, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -161,4 +161,21 @@ test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () =
   assert.strictEqual(r.gold, 0)
   const poor = { ...fresh(), gold: 4, slots: 3 }
   assert.strictEqual(expandSlot(poor), poor)
+})
+
+test('reorderParty moves a unit toward the front', () => {
+  const s = { ...fresh(), party: [0, 1, 2] }
+  assert.deepStrictEqual(reorderParty(s, 2, -1).party, [0, 2, 1])
+})
+
+test('reorderParty moves a unit toward the back', () => {
+  const s = { ...fresh(), party: [0, 1, 2] }
+  assert.deepStrictEqual(reorderParty(s, 0, 1).party, [1, 0, 2])
+})
+
+test('reorderParty is a no-op at boundaries or for non-party units', () => {
+  const s = { ...fresh(), party: [0, 1, 2] }
+  assert.strictEqual(reorderParty(s, 0, -1), s)   // 이미 맨앞
+  assert.strictEqual(reorderParty(s, 2, 1), s)    // 이미 맨뒤
+  assert.strictEqual(reorderParty(s, 5, -1), s)   // 미출전 인덱스
 })

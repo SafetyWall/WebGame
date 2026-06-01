@@ -14,6 +14,13 @@ test('prep view shows stage/gold, enemy preview, roster, and action buttons', ()
   assert.match(html, /data-action="fight"/)
 })
 
+test('prep view shows party order with reorder buttons', () => {
+  const s = { ...newRun(makeRng(1)), party: [0, 1] }
+  const html = renderGame(s)
+  assert.match(html, /출전 순서/)
+  assert.match(html, /data-action="reorderParty"/)
+})
+
 test('result win view shows reward and a next button', () => {
   const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2, lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [] } }
   const html = renderGame(s)

@@ -74,6 +74,16 @@ export function reorderSkill(s, i, skillId, dir) {
   return { ...s, roster }
 }
 
+// 출전 순서(=앞열) 재배열. i=roster 인덱스. dir=-1 앞으로/+1 뒤로. party 배열 순서가 줄(앞→뒤).
+export function reorderParty(s, i, dir) {
+  const pos = s.party.indexOf(i)
+  const j = pos + dir
+  if (pos < 0 || j < 0 || j >= s.party.length) return s     // 미출전·경계 밖 → no-op
+  const party = s.party.slice()
+  ;[party[pos], party[j]] = [party[j], party[pos]]
+  return { ...s, party }
+}
+
 export function toggleParty(s, i) {
   if (s.party.includes(i)) return { ...s, party: s.party.filter((x) => x !== i) }
   if (s.party.length >= s.slots) return s
