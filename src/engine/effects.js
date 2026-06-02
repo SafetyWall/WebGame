@@ -59,3 +59,8 @@ export function reflectFrac(unit) {
 export function hasIntercept(unit) {
   return (unit.effects || []).some(e => e.type === 'intercept')
 }
+
+// 표식(mark) = 피격 시 추가 데미지(시전자 atk 비례 스냅샷 값의 합).
+export function markBonus(unit) {
+  return (unit.effects || []).reduce((s, e) => (e.type === 'mark' ? s + e.value : s), 0)
+}

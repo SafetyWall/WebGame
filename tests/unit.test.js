@@ -62,7 +62,7 @@ test('makeUnit: skillOrder 보정 — 무효 id 무시 + 누락 직업스킬 app
 
 test('makeUnit: skillOrder 없으면 직업 기본 순서', () => {
   const u = makeUnit(JOBS.mage, 1, null)
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['mage_nuke', 'mage_focus', 'mage_frost', 'ranged_strike'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'])
 })
 
 test('makeMob: effects 빈 배열', () => {
