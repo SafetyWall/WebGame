@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -45,9 +45,9 @@ export function selectSkill(u, tick) {
 // 스킬 레벨 위력 배율. L1 1.0 → L5 2.0 (효율 2배). 미지정=1.
 export const skillLevelMult = (lv) => 1 + 0.25 * ((lv ?? 1) - 1)
 
-// 버프/디버프(dmgTaken·dmgDealt) = 1.0 기준 편차를 mult배(예 1.3→1.6, 0.6→0.2). 그 외(taunt)=불변.
+// 버프/디버프(dmgTaken·dmgDealt·speed) = 1.0 기준 편차를 mult배(예 1.3→1.6, 0.6→0.2). 그 외(taunt)=불변.
 export function scaledEffectValue(type, value, mult) {
-  if (type === 'dmgTaken' || type === 'dmgDealt') return 1 + (value - 1) * mult
+  if (type === 'dmgTaken' || type === 'dmgDealt' || type === 'speed') return 1 + (value - 1) * mult
   return value
 }
 
@@ -149,19 +149,21 @@ export function runBattle(party, mob, opts = {}) {
     // ① effect: HoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 HoT proc 보장.
     for (const u of party) { tickHoT(u, tick, log); expireEffects(u, tick) }
     tickHoT(mob, tick, log); expireEffects(mob, tick)
-    // ② 게이지 증가 (살아있는 유닛만)
-    for (const u of party) if (u.hp > 0) u.gauge += u.spd
-    if (mob.hp > 0) mob.gauge += mob.spd
+    // ② 게이지 증가 (살아있는 유닛만). speed effect로 가감속.
+    for (const u of party) if (u.hp > 0) u.gauge += u.spd * speedMult(u)
+    if (mob.hp > 0) mob.gauge += mob.spd * speedMult(mob)
     // ③ 행동: 파티 먼저(배열 순), 그다음 몹.
     // 동시틱 처리 = 파티 우선(의도된 결정, 2026-05-30 사용자 확정).
+    // while = 게이지가 THRESHOLD 배수만큼 쌓였으면(고속/오버플로) 그 횟수만큼 행동(턴 유실 방지).
     for (const u of party) {
-      if (u.hp > 0 && u.gauge >= THRESHOLD) {
+      while (u.hp > 0 && u.gauge >= THRESHOLD) {
         u.gauge -= THRESHOLD
         actUnit(u, party, mob, tick, log)
         if (mob.hp <= 0) break
       }
+      if (mob.hp <= 0) break
     }
-    if (mob.hp > 0 && mob.gauge >= THRESHOLD) {
+    while (mob.hp > 0 && mob.gauge >= THRESHOLD) {
       mob.gauge -= THRESHOLD
       actMob(mob, party, tick, log)
     }
