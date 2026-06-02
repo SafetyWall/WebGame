@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
 import { SLIME } from './_fixtures.js'
-import { makeUnit, makeMob } from '../src/engine/unit.js'
+import { makeUnit, makeMob, unitSkillIds } from '../src/engine/unit.js'
 
 test('makeUnit copies job stats into runtime unit', () => {
   const u = makeUnit(JOBS.warrior)
@@ -23,6 +23,19 @@ test('makeUnit: 전투 가변상태 mana/cooldowns/effects 초기화', () => {
   assert.strictEqual(u.mana, 0)
   assert.deepStrictEqual(u.cooldowns, {})
   assert.deepStrictEqual(u.effects, [])
+})
+
+test('unitSkillIds = 학습 액티브 + 평타(마지막); 미지정=전체(하위호환)', () => {
+  // 평타 = job.skills 마지막. 전사: cleave + melee_strike(평타).
+  assert.deepStrictEqual(unitSkillIds(JOBS.warrior, ['warrior_cleave']), ['warrior_cleave', 'melee_strike'])
+  assert.deepStrictEqual(unitSkillIds(JOBS.warrior, []), ['melee_strike'])            // 평타만(미학습)
+  assert.deepStrictEqual(unitSkillIds(JOBS.warrior, undefined), ['warrior_cleave', 'melee_strike']) // 전체
+  assert.deepStrictEqual(unitSkillIds(JOBS.novice, []), ['melee_strike'])             // 노비스=평타뿐
+})
+
+test('makeUnit: 미학습 액티브는 전투 스킬에서 제외(평타만)', () => {
+  const u = makeUnit(JOBS.warrior, 1, null, {}, [])   // learnedSkills=[] → 평타만
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['melee_strike'])
 })
 
 test('makeUnit: manaMax = 직업별(기본100, 마법사·사제 120)', () => {

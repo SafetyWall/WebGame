@@ -1,7 +1,7 @@
 // 런 상태기계(순수, 인메모리). 조우 RNG는 newRun/next에 주입(전투는 결정론).
 // RunState = { phase:'prep'|'result', gold, stage, slots, roster:[{job,level}], party:[idx], encounter, lastResult }
 import { JOBS } from '../data/jobs.js'
-import { makeUnit, makeMob, normalizeSkillOrder } from './unit.js'
+import { makeUnit, makeMob, normalizeSkillOrder, unitSkillIds } from './unit.js'
 import { runBattle } from './battle.js'
 import { generateEncounter } from './encounter.js'
 import { STAGES } from '../data/stages.js'
@@ -48,7 +48,10 @@ export function changeJob(s, i, job) {
   const u = s.roster[i]
   if (!u || u.job !== 'novice' || u.level !== PROMOTE_LEVEL) return s
   if (!PROMOTE_TARGETS.includes(job) || s.gold < PROMOTE_COST) return s
-  const roster = s.roster.map((r, j) => (j === i ? { ...r, job, level: r.level + 1 } : r))
+  const basic = JOBS[job].skills[0]   // 전직 시 기본 학습 스킬 1개(첫 액티브)
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, job, level: r.level + 1, learnedSkills: [basic], skillLevels: { [basic]: 1 }, skillOrder: null }
+    : r))
   return { ...s, gold: s.gold - PROMOTE_COST, roster }
 }
 
@@ -64,7 +67,7 @@ export function expandSlot(s) {
 export function reorderSkill(s, i, skillId, dir) {
   const u = s.roster[i]
   if (!u) return s
-  const order = normalizeSkillOrder(JOBS[u.job], u.skillOrder)
+  const order = normalizeSkillOrder(unitSkillIds(JOBS[u.job], u.learnedSkills), u.skillOrder)
   const idx = order.indexOf(skillId)
   const j = idx + dir
   if (idx < 0 || j < 0 || j >= order.length) return s     // 없는 스킬·경계 밖 → no-op
@@ -93,7 +96,10 @@ export function toggleParty(s, i) {
 export function fight(s) {
   if (s.phase !== 'prep') return s     // 준비 국면에서만 전투(결과 국면 재실행 → 보상 중복 방지)
   if (s.party.length === 0) return s
-  const units = s.party.map((i) => makeUnit(JOBS[s.roster[i].job], s.roster[i].level, s.roster[i].skillOrder))
+  const units = s.party.map((i) => {
+    const r = s.roster[i]
+    return makeUnit(JOBS[r.job], r.level, r.skillOrder, r.skillLevels, r.learnedSkills)
+  })
   const r = runBattle(units, makeMob(s.encounter))
   if (r.winner === 'party') {
     const rw = reward(s.stage)

@@ -114,6 +114,8 @@ test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), PROMOTE_COST 10
   assert.strictEqual(r.roster[0].job, 'warrior')
   assert.strictEqual(r.roster[0].level, 2)   // 전직 = 레벨업(자동 +1)
   assert.strictEqual(r.gold, 0)
+  assert.deepStrictEqual(r.roster[0].learnedSkills, ['warrior_cleave'])  // 기본 학습 1개
+  assert.deepStrictEqual(r.roster[0].skillLevels, { warrior_cleave: 1 })
 })
 
 test('changeJob refused: 비노비스/골드부족/잘못된job/없는인덱스/전직레벨아님 (same ref)', () => {
