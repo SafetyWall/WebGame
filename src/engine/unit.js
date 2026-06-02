@@ -11,7 +11,7 @@ export function normalizeSkillOrder(job, order) {
   return [...valid, ...job.skills.filter(id => !valid.includes(id))]
 }
 
-export function makeUnit(job, level = 1, skillOrder = null) {
+export function makeUnit(job, level = 1, skillOrder = null, skillLevels = {}) {
   const s = job.levels[level]
   if (!s) throw new RangeError(`makeUnit: no stats for ${job.name} level ${level}`)
   return {
@@ -29,6 +29,7 @@ export function makeUnit(job, level = 1, skillOrder = null) {
     gauge: 0,
     mana: 0,           // step5: 평타가 충전, 발동스킬이 소비
     manaMax: job.mana ?? 100,   // 직업별 마나 상한(레벨 불변, 전직으로만)
+    skillLevels: skillLevels || {},   // skillId → 레벨(1~5). 없으면 1(평타·미학습).
     cooldowns: {},     // skillId → readyTick
     effects: [],       // 전투중 버프/디버프 인스턴스
   }

@@ -42,18 +42,27 @@ export function selectSkill(u, tick) {
   return u.skills[u.skills.length - 1]
 }
 
-// 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, lowestHpAlly=힐대상.
-function applySkillEffects(skill, u, mob, healTarget, tick) {
+// 스킬 레벨 위력 배율. L1 1.0 → L5 2.0 (효율 2배). 미지정=1.
+export const skillLevelMult = (lv) => 1 + 0.25 * ((lv ?? 1) - 1)
+
+// 버프/디버프(dmgTaken·dmgDealt) = 1.0 기준 편차를 mult배(예 1.3→1.6, 0.6→0.2). 그 외(taunt)=불변.
+export function scaledEffectValue(type, value, mult) {
+  if (type === 'dmgTaken' || type === 'dmgDealt') return 1 + (value - 1) * mult
+  return value
+}
+
+// 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, lowestHpAlly=힐대상. mult=스킬레벨 배율.
+function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1) {
   for (const spec of skill.effects) {
     const target = spec.target === 'self' ? u : spec.target === 'enemy' ? mob : healTarget
     if (!target) continue
     const inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
     if (spec.type === 'hot') {
-      inst.value = Math.floor(u.heal * spec.valueRatio)
+      inst.value = Math.floor(u.heal * spec.valueRatio * mult)
       inst.interval = spec.interval
       inst.nextTick = tick + spec.interval
     } else {
-      inst.value = spec.value
+      inst.value = scaledEffectValue(spec.type, spec.value, mult)
     }
     applyEffect(target, inst)
   }
@@ -63,23 +72,24 @@ function actUnit(u, party, mob, tick, log) {
   const skill = selectSkill(u, tick)
   u.mana = Math.min(u.manaMax ?? MANA_MAX, u.mana + skill.manaGain - skill.cost)
   if (skill.cost > 0) u.cooldowns[skill.id] = tick + skill.cd
+  const mult = skillLevelMult(u.skillLevels && u.skillLevels[skill.id])  // 평타·미학습=1
 
   if (skill.kind === 'heal') {
     const target = lowestHpAlly(party)
     if (target) {
       if (skill.power > 0) {
-        const amt = Math.floor(u.heal * skill.power)
+        const amt = Math.floor(u.heal * skill.power * mult)
         target.hp = Math.min(target.maxHp, target.hp + amt)
         log.push(`${u.name} 회복 → ${target.name} (+${amt})`)
       }
-      applySkillEffects(skill, u, mob, target, tick)
+      applySkillEffects(skill, u, mob, target, tick, mult)
     }
     return
   }
   // kind === 'attack' → 몹 공격. effect 배율(자기 주는뎀·몹 받는뎀) + 트레잇이 데미지 수정.
   if (skill.power > 0) {
     const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
-    const base = damage(Math.floor(u.atk * skill.power), mob.def)
+    const base = damage(Math.floor(u.atk * skill.power * mult), mob.def)
     const afterMult = base * dmgDealtMult(u) * dmgTakenMult(mob)
     // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 최소 1 유지(회피≠면역).
     const t = applyRules('incomingDamage', afterMult, ctx, mob)
@@ -88,7 +98,7 @@ function actUnit(u, party, mob, tick, log) {
     applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
     log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
   }
-  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick)
+  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult)
 }
 
 function actMob(mob, party, tick, log) {
