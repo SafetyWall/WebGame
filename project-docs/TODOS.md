@@ -2,7 +2,8 @@
 
 ## 타겟팅 시스템 (2026-06-01 brainstorm)
 - [x] **Phase 1 — 앞열 타겟팅.** 몹=앞열 첫 생존자(도발 override), `reorderParty`+UI. (→ CHANGELOG 2026-06-01)
-- [ ] **Phase 2 — 위협도 스코어 일반화.** `selectMobTarget` → `threatScore=Σ factor×weight`(factor: 위치/저체력/atk/range/누적뎀), 디폴트=위치 지배(Phase1 등가). **몹 트레잇/스킬이 weight 변조** = 다양성: `저체력추적`·`강타추적`·`후열관통`·광역. 도발=weight 폭증 특수케이스 흡수. 선언적 규칙(`applyRules` 철학). 신직업(궁수·도적) 정체성을 factor/weight로. (spec: `docs/superpowers/specs/2026-06-01-targeting-threat-system-design.md`)
+- [x] **Phase 2 — 위협도 스코어 일반화.** `engine/threat.js` factor 가중합(위치/저체력/atk), 디폴트=위치 지배(Phase1 등가). 몹 트레잇 `targeting` 메타가 weight 변조. 도발=보너스 흡수. 데모 = 저체력추적(일반)·후열관통(희귀). (→ CHANGELOG 2026-06-01)
+  - **잔여(Phase 2+):** 강타추적(`{atk:1}`) 메커니즘 지원되나 미배치. `range`/`누적뎀(aggro)` factor 미도입. 신직업(궁수·도적) 정체성 weight. **weight 정밀 튜닝 = econ-sim 후.**
 
 ## 다음 마일스톤 (로드맵 step 3~)
 - [x] **step3a — 스킬 골격.** 평타=스킬, 근/원 태그(데이터), `type` 제거, 엔진 `skill.kind` 분기. (완료 → CHANGELOG 2026-05-31)

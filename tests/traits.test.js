@@ -10,10 +10,11 @@ import { runBattle } from '../src/engine/battle.js'
 const TRIGGERS = ['incomingDamage', 'postIncomingDamage', 'turnStart']
 const OPS = ['mult', 'add', 'heal', 'reflect']
 
-test('TRAITS entries have id(=key)/name/trigger/op/value with valid enums', () => {
+test('TRAITS entries have id(=key)/name; 규칙 트레잇은 trigger/op/value 유효 enum', () => {
   for (const [key, t] of Object.entries(TRAITS)) {
     assert.strictEqual(t.id, key, `${key} id matches key`)
     assert.ok(t.name, `${key} name`)
+    if (t.targeting) continue                            // 타겟팅 트레잇 = 규칙 파이프 무관(별도 테스트)
     assert.ok(TRIGGERS.includes(t.trigger), `${key} trigger`)
     assert.ok(OPS.includes(t.op), `${key} op`)
     assert.ok(Number.isFinite(t.value), `${key} value`)
@@ -202,4 +203,14 @@ test('전설 트레잇 존재 (regeneration = turnStart heal)', () => {
   assert.strictEqual(regen.trigger, 'turnStart')
   assert.strictEqual(regen.op, 'heal')
   assert.ok(regen.value > 0)
+})
+
+test('targeting 트레잇 = trigger 없음(applyRules 무간섭) + targeting weight 보유', () => {
+  for (const id of ['low_hp_seek', 'backline_pierce']) {
+    const t = TRAITS[id]
+    assert.ok(t.targeting && typeof t.targeting === 'object', `${id} targeting`)
+    assert.strictEqual(t.trigger, undefined, `${id} no trigger`)
+  }
+  assert.strictEqual(TRAITS.low_hp_seek.targeting.lowHp, 1)
+  assert.strictEqual(TRAITS.backline_pierce.targeting.position, -1)
 })

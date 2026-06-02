@@ -1,6 +1,7 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, hasTaunt } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult } from './effects.js'
+import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
 export function damage(atk, def) {
@@ -13,13 +14,18 @@ export function lowestHpAlly(party) {
   return alive.reduce((a, b) => (b.hp < a.hp ? b : a), alive[0])
 }
 
-// 몹 타겟 = 앞열(party 배열 순서) 첫 생존자. 도발 있으면 도발자 중 앞열.
-// 위협도 스코어 시스템 Phase1 = 위치 factor만. lowestHpAlly는 힐 타겟 전용(actUnit/스킬 effect).
-export function selectMobTarget(party) {
+// 몹 타겟 = 위협도 최고 생존자(threat.js). 디폴트 weight=위치 지배(앞열). 몹 트레잇이 weight 변조.
+// 동률 = 앞(먼저 만난 것) 유지 → 결정론. lowestHpAlly는 힐 타겟 전용(actUnit/스킬 effect).
+export function selectMobTarget(party, mob) {
   const alive = party.filter(u => u.hp > 0)
   if (alive.length === 0) return null
-  const taunters = alive.filter(hasTaunt)
-  return (taunters.length ? taunters : alive)[0]
+  const w = mobWeights(mob)
+  let best = alive[0], bestScore = threatScore(alive[0], 0, alive, w)
+  for (let i = 1; i < alive.length; i++) {
+    const sc = threatScore(alive[i], i, alive, w)
+    if (sc > bestScore) { best = alive[i]; bestScore = sc }
+  }
+  return best
 }
 
 const THRESHOLD = 1000
@@ -98,7 +104,7 @@ function actMob(mob, party, tick, log) {
     log.push(`${mob.name} 광역 (개당 -${shown})`)
     return
   }
-  const target = selectMobTarget(party)
+  const target = selectMobTarget(party, mob)
   if (target) {
     const dmg = Math.max(1, Math.floor(damage(mob.atk, target.def) * dmgTakenMult(target)))
     target.hp -= dmg
