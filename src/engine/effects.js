@@ -49,3 +49,8 @@ export function speedMult(unit) {
 export function isStunned(unit) {
   return (unit.effects || []).some(e => e.type === 'stun')
 }
+
+// 받은 데미지 반사 비율(reflect effect 합). 공격자에게 floor(받은뎀×비율) 되돌림.
+export function reflectFrac(unit) {
+  return (unit.effects || []).reduce((s, e) => (e.type === 'reflect' ? s + e.value : s), 0)
+}
