@@ -5,7 +5,7 @@ export const JOBS = {
   novice:   { name: '노비스', spd: 7, role: 'dps', mana: 100, skills: ['melee_strike'],
     levels: { 1: { hp: 70, atk: 14 }, 2: { hp: 84, atk: 17 }, 3: { hp: 100, atk: 20 }, 4: { hp: 120, atk: 24 }, 5: { hp: 144, atk: 29 },
               6: { hp: 173, atk: 35 }, 7: { hp: 207, atk: 42 }, 8: { hp: 249, atk: 50 }, 9: { hp: 299, atk: 60 }, 10: { hp: 358, atk: 72 } } },
-  warrior:  { name: '전사', spd: 9, role: 'dps', mana: 100, skills: ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'melee_strike'],
+  warrior:  { name: '전사', spd: 9, role: 'dps', mana: 100, skills: ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush', 'melee_strike'],
     levels: { 1: { hp: 115, atk: 22 }, 2: { hp: 138, atk: 26 }, 3: { hp: 166, atk: 31 }, 4: { hp: 199, atk: 37 }, 5: { hp: 239, atk: 44 },
               6: { hp: 287, atk: 53 }, 7: { hp: 344, atk: 63 }, 8: { hp: 413, atk: 76 }, 9: { hp: 496, atk: 91 }, 10: { hp: 595, atk: 110 } } },
   mage:     { name: '마법사', spd: 8, role: 'dps', mana: 120, skills: ['mage_nuke', 'mage_focus', 'mage_frost', 'ranged_strike'],

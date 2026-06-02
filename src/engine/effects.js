@@ -44,3 +44,8 @@ export function hasTaunt(unit) {
 export function speedMult(unit) {
   return (unit.effects || []).reduce((m, e) => (e.type === 'speed' ? m * e.value : m), 1)
 }
+
+// 스턴 = 게이지 정지 + 행동 불가(stun effect 보유).
+export function isStunned(unit) {
+  return (unit.effects || []).some(e => e.type === 'stun')
+}
