@@ -5,7 +5,7 @@ import { SKILLS } from '../src/data/skills.js'
 
 test('JOBS has 5 jobs with required fields (per-level stats)', () => {
   const keys = Object.keys(JOBS)
-  assert.strictEqual(keys.length, 5)
+  assert.strictEqual(keys.length, 7)   // novice + 6 전직(전사/마법사/가디언/사제/도적/궁수)
   for (const k of keys) {
     const j = JOBS[k]
     assert.ok(j.name, `${k} name`)

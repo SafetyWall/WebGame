@@ -17,4 +17,10 @@ export const JOBS = {
   priest:   { name: '사제', spd: 7, role: 'heal', mana: 120, skills: ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'],
     levels: { 1: { hp: 95, atk: 6, heal: 30 }, 2: { hp: 114, atk: 7, heal: 36 }, 3: { hp: 137, atk: 8, heal: 43 }, 4: { hp: 164, atk: 10, heal: 52 }, 5: { hp: 197, atk: 12, heal: 62 },
               6: { hp: 236, atk: 14, heal: 74 }, 7: { hp: 284, atk: 17, heal: 89 }, 8: { hp: 340, atk: 21, heal: 107 }, 9: { hp: 409, atk: 25, heal: 129 }, 10: { hp: 490, atk: 30, heal: 154 } } },
+  rogue:    { name: '도적', spd: 11, role: 'dps', mana: 100, skills: ['rogue_bleed', 'rogue_haste', 'rogue_double', 'rogue_pierce', 'melee_strike'],
+    levels: { 1: { hp: 90, atk: 26 }, 2: { hp: 108, atk: 31 }, 3: { hp: 130, atk: 37 }, 4: { hp: 156, atk: 45 }, 5: { hp: 187, atk: 54 },
+              6: { hp: 224, atk: 65 }, 7: { hp: 269, atk: 78 }, 8: { hp: 322, atk: 93 }, 9: { hp: 387, atk: 112 }, 10: { hp: 464, atk: 134 } } },
+  archer:   { name: '궁수', spd: 9, role: 'dps', mana: 100, skills: ['archer_aim', 'archer_rapid', 'archer_pierce', 'archer_bind', 'ranged_strike'],
+    levels: { 1: { hp: 75, atk: 28 }, 2: { hp: 90, atk: 34 }, 3: { hp: 108, atk: 40 }, 4: { hp: 130, atk: 48 }, 5: { hp: 156, atk: 58 },
+              6: { hp: 187, atk: 70 }, 7: { hp: 224, atk: 84 }, 8: { hp: 269, atk: 100 }, 9: { hp: 322, atk: 120 }, 10: { hp: 387, atk: 145 } } },
 }

@@ -14,7 +14,7 @@ export const MAX_LEVEL = 10          // 1차 직업 상한(레벨10 = 2차전직
 export const MAX_STAGE = Math.max(...Object.keys(STAGES).map(Number))
 export const reward = (stage) => 10 + 2 * stage   // 보상↑(만렙+풀스킬 2~3기 골드 목표). 플레이로 튜닝.
 export const PROMOTE_COST = 10
-export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest']
+export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest', 'rogue', 'archer']
 export const PROMOTE_LEVEL = 1   // 노비스 전직 레벨(고정). 이 레벨엔 강화 불가 — 전직만(전직=레벨업).
 
 export function newRun(rng) {
