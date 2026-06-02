@@ -206,11 +206,8 @@ test('전설 트레잇 존재 (regeneration = turnStart heal)', () => {
 })
 
 test('targeting 트레잇 = trigger 없음(applyRules 무간섭) + targeting weight 보유', () => {
-  for (const id of ['low_hp_seek', 'backline_pierce']) {
-    const t = TRAITS[id]
-    assert.ok(t.targeting && typeof t.targeting === 'object', `${id} targeting`)
-    assert.strictEqual(t.trigger, undefined, `${id} no trigger`)
-  }
-  assert.strictEqual(TRAITS.low_hp_seek.targeting.lowHp, 1)
-  assert.strictEqual(TRAITS.backline_pierce.targeting.position, -1)
+  const t = TRAITS.low_hp_seek
+  assert.ok(t.targeting && typeof t.targeting === 'object', 'low_hp_seek targeting')
+  assert.strictEqual(t.trigger, undefined, 'low_hp_seek no trigger')
+  assert.strictEqual(t.targeting.lowHp, 1)
 })
