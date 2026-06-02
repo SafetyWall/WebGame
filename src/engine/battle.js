@@ -51,20 +51,24 @@ export function scaledEffectValue(type, value, mult) {
   return value
 }
 
-// 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, lowestHpAlly=힐대상. mult=스킬레벨 배율.
-function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1) {
+// 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, allies=파티전체, lowestHpAlly=힐대상.
+function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = null) {
   for (const spec of skill.effects) {
-    const target = spec.target === 'self' ? u : spec.target === 'enemy' ? mob : healTarget
-    if (!target) continue
-    const inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
-    if (spec.type === 'hot') {
-      inst.value = Math.floor(u.heal * spec.valueRatio * mult)
-      inst.interval = spec.interval
-      inst.nextTick = tick + spec.interval
-    } else {
-      inst.value = scaledEffectValue(spec.type, spec.value, mult)
+    const targets = spec.target === 'self' ? [u]
+      : spec.target === 'enemy' ? [mob]
+      : spec.target === 'allies' ? (party || []).filter(a => a.hp > 0)
+      : (healTarget ? [healTarget] : [])
+    for (const target of targets) {
+      const inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
+      if (spec.type === 'hot') {
+        inst.value = Math.floor(u.heal * spec.valueRatio * mult)
+        inst.interval = spec.interval
+        inst.nextTick = tick + spec.interval
+      } else {
+        inst.value = scaledEffectValue(spec.type, spec.value, mult)
+      }
+      applyEffect(target, inst)
     }
-    applyEffect(target, inst)
   }
 }
 
@@ -82,7 +86,7 @@ function actUnit(u, party, mob, tick, log) {
         target.hp = Math.min(target.maxHp, target.hp + amt)
         log.push(`${u.name} 회복 → ${target.name} (+${amt})`)
       }
-      applySkillEffects(skill, u, mob, target, tick, mult)
+      applySkillEffects(skill, u, mob, target, tick, mult, party)
     }
     return
   }
@@ -98,7 +102,7 @@ function actUnit(u, party, mob, tick, log) {
     applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
     log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
   }
-  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult)
+  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)
 }
 
 function actMob(mob, party, tick, log) {
