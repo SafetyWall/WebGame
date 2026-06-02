@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -133,7 +133,12 @@ function actMob(mob, party, tick, log) {
     log.push(`${mob.name} 광역 (개당 -${shown})`)
     return
   }
-  const target = selectMobTarget(party, mob)
+  // 수호(intercept): 최저체력 아군을 겨냥하면, intercept 보유 아군(가디언)이 대신 받음.
+  let target = selectMobTarget(party, mob)
+  if (target === lowestHpAlly(party)) {
+    const guard = party.find(u => u.hp > 0 && u !== target && hasIntercept(u))
+    if (guard) target = guard
+  }
   if (target) {
     const dmg = Math.max(1, Math.floor(damage(mob.atk, target.def) * dmgTakenMult(target)))
     target.hp -= dmg

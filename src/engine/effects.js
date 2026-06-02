@@ -54,3 +54,8 @@ export function isStunned(unit) {
 export function reflectFrac(unit) {
   return (unit.effects || []).reduce((s, e) => (e.type === 'reflect' ? s + e.value : s), 0)
 }
+
+// 수호 = 최저체력 아군이 받을 데미지를 대신 받음(intercept effect 보유).
+export function hasIntercept(unit) {
+  return (unit.effects || []).some(e => e.type === 'intercept')
+}
