@@ -57,4 +57,11 @@ export const SKILLS = {
   rogue_double:     { id: 'rogue_double',      name: '더블어택', kind: 'attack', range: 'melee',  power: 0.8, hits: 2, manaGain: 0, cost: 30, cd: 350, learnCost: 6, effects: [] },  // 2회 타격(라이트닝 표식 시너지)
   archer_rapid:     { id: 'archer_rapid',      name: '연사',     kind: 'attack', range: 'ranged', power: 0.6, hits: 3, manaGain: 0, cost: 40, cd: 450, learnCost: 6, effects: [] },  // 3회 타격
   rogue_pierce:     { id: 'rogue_pierce',      name: '방어무시', kind: 'attack', range: 'melee',  power: 1.2, ignoreDef: 1, manaGain: 0, cost: 45, cd: 500, learnCost: 6, effects: [] },  // 적 방어 전부 무시(고방 적에 강함)
+  rogue_haste:      { id: 'rogue_haste',       name: '속도',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 35, cd: 600, learnCost: 6,
+    effects: [{ target: 'self', type: 'speed', value: 1.4, duration: 500 }] },  // 자기 속도 버프(자기만)
+  archer_aim:       { id: 'archer_aim',        name: '조준사격', kind: 'attack', range: 'ranged', power: 2.5, manaGain: 0, cost: 55, cd: 600, learnCost: 6, effects: [] },  // 고단일딜
+  archer_pierce:    { id: 'archer_pierce',     name: '방어구관통', kind: 'attack', range: 'ranged', power: 1.2, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
+    effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.3, duration: 500 }] },  // 딜 + 적 받는뎀↑
+  archer_bind:      { id: 'archer_bind',       name: '속박사격', kind: 'attack', range: 'ranged', power: 1.2, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
+    effects: [{ target: 'enemy', type: 'speed', value: 0.7, duration: 400 }] },  // 딜 + 적 속도↓
 }
