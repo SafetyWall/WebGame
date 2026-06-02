@@ -25,6 +25,13 @@ test('makeUnit: 전투 가변상태 mana/cooldowns/effects 초기화', () => {
   assert.deepStrictEqual(u.effects, [])
 })
 
+test('makeUnit: manaMax = 직업별(기본100, 마법사·사제 120)', () => {
+  assert.strictEqual(makeUnit(JOBS.warrior).manaMax, 100)
+  assert.strictEqual(makeUnit(JOBS.guardian).manaMax, 100)
+  assert.strictEqual(makeUnit(JOBS.mage).manaMax, 120)
+  assert.strictEqual(makeUnit(JOBS.priest).manaMax, 120)
+})
+
 test('makeUnit: skills resolve(우선순위 보존)', () => {
   const u = makeUnit(JOBS.warrior, 1)
   assert.strictEqual(u.skills[0].id, 'warrior_cleave')

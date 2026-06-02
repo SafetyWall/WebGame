@@ -28,6 +28,7 @@ export function makeUnit(job, level = 1, skillOrder = null) {
     def: 0,            // 플레이어 유닛은 방어 없음(버프=받는뎀 배율로)
     gauge: 0,
     mana: 0,           // step5: 평타가 충전, 발동스킬이 소비
+    manaMax: job.mana ?? 100,   // 직업별 마나 상한(레벨 불변, 전직으로만)
     cooldowns: {},     // skillId → readyTick
     effects: [],       // 전투중 버프/디버프 인스턴스
   }

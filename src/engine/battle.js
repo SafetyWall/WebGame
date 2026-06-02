@@ -61,7 +61,7 @@ function applySkillEffects(skill, u, mob, healTarget, tick) {
 
 function actUnit(u, party, mob, tick, log) {
   const skill = selectSkill(u, tick)
-  u.mana = Math.min(MANA_MAX, u.mana + skill.manaGain - skill.cost)
+  u.mana = Math.min(u.manaMax ?? MANA_MAX, u.mana + skill.manaGain - skill.cost)
   if (skill.cost > 0) u.cooldowns[skill.id] = tick + skill.cd
 
   if (skill.kind === 'heal') {
