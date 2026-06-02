@@ -1,6 +1,6 @@
 // 런 영속(localStorage). 엔진 순수 유지 — UI 레이어만. storage 주입가능(테스트 shim).
-const KEY = 'partyrpg.save.v2'   // 버전키: 스키마 변경 시 v 숫자 bump (v2 = 전직=레벨업 + roster.skillOrder)
-const VERSION = 2
+const KEY = 'partyrpg.save.v3'   // 버전키: 스키마 변경 시 v 숫자 bump (v3 = 레벨10·learnedSkills·skillLevels·경제리워크)
+const VERSION = 3
 
 export function save(state, rngState, storage = localStorage) {
   try {

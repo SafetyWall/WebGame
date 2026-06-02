@@ -14,6 +14,14 @@ test('prep view shows stage/gold, enemy preview, roster, and action buttons', ()
   assert.match(html, /data-action="fight"/)
 })
 
+test('prep: 미학습 액티브엔 학습버튼, 학습 액티브엔 레벨업버튼', () => {
+  const s = { ...newRun(makeRng(1)), gold: 50,
+    roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], party: [0] }
+  const html = renderGame(s)
+  assert.match(html, /data-action="learnSkill"[^>]*data-skill="warrior_heavy"/)   // 강타 미학습 → 학습
+  assert.match(html, /data-action="levelupSkill"[^>]*data-skill="warrior_cleave"/) // 갑옷부수기 학습됨 → 레벨업
+})
+
 test('prep view shows party order with reorder buttons', () => {
   const s = { ...newRun(makeRng(1)), party: [0, 1] }
   const html = renderGame(s)
