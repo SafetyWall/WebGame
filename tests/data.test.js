@@ -12,9 +12,11 @@ test('JOBS has 5 jobs with required fields (per-level stats)', () => {
     assert.ok(Number.isFinite(j.spd), `${k} spd`)
     assert.ok(['dps', 'tank', 'heal'].includes(j.role), `${k} role`)
     assert.ok(j.levels && j.levels[1], `${k} levels[1]`)
-    assert.strictEqual(Object.keys(j.levels).length, 5, `${k} has 5 levels`)
+    assert.strictEqual(Object.keys(j.levels).length, 10, `${k} has 10 levels`)
     assert.ok(Number.isFinite(j.levels[1].hp), `${k} levels[1].hp`)
     assert.ok(Number.isFinite(j.levels[1].atk), `${k} levels[1].atk`)
+    assert.ok(Number.isFinite(j.levels[10].hp), `${k} levels[10].hp`)
+    assert.ok(Number.isFinite(j.mana), `${k} mana`)
   }
   assert.ok(!JOBS.guardian.taunt)   // 상시 taunt 제거(도발=스킬 effect)
   assert.strictEqual(JOBS.priest.role, 'heal')

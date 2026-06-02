@@ -56,7 +56,7 @@ test('result view has a single h2 (no duplicate 결과: header)', () => {
 })
 
 test('prep: 노비스에 전직 버튼, 골드충분 시 슬롯확장 버튼 노출', () => {
-  const html = renderGame(newRun(makeRng(1)))     // gold5 slots3, roster 노비스×2
+  const html = renderGame({ ...newRun(makeRng(1)), gold: 10 })  // gold10(≥PROMOTE 10) slots3, 노비스×2
   assert.match(html, /data-action="promote"/)
   assert.match(html, /data-job="warrior"/)
   assert.match(html, /data-action="expand"/)
@@ -102,7 +102,7 @@ test('prep: 노비스는 강화 버튼 없음(전직만 가능)', () => {
 })
 
 test('prep: 비노비스는 강화 버튼 노출, 전직 버튼 없음', () => {
-  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0], gold: 5 }
+  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0], gold: 8 }  // ≥UPGRADE 8
   const html = renderGame(s)
   assert.match(html, /data-action="upgrade"/)
   assert.doesNotMatch(html, /data-action="promote"/)

@@ -25,12 +25,12 @@ test('recruit adds a novice for 4 gold; refused when gold < 4', () => {
 })
 
 test('upgrade: 노비스는 강화 불가(전직만), 비노비스는 레벨+1', () => {
-  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }, { job: 'warrior', level: 1 }], party: [0, 1], gold: 5 }
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }, { job: 'warrior', level: 1 }], party: [0, 1], gold: 12 }
   assert.strictEqual(upgrade(s, 0), s)   // 노비스 강화 거부(전직해야 성장) → same ref
-  const r = upgrade(s, 1)                // 전사 L1→L2, 5→1 gold
+  const r = upgrade(s, 1)                // 전사 L1→L2, 12→4 gold (UPGRADE_COST 8)
   assert.strictEqual(r.roster[1].level, 2)
-  assert.strictEqual(r.gold, 1)
-  assert.strictEqual(upgrade(r, 1), r)   // gold 1 < 4 → no-op
+  assert.strictEqual(r.gold, 4)
+  assert.strictEqual(upgrade(r, 1), r)   // gold 4 < 8 → no-op
 })
 
 test('toggleParty adds/removes; refuses over slots', () => {
@@ -44,13 +44,13 @@ test('toggleParty adds/removes; refuses over slots', () => {
   assert.strictEqual(s.party.length, 3)
 })
 
-test('fight win: gold += 4+stage, phase result, outcome win', () => {
+test('fight win: gold += reward(stage), phase result, outcome win', () => {
   let s = fresh()
   s = { ...s, roster: [{ job: 'guardian', level: 5 }, { job: 'warrior', level: 5 }, { job: 'mage', level: 5 }], party: [0, 1, 2] }
   const r = fight(s)
   assert.strictEqual(r.phase, 'result')
   assert.strictEqual(r.lastResult.outcome, 'win')
-  assert.strictEqual(r.gold, s.gold + (4 + s.stage))
+  assert.strictEqual(r.gold, s.gold + (10 + 2 * s.stage))
   assert.ok(Array.isArray(r.lastResult.rounds))
 })
 
@@ -108,8 +108,8 @@ test('fight only runs in prep phase (no double-resolve)', () => {
   assert.strictEqual(fight(s), s) // result 국면 → no-op
 })
 
-test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), 5골드', () => {
-  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 5 }
+test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), PROMOTE_COST 10', () => {
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 10 }
   const r = changeJob(s, 0, 'warrior')
   assert.strictEqual(r.roster[0].job, 'warrior')
   assert.strictEqual(r.roster[0].level, 2)   // 전직 = 레벨업(자동 +1)

@@ -9,11 +9,11 @@ import { STAGES } from '../data/stages.js'
 export const START_GOLD = 5
 export const START_SLOTS = 3
 export const RECRUIT_COST = 4
-export const UPGRADE_COST = 4
-export const MAX_LEVEL = 5
+export const UPGRADE_COST = 8        // 캐릭 레벨업(스킬레벨업보다 비싸게). 1→10 = 9회.
+export const MAX_LEVEL = 10          // 1차 직업 상한(레벨10 = 2차전직 해금 — 2차전직은 후속 조각).
 export const MAX_STAGE = Math.max(...Object.keys(STAGES).map(Number))
-export const reward = (stage) => 4 + stage
-export const PROMOTE_COST = 5
+export const reward = (stage) => 10 + 2 * stage   // 보상↑(만렙+풀스킬 2~3기 골드 목표). 플레이로 튜닝.
+export const PROMOTE_COST = 10
 export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest']
 export const PROMOTE_LEVEL = 1   // 노비스 전직 레벨(고정). 이 레벨엔 강화 불가 — 전직만(전직=레벨업).
 
