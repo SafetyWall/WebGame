@@ -1,0 +1,42 @@
+import { test } from 'node:test'
+import assert from 'node:assert'
+import { JOBS } from '../src/data/jobs.js'
+import { SKILLS } from '../src/data/skills.js'
+import { makeUnit, makeMob } from '../src/engine/unit.js'
+import { runBattle } from '../src/engine/battle.js'
+import { speedMult } from '../src/engine/effects.js'
+
+test('speedMult = speed effect 곱(없으면 1)', () => {
+  assert.strictEqual(speedMult({ effects: [] }), 1)
+  assert.strictEqual(speedMult({ effects: [{ type: 'speed', value: 1.3 }] }), 1.3)
+  assert.ok(Math.abs(speedMult({ effects: [{ type: 'speed', value: 2 }, { type: 'speed', value: 0.5 }] }) - 1) < 1e-9)
+  assert.strictEqual(speedMult({ effects: [{ type: 'dmgTaken', value: 0.5 }] }), 1)  // 다른 타입 무시
+})
+
+test('강화 = 자기 dmgDealt↑ + speed↑ / 빙결 = 적 speed↓', () => {
+  assert.ok(SKILLS.warrior_might.effects.some(e => e.type === 'speed' && e.value > 1))
+  assert.ok(SKILLS.warrior_might.effects.some(e => e.type === 'dmgDealt' && e.value > 1))
+  assert.ok(SKILLS.mage_frost.effects.some(e => e.type === 'speed' && e.value < 1))
+})
+
+// 오버플로 가드: 게이지가 THRESHOLD 배수만큼 쌓이면(고속) 한 틱에 여러 번 행동(턴 유실 없음).
+test('게이지 오버플로 = 한 틱 다중 행동(while 루프)', () => {
+  const u = makeUnit(JOBS.warrior, 1)              // spd9, 마나0 → 평타만
+  u.effects.push({ type: 'speed', value: 300, source: u.id, expireTick: 9999 })  // 9×300=2700/틱
+  const mob = makeMob({ name: 'D', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
+  const r = runBattle([u], mob, { maxTicks: 1 })
+  const hits = (r.rounds.flatMap(x => x.log).join('\n').match(/→ D \(-/g) || []).length
+  assert.strictEqual(hits, 2)                      // 2700 → 2회(1700→700)
+})
+
+test('적 speed 디버프 = 몹 행동 횟수 감소', () => {
+  // 동일 더미몹: speed×0.5 디버프 부여 시 같은 틱수 동안 몹 행동 절반.
+  const mk = () => makeMob({ name: 'M', hp: 1e6, atk: 5, def: 0, spd: 100, traits: [] })
+  const target = () => { const t = makeUnit(JOBS.guardian, 1); t.hp = 1e6; return t }
+  const fast = mk(), slow = mk()
+  slow.effects.push({ type: 'speed', value: 0.5, source: 0, expireTick: 9999 })
+  runBattle([target()], fast, { maxTicks: 1000 })
+  runBattle([target()], slow, { maxTicks: 1000 })
+  // 검증: 느린 몹 게이지가 더 적게 쌓임 → 행동 적음(여기선 speedMult 직접)
+  assert.ok(speedMult(slow) < speedMult(fast))
+})

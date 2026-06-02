@@ -30,4 +30,10 @@ export const SKILLS = {
     effects: [{ target: 'self', type: 'dmgTaken', value: 0.6, duration: 500 }] },
   priest_heal:      { id: 'priest_heal',      name: '치유',     kind: 'heal',   range: null,     power: 2.0, manaGain: 0, cost: 50, cd: 400, learnCost: 6, effects: [] },
   holy_bolt:        { id: 'holy_bolt',        name: '평타',     kind: 'attack', range: 'ranged', power: 1.0, manaGain: MANA_GAIN, cost: 0, cd: 0, effects: [] },  // 사제 평타(원거리딜+마나젠)
+
+  // === 속도 메커닉 스킬 ===
+  warrior_might:    { id: 'warrior_might',     name: '강화',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 40, cd: 700, learnCost: 6,
+    effects: [{ target: 'self', type: 'dmgDealt', value: 1.3, duration: 500 }, { target: 'self', type: 'speed', value: 1.3, duration: 500 }] },
+  mage_frost:       { id: 'mage_frost',        name: '빙결',     kind: 'attack', range: 'ranged', power: 1.5, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
+    effects: [{ target: 'enemy', type: 'speed', value: 0.7, duration: 400 }] },
 }

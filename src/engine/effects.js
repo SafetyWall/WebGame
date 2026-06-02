@@ -39,3 +39,8 @@ export function dmgDealtMult(unit) {
 export function hasTaunt(unit) {
   return (unit.effects || []).some(e => e.type === 'taunt')
 }
+
+// 게이지 증가 속도 배율(buff>1 빠름, debuff<1 느림). speed effect 곱.
+export function speedMult(unit) {
+  return (unit.effects || []).reduce((m, e) => (e.type === 'speed' ? m * e.value : m), 1)
+}

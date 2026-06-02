@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-06-01
+- **스킬 메커닉 — 속도(P2).** `speed` effect(게이지 증가 배율, `speedMult` 곱). 게이지 루프 `if`→`while` = 오버플로/고속 시 한 틱 다중 행동(턴 유실 방지). `scaledEffectValue`에 speed 추가(레벨 스케일). 신규: **강화**(전사, 자기 dmgDealt↑+speed↑), **빙결**(마법사, 딜+적 speed↓). 테스트 186→**190**.
 - **스킬 시스템 리워크 P1 (토대).** 7-task TDD, 테스트 176→**186**.
   - **레벨 상한 5→10**(손번호 테이블 전 직업 L6~10 ≈×1.2/레벨). **직업별 마나**(기본100·마법사/사제 120, 레벨 불변=전직으로만). **경제 리워크**: 전직 5→10, 캐릭레벨업 4→8, 보상 `4+stage`→`10+2*stage`(만렙+풀스킬 2~3기 목표). 
   - **스킬 레벨 1~5 위력 스케일** `skillLevelMult=1+0.25(lv-1)`(L5=2×). power·hot×mult, 버프/디버프는 1.0 기준 편차×mult. **학습 시스템**: roster `learnedSkills`/`skillLevels`, 전직 시 기본 1개 학습, `learnSkill`(LEARN_COST 6)·`levelUpSkill`(SKILL_LV_COST 4). `unitSkillIds`(학습+평타), selectSkill 학습필터.
