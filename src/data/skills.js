@@ -56,4 +56,5 @@ export const SKILLS = {
     effects: [{ target: 'enemy', type: 'dot', valueRatio: 0.3, interval: 100, duration: 500 }] },  // 딜 + 지속 출혈(시전자 atk 비례)
   rogue_double:     { id: 'rogue_double',      name: '더블어택', kind: 'attack', range: 'melee',  power: 0.8, hits: 2, manaGain: 0, cost: 30, cd: 350, learnCost: 6, effects: [] },  // 2회 타격(라이트닝 표식 시너지)
   archer_rapid:     { id: 'archer_rapid',      name: '연사',     kind: 'attack', range: 'ranged', power: 0.6, hits: 3, manaGain: 0, cost: 40, cd: 450, learnCost: 6, effects: [] },  // 3회 타격
+  rogue_pierce:     { id: 'rogue_pierce',      name: '방어무시', kind: 'attack', range: 'melee',  power: 1.2, ignoreDef: 1, manaGain: 0, cost: 45, cd: 500, learnCost: 6, effects: [] },  // 적 방어 전부 무시(고방 적에 강함)
 }
