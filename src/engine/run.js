@@ -1,7 +1,7 @@
 // 런 상태기계(순수, 인메모리). 조우 RNG는 newRun/next에 주입(전투는 결정론).
 // RunState = { phase:'prep'|'result', gold, stage, slots, roster:[{job,level}], party:[idx], encounter, lastResult }
 import { JOBS } from '../data/jobs.js'
-import { makeUnit, makeMob, normalizeSkillOrder } from './unit.js'
+import { makeUnit, makeMob, normalizeSkillOrder, unitSkillIds } from './unit.js'
 import { runBattle } from './battle.js'
 import { generateEncounter } from './encounter.js'
 import { STAGES } from '../data/stages.js'
@@ -9,11 +9,11 @@ import { STAGES } from '../data/stages.js'
 export const START_GOLD = 5
 export const START_SLOTS = 3
 export const RECRUIT_COST = 4
-export const UPGRADE_COST = 4
-export const MAX_LEVEL = 5
+export const UPGRADE_COST = 8        // 캐릭 레벨업(스킬레벨업보다 비싸게). 1→10 = 9회.
+export const MAX_LEVEL = 10          // 1차 직업 상한(레벨10 = 2차전직 해금 — 2차전직은 후속 조각).
 export const MAX_STAGE = Math.max(...Object.keys(STAGES).map(Number))
-export const reward = (stage) => 4 + stage
-export const PROMOTE_COST = 5
+export const reward = (stage) => 10 + 2 * stage   // 보상↑(만렙+풀스킬 2~3기 골드 목표). 플레이로 튜닝.
+export const PROMOTE_COST = 10
 export const PROMOTE_TARGETS = ['warrior', 'mage', 'guardian', 'priest']
 export const PROMOTE_LEVEL = 1   // 노비스 전직 레벨(고정). 이 레벨엔 강화 불가 — 전직만(전직=레벨업).
 
@@ -48,8 +48,41 @@ export function changeJob(s, i, job) {
   const u = s.roster[i]
   if (!u || u.job !== 'novice' || u.level !== PROMOTE_LEVEL) return s
   if (!PROMOTE_TARGETS.includes(job) || s.gold < PROMOTE_COST) return s
-  const roster = s.roster.map((r, j) => (j === i ? { ...r, job, level: r.level + 1 } : r))
+  const basic = JOBS[job].skills[0]   // 전직 시 기본 학습 스킬 1개(첫 액티브)
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, job, level: r.level + 1, learnedSkills: [basic], skillLevels: { [basic]: 1 }, skillOrder: null }
+    : r))
   return { ...s, gold: s.gold - PROMOTE_COST, roster }
+}
+
+export const LEARN_COST = 6        // 스킬 학습비(전직 기본 1개 외 3개 유료)
+export const SKILL_LV_COST = 4     // 스킬 레벨업비(캐릭 레벨업 8보다 쌈)
+export const MAX_SKILL_LEVEL = 5
+
+// 스킬 학습: 해당 직업 액티브(평타 제외)이고 미학습이면 추가(레벨1). 비용 LEARN_COST.
+export function learnSkill(s, i, skillId) {
+  const u = s.roster[i]
+  if (!u || s.gold < LEARN_COST) return s
+  const actives = JOBS[u.job].skills.slice(0, -1)   // 평타(마지막) 제외
+  const learned = u.learnedSkills || []
+  if (!actives.includes(skillId) || learned.includes(skillId)) return s
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, learnedSkills: [...learned, skillId], skillLevels: { ...(r.skillLevels || {}), [skillId]: 1 } }
+    : r))
+  return { ...s, gold: s.gold - LEARN_COST, roster }
+}
+
+// 스킬 레벨업: 학습됨 & lv<MAX_SKILL_LEVEL이면 +1. 비용 SKILL_LV_COST.
+export function levelUpSkill(s, i, skillId) {
+  const u = s.roster[i]
+  if (!u || s.gold < SKILL_LV_COST) return s
+  const learned = u.learnedSkills || []
+  const lv = (u.skillLevels && u.skillLevels[skillId]) || 0
+  if (!learned.includes(skillId) || lv < 1 || lv >= MAX_SKILL_LEVEL) return s
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, skillLevels: { ...(r.skillLevels || {}), [skillId]: lv + 1 } }
+    : r))
+  return { ...s, gold: s.gold - SKILL_LV_COST, roster }
 }
 
 export const slotCost = (slots) => 5 + 4 * (slots - 3)   // 체증: 3→4=5, 4→5=9, 5→6=13 (하드상한 없음)
@@ -64,7 +97,7 @@ export function expandSlot(s) {
 export function reorderSkill(s, i, skillId, dir) {
   const u = s.roster[i]
   if (!u) return s
-  const order = normalizeSkillOrder(JOBS[u.job], u.skillOrder)
+  const order = normalizeSkillOrder(unitSkillIds(JOBS[u.job], u.learnedSkills), u.skillOrder)
   const idx = order.indexOf(skillId)
   const j = idx + dir
   if (idx < 0 || j < 0 || j >= order.length) return s     // 없는 스킬·경계 밖 → no-op
@@ -93,7 +126,10 @@ export function toggleParty(s, i) {
 export function fight(s) {
   if (s.phase !== 'prep') return s     // 준비 국면에서만 전투(결과 국면 재실행 → 보상 중복 방지)
   if (s.party.length === 0) return s
-  const units = s.party.map((i) => makeUnit(JOBS[s.roster[i].job], s.roster[i].level, s.roster[i].skillOrder))
+  const units = s.party.map((i) => {
+    const r = s.roster[i]
+    return makeUnit(JOBS[r.job], r.level, r.skillOrder, r.skillLevels, r.learnedSkills)
+  })
   const r = runBattle(units, makeMob(s.encounter))
   if (r.winner === 'party') {
     const rw = reward(s.stage)

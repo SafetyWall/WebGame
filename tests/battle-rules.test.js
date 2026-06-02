@@ -139,8 +139,8 @@ test('all-dead party = immediate mob win at tick 0', () => {
 
 // #11 — 힐 오버힐 cap(maxHp 초과 금지).
 test('heal does not overheal above maxHp', () => {
-  // 사제 단독: 풀피에서 자가힐 → maxHp(95) 초과 안 함.
-  const party = [makeUnit(JOBS.priest)]
+  // 사제 단독: 풀피에서 자가힐(치유) → maxHp(95) 초과 안 함. (사제 평타=원거리딜이므로 마나 충전해 즉발힐 발동)
+  const party = [makeUnit(JOBS.priest)]; party[0].mana = 100
   const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 150 }) // 틱143 힐, 틱167 몹공격 전
   assert.match(logsOf(r).join('\n'), /회복/)

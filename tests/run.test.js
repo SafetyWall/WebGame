@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, reorderParty, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, reorderParty, learnSkill, levelUpSkill, LEARN_COST, SKILL_LV_COST, MAX_SKILL_LEVEL, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -25,12 +25,12 @@ test('recruit adds a novice for 4 gold; refused when gold < 4', () => {
 })
 
 test('upgrade: 노비스는 강화 불가(전직만), 비노비스는 레벨+1', () => {
-  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }, { job: 'warrior', level: 1 }], party: [0, 1], gold: 5 }
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }, { job: 'warrior', level: 1 }], party: [0, 1], gold: 12 }
   assert.strictEqual(upgrade(s, 0), s)   // 노비스 강화 거부(전직해야 성장) → same ref
-  const r = upgrade(s, 1)                // 전사 L1→L2, 5→1 gold
+  const r = upgrade(s, 1)                // 전사 L1→L2, 12→4 gold (UPGRADE_COST 8)
   assert.strictEqual(r.roster[1].level, 2)
-  assert.strictEqual(r.gold, 1)
-  assert.strictEqual(upgrade(r, 1), r)   // gold 1 < 4 → no-op
+  assert.strictEqual(r.gold, 4)
+  assert.strictEqual(upgrade(r, 1), r)   // gold 4 < 8 → no-op
 })
 
 test('toggleParty adds/removes; refuses over slots', () => {
@@ -44,13 +44,13 @@ test('toggleParty adds/removes; refuses over slots', () => {
   assert.strictEqual(s.party.length, 3)
 })
 
-test('fight win: gold += 4+stage, phase result, outcome win', () => {
+test('fight win: gold += reward(stage), phase result, outcome win', () => {
   let s = fresh()
   s = { ...s, roster: [{ job: 'guardian', level: 5 }, { job: 'warrior', level: 5 }, { job: 'mage', level: 5 }], party: [0, 1, 2] }
   const r = fight(s)
   assert.strictEqual(r.phase, 'result')
   assert.strictEqual(r.lastResult.outcome, 'win')
-  assert.strictEqual(r.gold, s.gold + (4 + s.stage))
+  assert.strictEqual(r.gold, s.gold + (10 + 2 * s.stage))
   assert.ok(Array.isArray(r.lastResult.rounds))
 })
 
@@ -108,12 +108,14 @@ test('fight only runs in prep phase (no double-resolve)', () => {
   assert.strictEqual(fight(s), s) // result 국면 → no-op
 })
 
-test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), 5골드', () => {
-  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 5 }
+test('changeJob: 노비스(L1) → 전사, 레벨 자동 +1(L2), PROMOTE_COST 10', () => {
+  const s = { ...fresh(), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 10 }
   const r = changeJob(s, 0, 'warrior')
   assert.strictEqual(r.roster[0].job, 'warrior')
   assert.strictEqual(r.roster[0].level, 2)   // 전직 = 레벨업(자동 +1)
   assert.strictEqual(r.gold, 0)
+  assert.deepStrictEqual(r.roster[0].learnedSkills, ['warrior_cleave'])  // 기본 학습 1개
+  assert.deepStrictEqual(r.roster[0].skillLevels, { warrior_cleave: 1 })
 })
 
 test('changeJob refused: 비노비스/골드부족/잘못된job/없는인덱스/전직레벨아님 (same ref)', () => {
@@ -134,7 +136,7 @@ test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {
 })
 
 test('reorderSkill: 스킬 우선순위 위/아래 이동, 경계/무효는 no-op(same ref)', () => {
-  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2 }], party: [0] }
+  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'] }], party: [0] }  // cleave+평타 2개
   const r = reorderSkill(s, 0, 'melee_strike', -1)            // 평타를 위로
   assert.deepStrictEqual(r.roster[0].skillOrder, ['melee_strike', 'warrior_cleave'])
   assert.strictEqual(reorderSkill(r, 0, 'melee_strike', -1), r) // 이미 맨 위 → no-op
@@ -161,6 +163,31 @@ test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () =
   assert.strictEqual(r.gold, 0)
   const poor = { ...fresh(), gold: 4, slots: 3 }
   assert.strictEqual(expandSlot(poor), poor)
+})
+
+test('learnSkill: 직업 액티브 학습(비용 LEARN_COST, skillLevels=1); 중복·타직업·골드부족 거부', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], gold: 20 }
+  const r = learnSkill(base, 0, 'warrior_heavy')
+  assert.deepStrictEqual(r.roster[0].learnedSkills, ['warrior_cleave', 'warrior_heavy'])
+  assert.strictEqual(r.roster[0].skillLevels.warrior_heavy, 1)
+  assert.strictEqual(r.gold, 20 - LEARN_COST)
+  assert.strictEqual(learnSkill(r, 0, 'warrior_heavy'), r)          // 이미 학습 → no-op
+  assert.strictEqual(learnSkill(base, 0, 'mage_nuke'), base)        // 타직업 스킬
+  assert.strictEqual(learnSkill(base, 0, 'melee_strike'), base)     // 평타는 학습 대상 아님
+  const poor = { ...base, gold: LEARN_COST - 1 }
+  assert.strictEqual(learnSkill(poor, 0, 'warrior_heavy'), poor)    // 골드부족
+})
+
+test('levelUpSkill: 학습 스킬 +1(비용 SKILL_LV_COST); 미학습·만렙·골드부족 거부', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], gold: 20 }
+  const r = levelUpSkill(base, 0, 'warrior_cleave')
+  assert.strictEqual(r.roster[0].skillLevels.warrior_cleave, 2)
+  assert.strictEqual(r.gold, 20 - SKILL_LV_COST)
+  assert.strictEqual(levelUpSkill(base, 0, 'warrior_heavy'), base)  // 미학습
+  const maxed = { ...base, roster: [{ ...base.roster[0], skillLevels: { warrior_cleave: MAX_SKILL_LEVEL } }] }
+  assert.strictEqual(levelUpSkill(maxed, 0, 'warrior_cleave'), maxed)  // 만렙
+  const poor = { ...base, gold: SKILL_LV_COST - 1 }
+  assert.strictEqual(levelUpSkill(poor, 0, 'warrior_cleave'), poor)    // 골드부족
 })
 
 test('reorderParty moves a unit toward the front', () => {

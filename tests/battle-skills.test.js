@@ -24,7 +24,7 @@ test('selectSkill: 마나 충분 + 쿨 끝 → 발동스킬', () => {
 })
 
 test('selectSkill: 쿨 중 → 평타', () => {
-  const u = makeUnit(JOBS.mage, 1)
+  const u = makeUnit(JOBS.mage, 1, null, {}, ['mage_nuke'])  // 파이어볼만 학습 → 나머지=평타
   u.mana = 100
   u.cooldowns['mage_nuke'] = 500
   assert.equal(selectSkill(u, 100).id, 'ranged_strike')   // tick100 < readyTick500
@@ -85,7 +85,7 @@ test('guardian_taunt: 자기 taunt + dmgTaken 0.6 effect 부여, 타게팅이 �
 })
 
 test('priest_hot: 최저HP 아군에 hot effect 부여(value=floor(heal×0.5), interval 100)', () => {
-  const p = makeUnit(JOBS.priest, 3); p.mana = 100  // L3 heal=43 → hot value floor(21.5)=21
+  const p = makeUnit(JOBS.priest, 3, null, {}, ['priest_hot']); p.mana = 100  // 재생만 학습. L3 heal=43 → hot floor(21.5)=21
   const wounded = makeUnit(JOBS.novice, 1); wounded.hp = 10  // 최저HP = 부여 대상
   runBattle([p, wounded], dummyMob(), { maxTicks: 143 })     // tick143 = 사제 1행동
   const hot = wounded.effects.find(e => e.type === 'hot')
