@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -64,6 +64,8 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         inst.value = Math.floor(u.heal * spec.valueRatio * mult)
         inst.interval = spec.interval
         inst.nextTick = tick + spec.interval
+      } else if (spec.type === 'reflect') {
+        inst.value = spec.value * mult     // 반사 비율 = 직접 ×레벨배율(0.3→0.6)
       } else {
         inst.value = scaledEffectValue(spec.type, spec.value, mult)
       }
@@ -105,12 +107,25 @@ function actUnit(u, party, mob, tick, log) {
   applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)
 }
 
+// 받은뎀 일부를 공격자(몹)에게 반사. reflect effect 보유 대상만.
+function reflectTo(mob, target, dmg, log) {
+  const refl = Math.floor(dmg * reflectFrac(target))
+  if (refl > 0) {
+    mob.hp -= refl
+    log.push(`${target.name} 반사 → ${mob.name} (-${refl})`)
+  }
+}
+
 function actMob(mob, party, tick, log) {
   applyRules('turnStart', 0, {}, mob) // 자가회복 등 side-effect (현재 라이브 몹 미부착)
   if (mob.aoe) {
     const base = Math.floor(mob.atk * mob.aoeRatio)
     for (const u of party) {
-      if (u.hp > 0) u.hp -= Math.max(1, Math.floor(damage(base, u.def) * dmgTakenMult(u)))
+      if (u.hp > 0) {
+        const dmg = Math.max(1, Math.floor(damage(base, u.def) * dmgTakenMult(u)))
+        u.hp -= dmg
+        reflectTo(mob, u, dmg, log)
+      }
     }
     // 로그는 실제 적용값 기준(살아있는 첫 아군 기준 표기). dmgTakenMult 반영.
     const ref = party.find(u => u.hp > 0)
@@ -123,6 +138,7 @@ function actMob(mob, party, tick, log) {
     const dmg = Math.max(1, Math.floor(damage(mob.atk, target.def) * dmgTakenMult(target)))
     target.hp -= dmg
     log.push(`${mob.name} 공격 → ${target.name} (-${dmg})`)
+    reflectTo(mob, target, dmg, log)
   }
 }
 
