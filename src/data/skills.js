@@ -32,6 +32,8 @@ export const SKILLS = {
   holy_bolt:        { id: 'holy_bolt',        name: '평타',     kind: 'attack', range: 'ranged', power: 1.0, manaGain: MANA_GAIN, cost: 0, cd: 0, effects: [] },  // 사제 평타(원거리딜+마나젠)
 
   // === 속도 메커닉 스킬 ===
+  mage_lightning:   { id: 'mage_lightning',    name: '라이트닝', kind: 'attack', range: 'ranged', power: 1.3, manaGain: 0, cost: 45, cd: 550, learnCost: 6,
+    effects: [{ target: 'enemy', type: 'mark', valueRatio: 0.6, duration: 500 }] },  // 적 표식: 피격당 +floor(시전자atk×0.6)
   warrior_might:    { id: 'warrior_might',     name: '강화',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 40, cd: 700, learnCost: 6,
     effects: [{ target: 'self', type: 'dmgDealt', value: 1.3, duration: 500 }, { target: 'self', type: 'speed', value: 1.3, duration: 500 }] },
   mage_frost:       { id: 'mage_frost',        name: '빙결',     kind: 'attack', range: 'ranged', power: 1.5, manaGain: 0, cost: 40, cd: 500, learnCost: 6,

@@ -28,7 +28,7 @@ test('each job references at least one valid skill id', () => {
     assert.ok(Array.isArray(j.skills) && j.skills.length >= 1, `${k} skills`)
     for (const id of j.skills) assert.ok(SKILLS[id], `${k} skill ${id} exists`)
   }
-  assert.deepStrictEqual(JOBS.mage.skills, ['mage_nuke', 'mage_focus', 'mage_frost', 'ranged_strike'])
+  assert.deepStrictEqual(JOBS.mage.skills, ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'])
   assert.deepStrictEqual(JOBS.priest.skills, ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'])
 })
 

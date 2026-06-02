@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -66,6 +66,8 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         inst.nextTick = tick + spec.interval
       } else if (spec.type === 'reflect') {
         inst.value = spec.value * mult     // 반사 비율 = 직접 ×레벨배율(0.3→0.6)
+      } else if (spec.type === 'mark') {
+        inst.value = Math.floor(u.atk * spec.valueRatio * mult)  // 피격당 추가뎀 = 시전자 atk 비례 스냅샷
       } else {
         inst.value = scaledEffectValue(spec.type, spec.value, mult)
       }
@@ -103,6 +105,9 @@ function actUnit(u, party, mob, tick, log) {
     mob.hp -= dmg
     applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
     log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
+    // 표식(mark): 이 타격으로 기존 표식 발동(추가뎀). 이번 스킬이 거는 표식은 아래 applySkillEffects라 자기발동 안 함.
+    const mk = markBonus(mob)
+    if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
   }
   applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)
 }

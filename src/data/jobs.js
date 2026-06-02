@@ -8,7 +8,7 @@ export const JOBS = {
   warrior:  { name: '전사', spd: 9, role: 'dps', mana: 100, skills: ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush', 'melee_strike'],
     levels: { 1: { hp: 115, atk: 22 }, 2: { hp: 138, atk: 26 }, 3: { hp: 166, atk: 31 }, 4: { hp: 199, atk: 37 }, 5: { hp: 239, atk: 44 },
               6: { hp: 287, atk: 53 }, 7: { hp: 344, atk: 63 }, 8: { hp: 413, atk: 76 }, 9: { hp: 496, atk: 91 }, 10: { hp: 595, atk: 110 } } },
-  mage:     { name: '마법사', spd: 8, role: 'dps', mana: 120, skills: ['mage_nuke', 'mage_focus', 'mage_frost', 'ranged_strike'],
+  mage:     { name: '마법사', spd: 8, role: 'dps', mana: 120, skills: ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'],
     levels: { 1: { hp: 55, atk: 32 }, 2: { hp: 66, atk: 38 }, 3: { hp: 79, atk: 46 }, 4: { hp: 95, atk: 55 }, 5: { hp: 114, atk: 66 },
               6: { hp: 137, atk: 79 }, 7: { hp: 164, atk: 95 }, 8: { hp: 197, atk: 114 }, 9: { hp: 236, atk: 137 }, 10: { hp: 284, atk: 164 } } },
   guardian: { name: '가디언', spd: 5, role: 'tank', mana: 100, skills: ['guardian_taunt', 'guardian_sunder', 'guardian_barrier', 'guardian_thorns', 'guardian_guard', 'guardian_strike'],
