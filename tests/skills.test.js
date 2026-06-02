@@ -25,7 +25,7 @@ test('makeUnit resolves job.skills ids into shared SKILLS defs', () => {
   // 우선순위 배열: [0]=발동(파이어볼), 마지막=평타(원거리). 둘 다 공유 def 참조(clone 아님).
   assert.strictEqual(mage.skills[0], SKILLS.mage_nuke)
   assert.strictEqual(mage.skills[mage.skills.length - 1], SKILLS.ranged_strike)
-  assert.strictEqual(makeUnit(JOBS.priest).skills[0], SKILLS.priest_hot)
+  assert.strictEqual(makeUnit(JOBS.priest).skills[0], SKILLS.priest_heal)  // 사제 기본=치유
 })
 
 test('makeUnit no longer carries phys/magic type', () => {
@@ -55,8 +55,24 @@ test('SKILLS: 발동스킬 5종 정의 + 자원/효과', () => {
   assert.strictEqual(SKILLS.priest_hot.effects[0].interval, 100)
   assert.ok(SKILLS.guardian_taunt.effects.some(e => e.type === 'taunt'))
   assert.ok(SKILLS.guardian_taunt.effects.some(e => e.type === 'dmgTaken' && e.value < 1))
-  assert.strictEqual(SKILLS.guardian_strike.effects[0].type, 'dmgDealt')   // 보스 약뎀감
-  assert.ok(SKILLS.guardian_strike.effects[0].value < 1)
+  assert.deepStrictEqual(SKILLS.guardian_strike.effects, [])               // 평타화(주는뎀↓ 제거)
+  assert.strictEqual(SKILLS.guardian_sunder.effects[0].type, 'dmgDealt')   // 무기파괴 = 적 주는뎀↓
+  assert.ok(SKILLS.guardian_sunder.effects[0].value < 1)
+})
+
+test('SKILLS: P1 신규 액티브 정의 + learnCost', () => {
+  for (const id of ['warrior_heavy', 'mage_focus', 'guardian_sunder', 'guardian_barrier', 'priest_heal', 'holy_bolt']) {
+    assert.ok(SKILLS[id], `${id} 존재`)
+    assert.strictEqual(SKILLS[id].id, id)
+  }
+  assert.ok(SKILLS.warrior_heavy.power > 2)                       // 고위력 burst
+  assert.strictEqual(SKILLS.mage_focus.effects[0].type, 'dmgDealt')
+  assert.ok(SKILLS.mage_focus.effects[0].value > 1)              // 자뎀 버프
+  assert.ok(SKILLS.guardian_barrier.effects[0].value < 1)        // 받는뎀 감소
+  assert.strictEqual(SKILLS.priest_heal.kind, 'heal')
+  assert.strictEqual(SKILLS.holy_bolt.kind, 'attack')            // 사제 평타=원거리딜
+  assert.strictEqual(SKILLS.holy_bolt.range, 'ranged')
+  assert.ok(SKILLS.holy_bolt.manaGain > 0)
 })
 
 test('SKILLS: MANA 상수 export', () => {

@@ -136,7 +136,7 @@ test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {
 })
 
 test('reorderSkill: 스킬 우선순위 위/아래 이동, 경계/무효는 no-op(same ref)', () => {
-  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2 }], party: [0] }
+  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'] }], party: [0] }  // cleave+평타 2개
   const r = reorderSkill(s, 0, 'melee_strike', -1)            // 평타를 위로
   assert.deepStrictEqual(r.roster[0].skillOrder, ['melee_strike', 'warrior_cleave'])
   assert.strictEqual(reorderSkill(r, 0, 'melee_strike', -1), r) // 이미 맨 위 → no-op

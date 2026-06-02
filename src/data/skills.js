@@ -11,13 +11,23 @@ export const SKILLS = {
   melee_strike:    { id: 'melee_strike',    name: '평타',     kind: 'attack', range: 'melee',  power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,   effects: [] },
   ranged_strike:   { id: 'ranged_strike',   name: '평타',     kind: 'attack', range: 'ranged', power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,   effects: [] },
   basic_heal:      { id: 'basic_heal',      name: '평타',     kind: 'heal',   range: null,     power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,   effects: [] },
-  guardian_strike: { id: 'guardian_strike', name: '방패치기', kind: 'attack', range: 'melee',  power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,
-    effects: [{ target: 'enemy', type: 'dmgDealt', value: 0.95, duration: 150 }] },
+  guardian_strike: { id: 'guardian_strike', name: '방패치기', kind: 'attack', range: 'melee',  power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0, effects: [] },  // 평타(주는뎀↓는 무기파괴로 이동)
   mage_nuke:       { id: 'mage_nuke',       name: '파이어볼', kind: 'attack', range: 'ranged', power: 2.2, manaGain: 0,         cost: 50, cd: 400, effects: [] },
   warrior_cleave:  { id: 'warrior_cleave',  name: '갑옷부수기', kind: 'attack', range: 'melee', power: 1.7, manaGain: 0,        cost: 50, cd: 450,
     effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.25, duration: 500 }] },
-  priest_hot:      { id: 'priest_hot',      name: '치유의기도', kind: 'heal',  range: null,     power: 0,   manaGain: 0,         cost: 50, cd: 500,
+  priest_hot:      { id: 'priest_hot',      name: '재생',     kind: 'heal',  range: null,     power: 0,   manaGain: 0,         cost: 50, cd: 500,
     effects: [{ target: 'lowestHpAlly', type: 'hot', valueRatio: 0.5, interval: 100, duration: 500 }] },
   guardian_taunt:  { id: 'guardian_taunt',  name: '도발',     kind: 'attack', range: 'melee',  power: 1.0, manaGain: 0,         cost: 40, cd: 500,
     effects: [{ target: 'self', type: 'taunt', value: 1, duration: 600 }, { target: 'self', type: 'dmgTaken', value: 0.6, duration: 600 }] },
+
+  // === P1 신규 액티브 (기존 메커닉) — 학습/레벨업 대상. 수치 placeholder ===
+  warrior_heavy:    { id: 'warrior_heavy',    name: '강타',     kind: 'attack', range: 'melee',  power: 2.8, manaGain: 0, cost: 60, cd: 600, learnCost: 6, effects: [] },
+  mage_focus:       { id: 'mage_focus',       name: '마력집중', kind: 'attack', range: 'ranged', power: 0,   manaGain: 0, cost: 30, cd: 700, learnCost: 6,
+    effects: [{ target: 'self', type: 'dmgDealt', value: 1.4, duration: 500 }] },
+  guardian_sunder:  { id: 'guardian_sunder',  name: '무기파괴', kind: 'attack', range: 'melee',  power: 1.2, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
+    effects: [{ target: 'enemy', type: 'dmgDealt', value: 0.8, duration: 500 }] },
+  guardian_barrier: { id: 'guardian_barrier', name: '방벽',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 50, cd: 800, learnCost: 6,
+    effects: [{ target: 'self', type: 'dmgTaken', value: 0.6, duration: 500 }] },
+  priest_heal:      { id: 'priest_heal',      name: '치유',     kind: 'heal',   range: null,     power: 2.0, manaGain: 0, cost: 50, cd: 400, learnCost: 6, effects: [] },
+  holy_bolt:        { id: 'holy_bolt',        name: '평타',     kind: 'attack', range: 'ranged', power: 1.0, manaGain: MANA_GAIN, cost: 0, cd: 0, effects: [] },  // 사제 평타(원거리딜+마나젠)
 }
