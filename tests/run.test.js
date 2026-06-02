@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 import { makeRng } from '../src/engine/rng.js'
-import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, reorderParty, MAX_STAGE } from '../src/engine/run.js'
+import { newRun, recruit, upgrade, toggleParty, fight, next, restart, changeJob, expandSlot, slotCost, reorderSkill, reorderParty, learnSkill, levelUpSkill, LEARN_COST, SKILL_LV_COST, MAX_SKILL_LEVEL, MAX_STAGE } from '../src/engine/run.js'
 
 const fresh = () => newRun(makeRng(1))
 
@@ -163,6 +163,31 @@ test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () =
   assert.strictEqual(r.gold, 0)
   const poor = { ...fresh(), gold: 4, slots: 3 }
   assert.strictEqual(expandSlot(poor), poor)
+})
+
+test('learnSkill: 직업 액티브 학습(비용 LEARN_COST, skillLevels=1); 중복·타직업·골드부족 거부', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], gold: 20 }
+  const r = learnSkill(base, 0, 'warrior_heavy')
+  assert.deepStrictEqual(r.roster[0].learnedSkills, ['warrior_cleave', 'warrior_heavy'])
+  assert.strictEqual(r.roster[0].skillLevels.warrior_heavy, 1)
+  assert.strictEqual(r.gold, 20 - LEARN_COST)
+  assert.strictEqual(learnSkill(r, 0, 'warrior_heavy'), r)          // 이미 학습 → no-op
+  assert.strictEqual(learnSkill(base, 0, 'mage_nuke'), base)        // 타직업 스킬
+  assert.strictEqual(learnSkill(base, 0, 'melee_strike'), base)     // 평타는 학습 대상 아님
+  const poor = { ...base, gold: LEARN_COST - 1 }
+  assert.strictEqual(learnSkill(poor, 0, 'warrior_heavy'), poor)    // 골드부족
+})
+
+test('levelUpSkill: 학습 스킬 +1(비용 SKILL_LV_COST); 미학습·만렙·골드부족 거부', () => {
+  const base = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], gold: 20 }
+  const r = levelUpSkill(base, 0, 'warrior_cleave')
+  assert.strictEqual(r.roster[0].skillLevels.warrior_cleave, 2)
+  assert.strictEqual(r.gold, 20 - SKILL_LV_COST)
+  assert.strictEqual(levelUpSkill(base, 0, 'warrior_heavy'), base)  // 미학습
+  const maxed = { ...base, roster: [{ ...base.roster[0], skillLevels: { warrior_cleave: MAX_SKILL_LEVEL } }] }
+  assert.strictEqual(levelUpSkill(maxed, 0, 'warrior_cleave'), maxed)  // 만렙
+  const poor = { ...base, gold: SKILL_LV_COST - 1 }
+  assert.strictEqual(levelUpSkill(poor, 0, 'warrior_cleave'), poor)    // 골드부족
 })
 
 test('reorderParty moves a unit toward the front', () => {

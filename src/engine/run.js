@@ -55,6 +55,36 @@ export function changeJob(s, i, job) {
   return { ...s, gold: s.gold - PROMOTE_COST, roster }
 }
 
+export const LEARN_COST = 6        // 스킬 학습비(전직 기본 1개 외 3개 유료)
+export const SKILL_LV_COST = 4     // 스킬 레벨업비(캐릭 레벨업 8보다 쌈)
+export const MAX_SKILL_LEVEL = 5
+
+// 스킬 학습: 해당 직업 액티브(평타 제외)이고 미학습이면 추가(레벨1). 비용 LEARN_COST.
+export function learnSkill(s, i, skillId) {
+  const u = s.roster[i]
+  if (!u || s.gold < LEARN_COST) return s
+  const actives = JOBS[u.job].skills.slice(0, -1)   // 평타(마지막) 제외
+  const learned = u.learnedSkills || []
+  if (!actives.includes(skillId) || learned.includes(skillId)) return s
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, learnedSkills: [...learned, skillId], skillLevels: { ...(r.skillLevels || {}), [skillId]: 1 } }
+    : r))
+  return { ...s, gold: s.gold - LEARN_COST, roster }
+}
+
+// 스킬 레벨업: 학습됨 & lv<MAX_SKILL_LEVEL이면 +1. 비용 SKILL_LV_COST.
+export function levelUpSkill(s, i, skillId) {
+  const u = s.roster[i]
+  if (!u || s.gold < SKILL_LV_COST) return s
+  const learned = u.learnedSkills || []
+  const lv = (u.skillLevels && u.skillLevels[skillId]) || 0
+  if (!learned.includes(skillId) || lv < 1 || lv >= MAX_SKILL_LEVEL) return s
+  const roster = s.roster.map((r, j) => (j === i
+    ? { ...r, skillLevels: { ...(r.skillLevels || {}), [skillId]: lv + 1 } }
+    : r))
+  return { ...s, gold: s.gold - SKILL_LV_COST, roster }
+}
+
 export const slotCost = (slots) => 5 + 4 * (slots - 3)   // 체증: 3→4=5, 4→5=9, 5→6=13 (하드상한 없음)
 
 export function expandSlot(s) {
