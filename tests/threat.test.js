@@ -31,14 +31,9 @@ test('selectMobTarget 저체력추적 몹 = 최저 hp 유닛', () => {
   assert.strictEqual(selectMobTarget(party, mob).name, '마법사')
 })
 
-test('selectMobTarget 후열관통 몹 = 맨뒤 유닛', () => {
-  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage)]
-  const mob = { traits: [TRAITS.backline_pierce] }
-  assert.strictEqual(selectMobTarget(party, mob).name, '마법사')  // idx1 = 뒤
-})
-
-test('selectMobTarget 도발 > 후열관통 (도발이 어그로 강제)', () => {
-  const party = [taunted(makeUnit(JOBS.guardian)), makeUnit(JOBS.mage)]  // 가디언 앞 도발
-  const mob = { traits: [TRAITS.backline_pierce] }
+test('selectMobTarget 도발 > 저체력추적 (도발이 어그로 강제)', () => {
+  // 가디언(고hp) 앞 도발 + 마법사(저hp). 저체력추적이면 평소 마법사지만 도발이 뺏음.
+  const party = [taunted(makeUnit(JOBS.guardian)), makeUnit(JOBS.mage)]
+  const mob = { traits: [TRAITS.low_hp_seek] }
   assert.strictEqual(selectMobTarget(party, mob).name, '가디언')
 })

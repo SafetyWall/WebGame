@@ -10,6 +10,6 @@ export const TRAITS = {
   damage_reflect: { id: 'damage_reflect', name: '데미지반사', rarity: '희귀', trigger: 'postIncomingDamage',                                  op: 'reflect', value: 0.3, priority: 100 },
   regeneration:   { id: 'regeneration',   name: '재생',      rarity: '전설', trigger: 'turnStart',                                            op: 'heal',    value: 50,  priority: 100 },
   // 타겟팅 트레잇 = trigger 없음(applyRules 무간섭). engine/threat.js가 targeting weight로 몹 타겟 변조.
+  // 위치 기반 변주(후열관통 등)는 보류 — 자유 재배열로 trivial 해결됨(슬롯에 탱 옮기면 끝). 스탯 기반만(슬롯 무관).
   low_hp_seek:     { id: 'low_hp_seek',     name: '저체력추적', rarity: '일반', targeting: { position: 0, lowHp: 1 } },
-  backline_pierce: { id: 'backline_pierce', name: '후열관통',   rarity: '희귀', targeting: { position: -1 } },
 }
