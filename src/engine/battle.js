@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -153,21 +153,21 @@ export function runBattle(party, mob, opts = {}) {
     // ① effect: HoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 HoT proc 보장.
     for (const u of party) { tickHoT(u, tick, log); expireEffects(u, tick) }
     tickHoT(mob, tick, log); expireEffects(mob, tick)
-    // ② 게이지 증가 (살아있는 유닛만). speed effect로 가감속.
-    for (const u of party) if (u.hp > 0) u.gauge += u.spd * speedMult(u)
-    if (mob.hp > 0) mob.gauge += mob.spd * speedMult(mob)
+    // ② 게이지 증가 (살아있는 + 스턴 아닌 유닛만). speed effect로 가감속.
+    for (const u of party) if (u.hp > 0 && !isStunned(u)) u.gauge += u.spd * speedMult(u)
+    if (mob.hp > 0 && !isStunned(mob)) mob.gauge += mob.spd * speedMult(mob)
     // ③ 행동: 파티 먼저(배열 순), 그다음 몹.
     // 동시틱 처리 = 파티 우선(의도된 결정, 2026-05-30 사용자 확정).
     // while = 게이지가 THRESHOLD 배수만큼 쌓였으면(고속/오버플로) 그 횟수만큼 행동(턴 유실 방지).
     for (const u of party) {
-      while (u.hp > 0 && u.gauge >= THRESHOLD) {
+      while (u.hp > 0 && !isStunned(u) && u.gauge >= THRESHOLD) {
         u.gauge -= THRESHOLD
         actUnit(u, party, mob, tick, log)
         if (mob.hp <= 0) break
       }
       if (mob.hp <= 0) break
     }
-    while (mob.hp > 0 && mob.gauge >= THRESHOLD) {
+    while (mob.hp > 0 && !isStunned(mob) && mob.gauge >= THRESHOLD) {
       mob.gauge -= THRESHOLD
       actMob(mob, party, tick, log)
     }
