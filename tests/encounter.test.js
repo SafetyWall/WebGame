@@ -5,6 +5,7 @@ import { makeRng } from '../src/engine/rng.js'
 import { MONSTERS } from '../src/data/monsters.js'
 import { TRAITS } from '../src/data/traits.js'
 import { levelCurve } from '../src/data/curve.js'
+import { STAGES } from '../src/data/stages.js'
 
 test('same (stage, seed) produces the same encounter', () => {
   const a = generateEncounter(4, makeRng(42))
@@ -29,15 +30,16 @@ test('encounter stats = round(levelCurve(level) × monster mul)', () => {
 })
 
 test('trait count equals the stage slot count and traits are distinct', () => {
-  const e = generateEncounter(4, makeRng(3)) // stage 4 = ['일반','희귀']
-  assert.strictEqual(e.traits.length, 2)
-  assert.strictEqual(new Set(e.traits).size, 2) // distinct
+  const stage = 9                       // S9 = [일반,일반,희귀] (스킵 없음: 일반풀3≥2·희귀풀2≥1)
+  const e = generateEncounter(stage, makeRng(3))
+  assert.strictEqual(e.traits.length, STAGES[stage].traitSlots.length)
+  assert.strictEqual(new Set(e.traits).size, e.traits.length) // distinct
 })
 
 test('drawn traits match the slot rarities in order', () => {
-  const e = generateEncounter(4, makeRng(3)) // ['일반','희귀']
-  assert.strictEqual(TRAITS[e.traits[0]].rarity, '일반')
-  assert.strictEqual(TRAITS[e.traits[1]].rarity, '희귀')
+  const stage = 9
+  const e = generateEncounter(stage, makeRng(3))
+  STAGES[stage].traitSlots.forEach((r, i) => assert.strictEqual(TRAITS[e.traits[i]].rarity, r, `slot ${i}`))
 })
 
 test('stage 1 attaches no traits', () => {
