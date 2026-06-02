@@ -96,19 +96,24 @@ function actUnit(u, party, mob, tick, log) {
     return
   }
   // kind === 'attack' → 몹 공격. effect 배율(자기 주는뎀·몹 받는뎀) + 트레잇이 데미지 수정.
+  // hits>1 = 멀티히트(1행동 N회 타격, 각 히트가 mark 등 on-hit 발동).
   if (skill.power > 0) {
     const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
-    const base = damage(Math.floor(u.atk * skill.power * mult), mob.def)
-    const afterMult = base * dmgDealtMult(u) * dmgTakenMult(mob)
-    // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 최소 1 유지(회피≠면역).
-    const t = applyRules('incomingDamage', afterMult, ctx, mob)
-    const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
-    mob.hp -= dmg
-    applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
-    log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
-    // 표식(mark): 이 타격으로 기존 표식 발동(추가뎀). 이번 스킬이 거는 표식은 아래 applySkillEffects라 자기발동 안 함.
-    const mk = markBonus(mob)
-    if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
+    const hits = skill.hits || 1
+    for (let h = 0; h < hits; h++) {
+      if (mob.hp <= 0) break
+      const base = damage(Math.floor(u.atk * skill.power * mult), mob.def)
+      const afterMult = base * dmgDealtMult(u) * dmgTakenMult(mob)
+      // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 최소 1 유지(회피≠면역).
+      const t = applyRules('incomingDamage', afterMult, ctx, mob)
+      const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
+      mob.hp -= dmg
+      applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
+      log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
+      // 표식(mark): 이 타격으로 기존 표식 발동(추가뎀). 이번 스킬이 거는 표식은 아래 applySkillEffects라 자기발동 안 함.
+      const mk = markBonus(mob)
+      if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
+    }
   }
   applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)
 }

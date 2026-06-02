@@ -13,7 +13,7 @@
   - [x] 파티 전체 타겟(target 'allies') → 파티힐·파티뎀버프 (사제 키트 완성). (→ CHANGELOG)
   - [x] intercept(최저체력 아군 대신 받기) → 수호. (→ CHANGELOG)
   - [x] 유닛 데미지 반사(reflect effect) → 가시방패. (→ CHANGELOG)
-  - [ ] 멀티히트/추가공격 → 더블어택·연사
+  - [x] 멀티히트(skill.hits N회 타격, 각 히트 on-hit 발동) → 더블어택·연사(미배선=P11). (→ CHANGELOG)
   - [x] mark(피격시 추가뎀, 시전자 atk 비례 스냅샷) → 라이트닝 (마법사 키트 완성). (→ CHANGELOG)
   - [ ] 방어무시 데미지 → 도적 방무딜
   - [x] 스턴(게이지 프리즈+행동불가) → 분쇄 (전사 키트 완성). (→ CHANGELOG)
