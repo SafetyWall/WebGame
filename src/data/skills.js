@@ -40,6 +40,8 @@ export const SKILLS = {
     effects: [{ target: 'enemy', type: 'stun', value: 1, duration: 150 }] },  // 딜 + 적 게이지 정지
   guardian_thorns:  { id: 'guardian_thorns',   name: '가시방패', kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 45, cd: 600, learnCost: 6,
     effects: [{ target: 'self', type: 'reflect', value: 0.3, duration: 500 }] },  // 받은뎀 30% 반사
+  guardian_guard:   { id: 'guardian_guard',    name: '수호',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 50, cd: 700, learnCost: 6,
+    effects: [{ target: 'self', type: 'intercept', value: 1, duration: 500 }] },  // 최저체력 아군 대신 받기
 
   // === 파티 전체 타겟 메커닉(사제) ===
   priest_party_heal: { id: 'priest_party_heal', name: '파티힐',   kind: 'heal', range: null, power: 0, manaGain: 0, cost: 60, cd: 600, learnCost: 6,
