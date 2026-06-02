@@ -29,7 +29,7 @@ test('each job references at least one valid skill id', () => {
     for (const id of j.skills) assert.ok(SKILLS[id], `${k} skill ${id} exists`)
   }
   assert.deepStrictEqual(JOBS.mage.skills, ['mage_nuke', 'mage_focus', 'mage_frost', 'ranged_strike'])
-  assert.deepStrictEqual(JOBS.priest.skills, ['priest_heal', 'priest_hot', 'holy_bolt'])
+  assert.deepStrictEqual(JOBS.priest.skills, ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'])
 })
 
 test('JOBS: skills 배열 = 우선순위(발동 먼저, 평타 마지막)', () => {

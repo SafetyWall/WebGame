@@ -14,7 +14,7 @@ export const JOBS = {
   guardian: { name: '가디언', spd: 5, role: 'tank', mana: 100, skills: ['guardian_taunt', 'guardian_sunder', 'guardian_barrier', 'guardian_strike'],
     levels: { 1: { hp: 260, atk: 10 }, 2: { hp: 312, atk: 12 }, 3: { hp: 374, atk: 14 }, 4: { hp: 449, atk: 17 }, 5: { hp: 539, atk: 20 },
               6: { hp: 647, atk: 24 }, 7: { hp: 776, atk: 29 }, 8: { hp: 931, atk: 35 }, 9: { hp: 1118, atk: 42 }, 10: { hp: 1341, atk: 50 } } },
-  priest:   { name: '사제', spd: 7, role: 'heal', mana: 120, skills: ['priest_heal', 'priest_hot', 'holy_bolt'],
+  priest:   { name: '사제', spd: 7, role: 'heal', mana: 120, skills: ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'],
     levels: { 1: { hp: 95, atk: 6, heal: 30 }, 2: { hp: 114, atk: 7, heal: 36 }, 3: { hp: 137, atk: 8, heal: 43 }, 4: { hp: 164, atk: 10, heal: 52 }, 5: { hp: 197, atk: 12, heal: 62 },
               6: { hp: 236, atk: 14, heal: 74 }, 7: { hp: 284, atk: 17, heal: 89 }, 8: { hp: 340, atk: 21, heal: 107 }, 9: { hp: 409, atk: 25, heal: 129 }, 10: { hp: 490, atk: 30, heal: 154 } } },
 }

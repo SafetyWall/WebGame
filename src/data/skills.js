@@ -36,4 +36,10 @@ export const SKILLS = {
     effects: [{ target: 'self', type: 'dmgDealt', value: 1.3, duration: 500 }, { target: 'self', type: 'speed', value: 1.3, duration: 500 }] },
   mage_frost:       { id: 'mage_frost',        name: '빙결',     kind: 'attack', range: 'ranged', power: 1.5, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
     effects: [{ target: 'enemy', type: 'speed', value: 0.7, duration: 400 }] },
+
+  // === 파티 전체 타겟 메커닉(사제) ===
+  priest_party_heal: { id: 'priest_party_heal', name: '파티힐',   kind: 'heal', range: null, power: 0, manaGain: 0, cost: 60, cd: 600, learnCost: 6,
+    effects: [{ target: 'allies', type: 'hot', valueRatio: 0.4, interval: 100, duration: 400 }] },
+  priest_party_buff: { id: 'priest_party_buff', name: '파티뎀버프', kind: 'heal', range: null, power: 0, manaGain: 0, cost: 50, cd: 700, learnCost: 6,
+    effects: [{ target: 'allies', type: 'dmgDealt', value: 1.2, duration: 500 }] },
 }
