@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, tickDoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -66,8 +66,9 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         inst.nextTick = tick + spec.interval
       } else if (spec.type === 'reflect') {
         inst.value = spec.value * mult     // 반사 비율 = 직접 ×레벨배율(0.3→0.6)
-      } else if (spec.type === 'mark') {
-        inst.value = Math.floor(u.atk * spec.valueRatio * mult)  // 피격당 추가뎀 = 시전자 atk 비례 스냅샷
+      } else if (spec.type === 'mark' || spec.type === 'dot') {
+        inst.value = Math.floor(u.atk * spec.valueRatio * mult)  // mark=피격당 추가뎀 / dot=틱당 데미지. 둘 다 시전자 atk 비례
+        if (spec.type === 'dot') { inst.interval = spec.interval; inst.nextTick = tick + spec.interval }
       } else {
         inst.value = scaledEffectValue(spec.type, spec.value, mult)
       }
@@ -176,9 +177,9 @@ export function runBattle(party, mob, opts = {}) {
 
   while (tick < maxTicks) {
     tick++
-    // ① effect: HoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 HoT proc 보장.
-    for (const u of party) { tickHoT(u, tick, log); expireEffects(u, tick) }
-    tickHoT(mob, tick, log); expireEffects(mob, tick)
+    // ① effect: HoT/DoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 proc 보장.
+    for (const u of party) { tickHoT(u, tick, log); tickDoT(u, tick, log); expireEffects(u, tick) }
+    tickHoT(mob, tick, log); tickDoT(mob, tick, log); expireEffects(mob, tick)
     // ② 게이지 증가 (살아있는 + 스턴 아닌 유닛만). speed effect로 가감속.
     for (const u of party) if (u.hp > 0 && !isStunned(u)) u.gauge += u.spd * speedMult(u)
     if (mob.hp > 0 && !isStunned(mob)) mob.gauge += mob.spd * speedMult(mob)

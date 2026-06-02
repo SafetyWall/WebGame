@@ -28,6 +28,19 @@ export function tickHoT(target, tick, log) {
   }
 }
 
+// dot effect 중 nextTick 도달분 데미지 적용 + nextTick 전진. 죽은 대상 no-op. (hot의 데미지판)
+export function tickDoT(target, tick, log) {
+  for (const e of (target.effects || [])) {
+    if (e.type === 'dot' && e.nextTick <= tick) {
+      if (target.hp > 0) {
+        target.hp -= e.value
+        log.push(`${target.name} 출혈 (-${e.value})`)
+      }
+      e.nextTick += e.interval
+    }
+  }
+}
+
 export function dmgTakenMult(unit) {
   return (unit.effects || []).reduce((m, e) => (e.type === 'dmgTaken' ? m * e.value : m), 1)
 }
