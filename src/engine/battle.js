@@ -102,7 +102,8 @@ function actUnit(u, party, mob, tick, log) {
     const hits = skill.hits || 1
     for (let h = 0; h < hits; h++) {
       if (mob.hp <= 0) break
-      const base = damage(Math.floor(u.atk * skill.power * mult), mob.def)
+      const effDef = Math.floor(mob.def * (1 - (skill.ignoreDef || 0)))  // 방어무시: def 일부/전부 무시
+      const base = damage(Math.floor(u.atk * skill.power * mult), effDef)
       const afterMult = base * dmgDealtMult(u) * dmgTakenMult(mob)
       // 트레잇이 정확히 0으로 만들면 0(진짜 면역). 그 외엔 최소 1 유지(회피≠면역).
       const t = applyRules('incomingDamage', afterMult, ctx, mob)
