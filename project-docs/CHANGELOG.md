@@ -1,6 +1,11 @@
 # CHANGELOG
 
 ## 2026-06-01
+- **스킬 시스템 리워크 P1 (토대).** 7-task TDD, 테스트 176→**186**.
+  - **레벨 상한 5→10**(손번호 테이블 전 직업 L6~10 ≈×1.2/레벨). **직업별 마나**(기본100·마법사/사제 120, 레벨 불변=전직으로만). **경제 리워크**: 전직 5→10, 캐릭레벨업 4→8, 보상 `4+stage`→`10+2*stage`(만렙+풀스킬 2~3기 목표). 
+  - **스킬 레벨 1~5 위력 스케일** `skillLevelMult=1+0.25(lv-1)`(L5=2×). power·hot×mult, 버프/디버프는 1.0 기준 편차×mult. **학습 시스템**: roster `learnedSkills`/`skillLevels`, 전직 시 기본 1개 학습, `learnSkill`(LEARN_COST 6)·`levelUpSkill`(SKILL_LV_COST 4). `unitSkillIds`(학습+평타), selectSkill 학습필터.
+  - **신규 액티브(기존메커닉)**: 강타·마력집중·무기파괴·방벽·치유. **사제 평타=원거리딜**(holy_bolt, basic_heal 대체). 치유의기도→재생. 방패치기 효과→무기파괴 이동. UI 학습/레벨업 버튼. persist v2→**v3**.
+  - **잔여(신규 메커닉, 순차)**: 속도·DoT·파티타겟·intercept·반사·멀티히트·mark·스턴·방어무시 + 신규직업(도적·궁수). 몹/캐릭 파워커브 = 플레이/sim 튜닝.
 - **스테이지 절차생성 1~20.** 수기 `STAGES` 테이블(1~5, 6+ 크래시) → `stageCfg(s)={level:s, traitSlots: 레어도 unlock/간격/상한 규칙}`. `STAGES`=1..20 생성객체(encounter/sim/run 호환), `MAX_STAGE`=20. 곡선: 온보딩 S1~2 무트레잇 → 일반(S3+)→희귀(S9+)→영웅(S15+)→전설(S19+) 점증. **수치 placeholder**(econ-sim 튜닝 대상). **중후반 승률 미보장** — 몹 레벨=스테이지로 오르나 플레이어 직업레벨 상한5 + 2차전직 미구현 → sim상 고정레벨 파티 ~S9 벽(설계상 정상, 2차전직 후 밸런싱). encounter 테스트 2개 동적 검증화. 테스트 170→**176**. (인라인 TDD.)
 - **위협도 스코어 타겟팅 (Phase 2).** `selectMobTarget` → 신규 `engine/threat.js` factor 가중합(`위치`/`저체력`/`atk`, 0~1 정규화). **디폴트 weight=위치 지배 → 앞열 = Phase1 정확 등가(회귀 0)**. 몹 트레잇의 `targeting` 메타가 weight 변조(명시 factor만 덮어씀) = 다양성 출처. 도발 = +대량 보너스로 흡수(override 폐기 아님). 데모 트레잇 = **저체력추적**(일반, `{position:0,lowHp:1}` = 최저체력 직격 → 슬롯 무관이라 재배열로 못 피함). trigger 없음 → `applyRules`(데미지 파이프) 무간섭, prep 미리보기 `[...]`에 이름 노출. weight=categorical로 눈대중 수치 리스크 회피. **위치 기반 변주(후열관통 등)는 보류** — 자유 재배열+정보공개면 그 슬롯에 탱 옮겨 trivial 해결됨 → 변주는 스탯 기반(슬롯 무관)만. 디폴트=앞열은 유지(탱 보호 베이스). 테스트 164→**170**. (Phase 1 spec 문서 참조. 누적 어글 모델은 후속 검토.)
 - **앞열 타겟팅 (위협도 시스템 Phase 1).** 몹 타겟팅 `lowestHpAlly`(최저체력 포커싱 → 마법사 일방 즉사) → **앞열(party 배열 순서) 첫 생존자** 타격. 도발 override 유지(도발자 중 앞열), `lowestHpAlly`는 힐 타겟 전용으로 분리. `reorderParty(s,i,dir)` + prep UI "출전 순서(앞→뒤)" ▲▼ 재배열 + 🛡️앞열 표식 → 탱 앞·마법사 뒤로 보호(자동전투의 어그로 통제 = 편성). RNG 미도입 = 결정론 유지(디자인 기둥 §2). sim: 균형파티(전사 앞 소킹) S5 승률 L1 15→25·L3 25→30 상승. 테스트 157→**164**. 4-task TDD. (설계: `docs/superpowers/specs/2026-06-01-targeting-threat-system-design.md`. Phase 2=위협도 스코어 일반화+몹 타겟 트레잇은 후속.)
