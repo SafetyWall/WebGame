@@ -5,26 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Party RPG — 베이스</title>
   <style>
-    body { font-family: ui-monospace, monospace; background: #111; color: #ddd; padding: 1rem; line-height: 1.5; }
-    #app { max-width: 640px; margin: 0 auto; }
-    h2 { color: #fc6; }
-    section { border-top: 1px solid #333; padding: .5rem 0; }
-    .hp { color: #6c6; }
-    .mob { color: #e88; }
-    .mob.boss { color: #f84; font-weight: bold; }
-    .traits { color: #fc6; }
-    .log { color: #9af; font-size: .9em; }
-    .skills { font-size: .85em; color: #aaa; margin-top: .15rem; }
-    .skills button { padding: 0 .35rem; margin: 0 .1rem; }
-    .preview { border: 1px solid #444; padding: .5rem; margin: .5rem 0; border-radius: 4px; }
-    .roster { list-style: none; padding: 0; }
-    .roster li { padding: .3rem 0; border-bottom: 1px solid #222; }
-    .roster li.in-party { color: #6c6; }
-    .actions { margin: .75rem 0; }
-    button { font-family: inherit; background: #243; color: #cfc; border: 1px solid #485; border-radius: 4px; padding: .25rem .6rem; margin: 0 .2rem; cursor: pointer; }
+    :root { --bg:#111; --card:#161a16; --line:#2a2f2a; --accent:#fc6; --ok:#6c6; }
+    * { box-sizing: border-box; }
+    body { font-family: ui-monospace, monospace; background: var(--bg); color: #ddd; padding: .6rem; line-height: 1.45; }
+    #app { max-width: 440px; margin: 0 auto; }          /* 폭 고정 — 넓은 화면서 stretch/열증가 안 함 */
+    h2 { color: var(--accent); }
+    button { font-family: inherit; background: #243; color: #cfc; border: 1px solid #485; border-radius: 4px; padding: .2rem .55rem; margin: 0 .15rem; cursor: pointer; font-size: .85em; }
     button:hover { background: #365; }
-    button:disabled { opacity: .5; cursor: not-allowed; background: #222; color: #777; }
-    .party-count.full { color: #fc6; font-weight: bold; }
+    button:disabled { opacity: .45; cursor: not-allowed; background: #222; color: #777; }
+    button.mini { padding: .05rem .4rem; font-size: .9em; }
+
+    /* 헤더 */
+    .stage-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: .35rem; }
+    .sh-main { color: var(--accent); font-size: .95em; }
+    .layout-toggle { background: #223; }
+
+    /* 적 미리보기 */
+    .enemy-preview { border: 1px solid #444; border-radius: 6px; padding: .4rem .55rem; margin: .5rem 0; font-size: .88em; }
+    .enemy-head .mob { color: #e88; } .enemy-head .mob.boss { color: #f84; font-weight: bold; }
+    .enemy-stats { color: #9c9; font-size: .92em; }
+    .enemy-traits { margin-top: .2rem; }
+    .trait { color: var(--accent); border-bottom: 1px dotted var(--accent); cursor: pointer; }
+
+    /* 로스터 */
+    .sec-label { font-size: .72em; color: #789; letter-spacing: .5px; margin: .4rem 0 .25rem; }
+    .card { border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+    .card.in { border-color: #485; background: #15211a; }
+    .ctop .jb { color: #cfc; font-weight: bold; } .ctop .lv { color: #9c9; } .front { color: var(--accent); }
+    .hpbar { height: 5px; background: #252; border-radius: 3px; overflow: hidden; margin: .25rem 0; }
+    .hpbar > i { display: block; height: 100%; background: var(--ok); }
+    .nums { color: #9c9; font-size: .85em; }
+    .numrow { display: flex; justify-content: space-between; align-items: center; gap: .4rem; margin-top: .15rem; }
+    .card.in { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }   /* 출전 카드 = 자체 드래그(글씨 선택 대신 카드 이동) */
+    .card.dragging { cursor: grabbing; position: relative; z-index: 50; pointer-events: none; opacity: .9; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
+    .drop-target { outline: 2px solid var(--accent); background: #1d2a1d; }
+    .skills2 { display: grid; gap: 3px; }
+    .sk { border: 1px solid #356; border-radius: 5px; color: #9cf; font-size: .8em; padding: 1px 5px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+    .sk.have { border-color: #485; color: #cfc; background: #13241a; }
+    .sk.no { border-color: #3a3a3a; color: #777; }
+    .sk .lvb { color: var(--accent); font-size: .85em; }
+
+    /* 2col 레이아웃 */
+    .layout-2col .card-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .layout-2col .card { padding: .4rem .5rem; }
+    .layout-2col .skills2 { grid-template-columns: 1fr 1fr; margin-top: .25rem; }
+
+    /* 1col 레이아웃 — 세로 압축 */
+    .layout-1col .card-list { display: flex; flex-direction: column; gap: 4px; }
+    .layout-1col .card { display: grid; grid-template-columns: 1fr 158px; gap: 8px; align-items: center; padding: .25rem .55rem; }
+    .layout-1col .card .ctop { font-size: .92em; }
+    .layout-1col .card .hpbar { height: 4px; margin: .15rem 0; }
+    .layout-1col .card .numrow { margin-top: .1rem; }
+    .layout-1col .skills2 { grid-template-columns: 1fr 1fr; gap: 2px; }
+    .layout-1col .sk { padding: 0 5px; }
+
+    /* 출전 순서 / 드래그 */
+    .party-order .order-list, .prio-list { list-style: none; padding: 0; margin: 0; }
+    .order-item, .prio-item { border: 1px solid #233; border-radius: 5px; background: #141414; padding: .25rem .45rem; margin: 4px 0; font-size: .85em; }
+    .handle { cursor: grab; color: #888; touch-action: none; padding: 0 .2rem; user-select: none; }
+    .dragging { opacity: .5; }
+    .drop-target { border-color: var(--accent); }
+
+    /* 액션바 */
+    .action-bar { margin: .7rem 0; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+    .party-count { color: #9c9; font-size: .85em; } .party-count.full { color: var(--accent); font-weight: bold; }
+    .hint { color: #888; font-size: .85em; }
+    .fight { background: #363; color: #dfd; margin-left: auto; }
+
+    /* 모달 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
+    .modal { background: var(--card); border: 1px solid #485; border-radius: 8px; width: 100%; max-width: 360px; max-height: 86vh; overflow: auto; padding: .8rem .9rem; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; }
+    .modal-head .jb { color: #cfc; font-weight: bold; font-size: 1.05em; }
+    .modal-close { background: #322; }
+    .modal-stats { color: #9c9; font-size: .85em; margin: .35rem 0 .5rem; }
+    .modal-section { border-top: 1px solid #222; padding: .45rem 0; }
+    .ms-title { color: #789; font-size: .75em; letter-spacing: .5px; margin-bottom: .3rem; }
+    .preview { color: #8c8; font-size: .82em; margin-top: .25rem; }
+    .preview b { color: var(--ok); } .delta { color: var(--accent); }
+    .skill-row { font-size: .85em; margin: .2rem 0; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+    .sk-name.have { color: #cfc; } .sk-name.no { color: #999; }
+    .promote-btns { display: flex; flex-wrap: wrap; gap: .3rem; }
+
+    /* 툴팁 */
+    .tooltip-box { position: absolute; z-index: 80; background: #1c1c22; border: 1px solid #46f; border-radius: 6px;
+                   padding: .4rem .6rem; font-size: .82em; color: #cdd; max-width: 240px; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
+    .tt-title { color: #9cf; font-weight: bold; margin-bottom: .2rem; }
+    .tt-line { color: #bcd; }
+
+    /* 결과 뷰(라운드 로그) — 기존 색 보존 */
+    section { border-top: 1px solid #333; padding: .5rem 0; }
+    .hp { color: #6c6; } .mob { color: #e88; } .mob.boss { color: #f84; font-weight: bold; }
+    .traits { color: #fc6; } .log { color: #9af; font-size: .9em; }
   </style>
 </head>
 <body>

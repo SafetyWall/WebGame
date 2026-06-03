@@ -23,10 +23,19 @@ src/engine/traits.js    # 몹 트레잇 규칙 인터프리터 applyRules
 src/engine/rng.js       # 시드 PRNG(mulberry32) — 조우 랜덤(+snapshot=영속용)
 src/engine/encounter.js # 절차적 조우 생성 generateEncounter(stage, rng, monId?), conflicts
 src/engine/run.js       # 런 상태기계(순수): 영입/강화/전직/스킬학습·레벨업/선발·순서/전투/진행
-src/ui/render.js        # 전투결과 → HTML 문자열 (순수)
-src/ui/game.js          # 게임 화면 renderGame(state) prep/result (순수, data-action)
-src/ui/main.js          # 부트: 런상태 + 이벤트 위임 + 재렌더 + 영속 (DOM 의존)
+src/ui/render.js        # 전투결과 → HTML 문자열 (순수, ResultView가 재사용)
+src/ui/store.js         # 중앙 상태 {run,ui} + dispatch + subscribe (순수, DOM-free)
+src/ui/component.js     # 미니 컴포넌트 베이스(render→innerHTML, update(el,state) seam)
+src/ui/view.js          # 앱 합성 renderApp({run,ui}) prep/result 분기 (순수)
+src/ui/components/*.js   # StageHeader·EnemyPreview·Roster·CharacterCard·PartyOrder·ActionBar·CharacterModal·ResultView + parts.js(공유) — 각 순수 render
+src/ui/describe.js      # 스킬·트레잇 필드 → 툴팁 텍스트 생성 (순수)
+src/ui/preview.js       # 레벨업/스킬업 before→after 계산 (순수)
+src/ui/dragMove.js      # 드롭=목표 인덱스(기존 ±1 reorder를 |delta|회 접음, 순수)
+src/ui/tooltip.js       # 단일 플로팅 툴팁(click/tap 토글) (DOM 의존)
+src/ui/drag.js          # pointer 기반 재배열(터치+마우스) (DOM 의존)
+src/ui/main.js          # 부트: store + 컴포넌트 마운트 + 이벤트 위임 + 드래그 + 영속 (DOM 의존)
 src/ui/persist.js       # localStorage 런 영속 save/load/clear(버전키, 순수)
+src/ui/uiPrefs.js       # UI 취향(layout) 영속 — 런 세이브와 별도 키 (순수)
 sim/sim.js              # 전투 시뮬(고정파티 × 스테이지×시드 승률)
 sim/econ-sim.js         # 경제 런루프 시뮬(풀투자 정책 → 사망/클리어 분포)
 tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 고정 몹)
@@ -68,7 +77,7 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 - `range` 근/원 이진 태그 = 근접회피/원거리저항 등이 소비.
 
 ## 테스트 전략
-`node:test` **223개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax) / damage·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / 조우 생성 / 절차 스테이지(MAX_STAGE 20·온보딩·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / 게임 렌더 / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. UI 이벤트는 수동 실측.
+`node:test` **252개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax) / damage·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / 조우 생성 / 절차 스테이지(MAX_STAGE 20·온보딩·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / **UI 순수단위(describe 툴팁텍스트·preview before→after·store dispatch/구독·uiPrefs·view 렌더 부분문자열·dragMove 인덱스)** / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. **UI DOM 글루(tooltip·drag·main 이벤트)는 수동/헤드리스 실측**(드래그·tap 거동·sticky-hover = 실기기).
 
 ## 설계 원칙
 - **시스템 확장성 우선** — 스킬·effect·트리거·데미지 파이프는 견고히(토대 약하면 갈아엎음). 단 단일 스킬·옵션 과추상화 금지. 시스템=구조적 / 개별 기능=YAGNI OK.

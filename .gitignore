@@ -2,8 +2,9 @@ node_modules/
 *.log
 .DS_Store
 
-# superpowers 작업용 임시 산출물(스펙·플랜) — repo에 안 넣음
+# superpowers 작업용 임시 산출물(스펙·플랜·브레인스토밍) — repo에 안 넣음
 docs/superpowers/
+.superpowers/
 .gstack/
 
 # 디버그 임시 스크립트/산출물
