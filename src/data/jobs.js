@@ -11,7 +11,7 @@ export const JOBS = {
   mage:     { name: '마법사', spd: 8, role: 'dps', mana: 120, skills: ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'],
     levels: { 1: { hp: 55, atk: 32 }, 2: { hp: 66, atk: 38 }, 3: { hp: 79, atk: 46 }, 4: { hp: 95, atk: 55 }, 5: { hp: 114, atk: 66 },
               6: { hp: 137, atk: 79 }, 7: { hp: 164, atk: 95 }, 8: { hp: 197, atk: 114 }, 9: { hp: 236, atk: 137 }, 10: { hp: 284, atk: 164 } } },
-  guardian: { name: '가디언', spd: 5, role: 'tank', mana: 100, skills: ['guardian_taunt', 'guardian_sunder', 'guardian_barrier', 'guardian_thorns', 'guardian_guard', 'guardian_strike'],
+  guardian: { name: '가디언', spd: 5, role: 'tank', mana: 100, skills: ['guardian_sunder', 'guardian_barrier', 'guardian_thorns', 'guardian_guard', 'guardian_strike'],
     levels: { 1: { hp: 260, atk: 10 }, 2: { hp: 312, atk: 12 }, 3: { hp: 374, atk: 14 }, 4: { hp: 449, atk: 17 }, 5: { hp: 539, atk: 20 },
               6: { hp: 647, atk: 24 }, 7: { hp: 776, atk: 29 }, 8: { hp: 931, atk: 35 }, 9: { hp: 1118, atk: 42 }, 10: { hp: 1341, atk: 50 } } },
   priest:   { name: '사제', spd: 7, role: 'heal', mana: 120, skills: ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'],

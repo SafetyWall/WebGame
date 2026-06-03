@@ -7,7 +7,7 @@ import { makeRng } from '../src/engine/rng.js'
 test('prep view shows stage/gold, enemy preview, roster, and action buttons', () => {
   const html = renderGame(newRun(makeRng(1)))
   assert.match(html, /스테이지 1/)
-  assert.match(html, /골드 5/)
+  assert.match(html, /골드 20/)
   assert.match(html, /다가올 적/)
   assert.match(html, /data-action="recruit"/)
   assert.match(html, /data-action="toggle"/)

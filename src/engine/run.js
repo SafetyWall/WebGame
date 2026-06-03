@@ -6,7 +6,7 @@ import { runBattle } from './battle.js'
 import { generateEncounter } from './encounter.js'
 import { STAGES } from '../data/stages.js'
 
-export const START_GOLD = 5
+export const START_GOLD = 20
 export const START_SLOTS = 3
 export const RECRUIT_COST = 4
 export const UPGRADE_COST = 8        // 캐릭 레벨업(스킬레벨업보다 비싸게). 1→10 = 9회.

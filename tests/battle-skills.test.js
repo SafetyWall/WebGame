@@ -4,6 +4,7 @@ import { runBattle, selectSkill, selectMobTarget } from '../src/engine/battle.js
 import { makeUnit, makeMob } from '../src/engine/unit.js'
 import { JOBS } from '../src/data/jobs.js'
 import { SLIME } from './_fixtures.js'
+import { SKILLS } from '../src/data/skills.js'
 
 // 더미 몹: spd 0(반격 안 함) + 큰 hp(안 죽음) → 유닛 1행동만 격리해 수치 직접 검증.
 // 유닛 1행동 시점 = ceil(1000/spd): 마법사(8)=125, 전사(9)=112, 가디언(5)=200, 사제(7)=143.
@@ -73,8 +74,10 @@ test('warrior_cleave: 몹에 dmgTaken 1.25 디버프 부여 + 첫타 = floor(atk
   assert.equal(deb.source, w.id)
 })
 
-test('guardian_taunt: 자기 taunt + dmgTaken 0.6 effect 부여, 타게팅이 도발 가디언으로', () => {
+test('guardian_taunt(2차전직용 메커니즘): 자기 taunt + dmgTaken 0.6 부여, 타게팅 override', () => {
+  // 도발은 가디언 기본 키트서 빠짐(엔진 메커니즘 유지) → 스킬을 직접 주입해 검증.
   const g = makeUnit(JOBS.guardian, 1); g.mana = 100
+  g.skills = [SKILLS.guardian_taunt, SKILLS.guardian_strike]
   runBattle([g], dummyMob(), { maxTicks: 200 })     // tick200 = 가디언 1행동(도발 발동)
   assert.ok(g.effects.some(e => e.type === 'taunt'), 'taunt effect')
   const buff = g.effects.find(e => e.type === 'dmgTaken')

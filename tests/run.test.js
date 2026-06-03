@@ -8,7 +8,7 @@ const fresh = () => newRun(makeRng(1))
 test('newRun gives start state', () => {
   const s = fresh()
   assert.strictEqual(s.phase, 'prep')
-  assert.strictEqual(s.gold, 5)
+  assert.strictEqual(s.gold, 20)
   assert.strictEqual(s.stage, 1)
   assert.strictEqual(s.slots, 3)
   assert.strictEqual(s.roster.length, 2)
@@ -17,11 +17,11 @@ test('newRun gives start state', () => {
 })
 
 test('recruit adds a novice for 4 gold; refused when gold < 4', () => {
-  const s = recruit(fresh())            // 5 → 1 gold, roster 3
-  assert.strictEqual(s.gold, 1)
+  const s = recruit(fresh())            // 20 → 16 gold, roster 3
+  assert.strictEqual(s.gold, 16)
   assert.strictEqual(s.roster.length, 3)
-  const s2 = recruit(s)                 // gold 1 < 4 → no-op
-  assert.strictEqual(s2, s)
+  const poor = { ...fresh(), gold: 3 }
+  assert.strictEqual(recruit(poor), poor)  // gold 3 < 4 → no-op
 })
 
 test('upgrade: 노비스는 강화 불가(전직만), 비노비스는 레벨+1', () => {
@@ -88,7 +88,7 @@ test('next advances stage and generates a new encounter', () => {
 test('restart returns a fresh run', () => {
   const r = restart(makeRng(1))
   assert.strictEqual(r.stage, 1)
-  assert.strictEqual(r.gold, 5)
+  assert.strictEqual(r.gold, 20)
 })
 
 test('deterministic: same seed + same actions → same state', () => {

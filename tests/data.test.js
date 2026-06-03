@@ -35,5 +35,5 @@ test('each job references at least one valid skill id', () => {
 test('JOBS: skills 배열 = 우선순위(발동 먼저, 평타 마지막)', () => {
   assert.deepStrictEqual(JOBS.novice.skills, ['melee_strike'])             // 노비스=평타만
   assert.deepStrictEqual(JOBS.warrior.skills, ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush', 'melee_strike'])
-  assert.deepStrictEqual(JOBS.guardian.skills, ['guardian_taunt', 'guardian_sunder', 'guardian_barrier', 'guardian_thorns', 'guardian_guard', 'guardian_strike'])
+  assert.deepStrictEqual(JOBS.guardian.skills, ['guardian_sunder', 'guardian_barrier', 'guardian_thorns', 'guardian_guard', 'guardian_strike'])  // 도발 제외(엔진 메커니즘은 유지=2차전직용)
 })
