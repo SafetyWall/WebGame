@@ -9,67 +9,67 @@
 ```
 index.html              # 엔트리, <script type=module src=src/ui/main.js>
 package.json            # {"type":"module"}, 의존성 0
-src/data/jobs.js        # 직업 테이블 (메타 + 레벨별 스탯 levels{1..5})
-src/data/skills.js      # 스킬 테이블(평타=스킬, 근/원 태그)
-src/data/traits.js      # 몹 트레잇 규칙 테이블(+rarity)
-src/data/monsters.js    # 몹 풀 — MONSTERS(일반, 고정특성 없음) + BOSSES(보스, 고정능력 aoe|fixed + bonus 추가슬롯)
-src/data/curve.js       # 전역 레벨 성장 커브 levelCurve(L)
-src/data/stages.js      # 스테이지별 몹레벨 + 특성 슬롯
-src/engine/unit.js      # 직업/몹 → 전투용 인스턴스 팩토리(스킬/트레잇 resolve)
-src/engine/battle.js    # 틱루프·데미지·타게팅·교착·스킬발동. 순수, DOM 0. ← 핵심 단위
-src/engine/traits.js    # 트레잇 규칙 인터프리터 applyRules(몹 정적특성)
-src/engine/effects.js   # 전투중 버프/디버프 effect(refresh·만료·HoT·배율, 순수). 트레잇과 평행
-src/engine/rng.js       # 시드 PRNG(mulberry32) — 조우 랜덤용(+snapshot=영속용 상태 읽기)
-src/engine/encounter.js # 절차적 조우 생성 generateEncounter(stage, rng)
-src/engine/run.js       # 런 상태기계(순수): 영입/강화/선발/전투/진행/리셋
-src/ui/render.js        # 전투결과 → HTML 문자열 (순수, 테스트 가능)
+src/data/jobs.js        # 직업 테이블 — 7직업(노비스+6전직), 메타(spd/role/mana/skills) + 레벨별 스탯 levels{1..10}
+src/data/skills.js      # 스킬 테이블 — 평타+액티브, 발동/효과/멀티히트/방어무시 필드
+src/data/traits.js      # 몹 트레잇 — 규칙형(trigger/op) + 타겟팅형(targeting weight)
+src/data/monsters.js    # 몹 풀 — MONSTERS(일반) + BOSSES(보스, aoe|fixed + bonus)
+src/data/curve.js       # 전역 레벨 성장 커브 levelCurve(L) — 몹 스탯용
+src/data/stages.js      # 절차생성 stageCfg(s) → {level, traitSlots}; STAGES(1..MAX_STAGE 생성), MAX_STAGE
+src/engine/unit.js      # 직업/몹 → 전투 인스턴스 팩토리(스킬/트레잇 resolve), unitSkillIds·normalizeSkillOrder
+src/engine/battle.js    # 틱루프·데미지·스킬발동·멀티히트·교착. 순수, DOM 0. ← 핵심 단위
+src/engine/threat.js    # 위협도 타겟팅 스코어(몹 타겟 선택) — selectMobTarget이 사용
+src/engine/effects.js   # 전투중 effect(버프/디버프/지속/특수) 순수 모듈. 트레잇과 평행
+src/engine/traits.js    # 몹 트레잇 규칙 인터프리터 applyRules
+src/engine/rng.js       # 시드 PRNG(mulberry32) — 조우 랜덤(+snapshot=영속용)
+src/engine/encounter.js # 절차적 조우 생성 generateEncounter(stage, rng, monId?), conflicts
+src/engine/run.js       # 런 상태기계(순수): 영입/강화/전직/스킬학습·레벨업/선발·순서/전투/진행
+src/ui/render.js        # 전투결과 → HTML 문자열 (순수)
 src/ui/game.js          # 게임 화면 renderGame(state) prep/result (순수, data-action)
-src/ui/main.js          # 부트: 런상태 보유 + 이벤트 위임 + 재렌더 + 영속 복원/저장 (DOM 의존)
-src/ui/persist.js       # localStorage 런 영속 save/load/clear(버전키, storage 주입가능, 순수)
-sim/sim.js              # node 헤드리스 시뮬(스테이지×시드 trial)
+src/ui/main.js          # 부트: 런상태 + 이벤트 위임 + 재렌더 + 영속 (DOM 의존)
+src/ui/persist.js       # localStorage 런 영속 save/load/clear(버전키, 순수)
+sim/sim.js              # 전투 시뮬(고정파티 × 스테이지×시드 승률)
+sim/econ-sim.js         # 경제 런루프 시뮬(풀투자 정책 → 사망/클리어 분포)
 tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 고정 몹)
 ```
-- `data/*` = 순수 테이블, 로직 없음. `ui/*` = 표시만(전투 계산 안 함). `sim/sim.js` = node 전용.
+- `data/*` = 순수 테이블, 로직 없음. `ui/*` = 표시만(전투 계산 안 함). `sim/*` = node 전용.
 
 ## 엔진 계약 (battle.js)
 - `runBattle(party, mob, opts={maxTicks}) → { winner:'party'|'mob', rounds, ticks }`. **순수함수, 부수효과 0.** ui·sim 공용.
-  - `rounds[]` = `{ tick, party:[{name,hp,maxHp}], mob:{name,hp,maxHp,aoe,traits:[name...]}, log:[...] }` 스냅샷. (마나/effect는 내부상태 — 스냅샷 미노출. `mob.aoe`=광역 라벨 표기용.)
-  - **빈/전멸 파티 가드**: `party`가 비었거나 전원 hp≤0이면 루프 진입 전 즉시 `finish('mob')`(틱0).
-- `makeUnit(job, level=1, skillOrder=null) → unit`(skillOrder=플레이어 우선순위 override, `normalizeSkillOrder`로 보정), `makeMob(mob) → 몹`. 런타임 가변 `hp`·`gauge`·`mana`(0)·`cooldowns`({})·`effects`([]) 부여(몹도 effects). **플레이어 유닛 def=0.** (상시 `taunt` 필드 제거 — 도발=스킬 effect.) makeUnit은 `job.levels[level]`(hp·atk·[heal])에서 스탯, spd는 메타(레벨 불변), 잘못된 level은 RangeError(fail-fast). `job.skills`(id)를 `SKILLS` 공유 def로 resolve. `makeMob`도 `mob.traits`(id)를 `TRAITS` 공유 def로 resolve(없으면 `[]`).
-- `damage(atk, def) = max(1, atk-def)`. `lowestHpAlly`, `selectMobTarget` export(테스트용).
-- **행동 = `selectSkill(u, tick)` → `skill.kind` 분기** (attack→몹 데미지, heal→최저HP아군 +heal). `selectSkill`=우선순위 톱다운 `canUse`(마나≥cost & tick≥readyTick) 첫 스킬, 없으면 마지막(평타, 항상 cost0·cd0). `actUnit(u,party,mob,tick,log)`=자원(마나 충전/소비·쿨 세팅)+즉발(`atk×power`/`heal×power`)+effect 부여. 평타=마나 generator(manaGain), 발동스킬=마나 소비. `role`은 서술 라벨.
-- **데미지 합성** = `damage(atk×power, def) × dmgDealtMult(u) × dmgTakenMult(mob)` → `applyRules('incomingDamage')`(트레잇). effect 배율(주는뎀/받는뎀)과 트레잇이 같은 데미지에 곱 누적. 플레이어 def=0 유지 — 버프=받는뎀 배율(`dmgTaken`), def 미도입.
-- **effect = 전투중 버프/디버프**(engine/effects.js, 순수). `{type:'dmgTaken'|'dmgDealt'|'taunt'|'hot', value, source, expireTick, interval?, nextTick?}`. `applyEffect`(refresh: 같은 `(type,source)` 덮어쓰기·다른 source 별도→곱), `expireEffects`, `tickHoT`(interval마다 회복), `dmgTakenMult`/`dmgDealtMult`(곱), `hasTaunt`. 스킬 effect 스펙(`SKILLS[].effects`)을 actUnit이 `source=u.id, expireTick=tick+duration`으로 인스턴스화. 도발=`taunt` effect(상시 taunt 제거 → `selectMobTarget`이 `hasTaunt` 판정).
-- **트레잇 = 규칙엔진.** `applyRules(trigger, value, ctx, mob)`(engine/traits.js, 순수)가 mob.traits를 priority 오름차순 적용(value-변환 mult/add, side-effect heal/reflect, `exclusive` 중단). battle.js 3 지점: `incomingDamage`(받는 데미지 변환 — 근접회피), `postIncomingDamage`(반사), `turnStart`(자가회복, actMob 진입). 트레잇 없는 몹 = no-op → 거동 불변. 데미지 적용: `t=applyRules('incomingDamage',base,…)` → `dmg = t===0 ? 0 : max(1,floor(t))`(트레잇이 0으로 만들면 **진짜 면역**, 그 외 최소1 = 회피≠면역).
-- **조우 생성 = 시드 결정론.** `makeRng(seed)`(engine/rng.js, mulberry32) → `generateEncounter(stage, rng, monId=null)`(engine/encounter.js): `monId` 없으면 **일반 풀**(MONSTERS) 랜덤, 있으면 그 몹(일반·보스 무관 — 보스는 아직 자동 배치 안 함). 스탯 = `levelCurve(stage.level)×mul`(반올림). 트레잇 = **고정**(`mon.fixed`) + 스테이지 슬롯 + **보스 bonus** 슬롯, 각 슬롯 레어도별 distinct 랜덤 + **상호배제 `conflicts()`** 필터(전딜봉쇄 금지). `aoe`/`boss` 플래그 노출. 같은 (stage,seed,monId)=같은 조우. UI(main.js)가 `Math.random`로 시드 주입(엔진은 시드만 받아 순수).
-- **런 상태기계 = 순수**(engine/run.js). `RunState{ phase:'prep'|'result', gold, stage, slots, roster:[{job, level, skillOrder?}], party:[idx], encounter, lastResult }`. 액션 = newRun/recruit/upgrade/changeJob/reorderSkill/expandSlot/toggleParty/fight/next/restart (새 상태 반환, no-op=같은 ref). 골드 경제(영입4·강화4·**전직5·슬롯확장 체증** `slotCost(slots)=5+4*(slots-3)`, 보상 4+stage), fight→prep만·승=gold+보상·outcome win/loss/clear, next=최종스테이지서 terminal. **전직(changeJob)** = 노비스만 + `level===PROMOTE_LEVEL`(1)에서만 → `PROMOTE_TARGETS`(전사/마법사/가디언/사제), 비가역·**레벨 자동 +1**(전직=레벨업). **강화(upgrade)** = 노비스 거부(성장=전직). **스킬 재배열(reorderSkill)** = `roster[i].skillOrder` ▲▼ 이동(무료), fight가 makeUnit에 전달. **슬롯확장(expandSlot)** = 하드상한 없음. rng는 newRun/next만(조우 생성), fight는 결정론. UI(game.js/main.js)가 렌더+이벤트위임으로 구동(전투 자동, 결정은 준비단계).
-- **런 영속 = UI 레이어**(ui/persist.js, 엔진 순수 불변). 매 액션 후 `save(state, rng.snapshot())` → localStorage(버전키 `partyrpg.save.v2` — 전직=레벨업·skillOrder 도입으로 v1에서 bump), 부팅 시 `load()` 있으면 state+rng 복원(`makeRng(snapshot)`로 조우 수열 재개), 없으면 새 런. 손상·구버전(v≠2) 저장 → null → 새 런(크래시 없음). storage 주입가능(테스트 = Map shim).
+  - `rounds[]` = `{ tick, party:[{name,hp,maxHp}], mob:{name,hp,maxHp,aoe,traits:[name...]}, log:[...] }` 스냅샷.
+  - **빈/전멸 파티 가드**: 비었거나 전원 hp≤0이면 루프 진입 전 즉시 `finish('mob')`(틱0).
+- `makeUnit(job, level=1, skillOrder=null, skillLevels={}, learnedSkills=null) → unit`. 런타임 가변 `hp`·`gauge`·`mana`(0)·`manaMax`(직업별)·`skillLevels`·`cooldowns`·`effects` 부여. **플레이어 def=0.** `job.levels[level]`에서 스탯(잘못된 level=RangeError). 전투 스킬 = `unitSkillIds(job, learnedSkills)`(학습 액티브 + 평타; learnedSkills 미지정=전체) → `normalizeSkillOrder`로 우선순위 보정 → `SKILLS` 공유 def resolve. `makeMob(mob)`도 `mob.traits`(id) → `TRAITS` 공유 def(없으면 `[]`).
+- `damage(atk, def) = max(1, atk-def)`. `lowestHpAlly`(힐 대상), `selectMobTarget(party, mob)`, `skillLevelMult`, `scaledEffectValue` export.
+- **행동 = `selectSkill(u, tick)` → `skill.kind` 분기.** `selectSkill` = 우선순위 톱다운 `canUse`(마나≥cost & tick≥readyTick) 첫 스킬, 없으면 마지막(평타, cost0·cd0). `actUnit` = 자원(마나 충전/소비·쿨)+행동. **스킬 레벨 위력** = `skillLevelMult(lv)=1+0.25(lv-1)`(L1 1.0→L5 2.0)을 `u.skillLevels[skill.id]`로 적용(평타·미지정=1).
+  - attack: `damage(floor(atk×power×mult), effDef) × dmgDealtMult(u) × dmgTakenMult(mob)` → `applyRules('incomingDamage')`. `effDef = floor(def×(1-skill.ignoreDef))`(방어무시). **멀티히트** `skill.hits`(기본1) = 1행동 N회 타격(각 히트가 mark 등 on-hit 발동). 히트 후 `markBonus(mob)` 추가뎀.
+  - heal: `floor(heal×power×mult)` → 최저HP아군. power0=버프전용.
+- **effect = 전투중 상태(engine/effects.js, 순수).** type 10종: `dmgTaken`·`dmgDealt`·`speed`(배율, `*Mult` 곱) / `taunt`·`stun`·`intercept`(플래그, `has*`/`isStunned`) / `hot`·`dot`(지속 회복/데미지, `tickHoT`/`tickDoT`, interval) / `reflect`(받은뎀 반사 비율, `reflectFrac` 합) / `mark`(피격당 추가뎀, `markBonus` 합). `applyEffect`(refresh: 같은 `(type,source)` 덮어쓰기·다른 source 별도). `expireEffects`. **스킬 effect 스펙 인스턴스화 레벨스케일**: hot/mark/dot value=`floor((heal|atk)×valueRatio×mult)`, reflect=`value×mult`, dmgTaken/dmgDealt/speed=`scaledEffectValue`(1.0 기준 편차×mult), taunt/stun=불변. `target`: `self`/`enemy`/`allies`(파티전원)/`lowestHpAlly`.
+- **타겟팅 = 위협도 스코어(engine/threat.js).** `selectMobTarget(party, mob)` = 생존자별 `threatScore = Σ factor×weight` 최고. factor(0~1정규화): 위치(앞열)/저체력/atk. **디폴트 weight=위치 지배 → 앞열 첫 생존자**(동률=앞 유지=결정론). 도발=+대량 보너스(override). 몹 트레잇의 `targeting` 메타가 weight 변조(저체력추적 등). **수호(intercept)**: 몹이 최저체력 아군 겨냥 시 intercept 보유 아군이 대신 받음(actMob). **반사**: 몹 공격 후 대상 `reflectFrac`만큼 몹에 되돌림.
+- **트레잇 = 규칙엔진.** `applyRules(trigger, value, ctx, mob)`(engine/traits.js, 순수)가 mob.traits를 priority 오름차순 적용(mult/add 변환, heal/reflect side-effect, exclusive 중단). 3 지점: `incomingDamage`(받는뎀 변환), `postIncomingDamage`(반사), `turnStart`(자가회복). **타겟팅 트레잇(targeting 필드 보유)은 trigger 없음 → applyRules 무간섭**. 데미지: `t=applyRules('incomingDamage',…)` → `dmg = t===0 ? 0 : max(1,floor(t))`(0=진짜 면역, 그 외 최소1=회피≠면역).
+- **조우 생성 = 시드 결정론.** `makeRng(seed)` → `generateEncounter(stage, rng, monId=null)`: monId 없으면 일반 풀(MONSTERS) 랜덤, 있으면 그 몹. 스탯 = `levelCurve(stageCfg.level)×mul`(반올림). 트레잇 = 고정(`mon.fixed`) + 스테이지 슬롯 + 보스 `bonus`, 각 레어도별 distinct 랜덤 + `conflicts()` 상호배제(전딜봉쇄 금지). 같은 (stage,seed,monId)=같은 조우.
+- **런 상태기계 = 순수(engine/run.js).** `RunState{ phase:'prep'|'result', gold, stage, slots, roster:[{job, level, skillOrder?, learnedSkills?, skillLevels?}], party:[idx], encounter, lastResult }`. 액션(새 상태 반환, no-op=같은 ref): newRun·recruit·upgrade·changeJob·**learnSkill**·**levelUpSkill**·reorderSkill·**reorderParty**·expandSlot·toggleParty·fight·next·restart. **경제 상수**: START_GOLD 20·RECRUIT 4·UPGRADE 8·PROMOTE 10·LEARN_COST 6·SKILL_LV_COST 4·slotCost `5+4*(slots-3)`·보상 `10+2*stage`·MAX_LEVEL 10·MAX_SKILL_LEVEL 5·MAX_STAGE 20. **전직(changeJob)** = 노비스만·`level===PROMOTE_LEVEL`(1)에서만 → `PROMOTE_TARGETS`(전사/마법사/가디언/사제/도적/궁수), 비가역·레벨+1·기본 액티브 1개 학습. **강화** = 노비스 거부(성장=전직), ~L10. **스킬 학습/레벨업** = 직업 액티브(평타 제외), learnedSkills/skillLevels 갱신. **출전 순서(reorderParty)** = party 배열 순서(앞→뒤). fight=prep만·승=gold+보상·outcome win/loss/clear·MAX_STAGE서 clear. rng는 newRun/next만(조우), fight 결정론.
+- **런 영속 = UI 레이어(ui/persist.js).** 매 액션 후 `save(state, rng.snapshot())` → localStorage(버전키 `partyrpg.save.v3`). 부팅 시 `load()` 있으면 복원, 손상·구버전(v≠3)=null→새 런. storage 주입가능(테스트=Map shim).
 
 ## 틱 구현 ([game-design.md](game-design.md) §5 규칙의 구현)
-- 매 틱: 살아있는 유닛 `gauge += spd`; `≥1000`이면 1회 행동 후 `gauge -= 1000`(**carry — 0 리셋 아님**).
-- **틱 내 순서: ①effect(tickHoT→expireEffects) ②게이지 증가 ③행동.** HoT 적용 후 만료(만료틱 마지막 proc 보장). 일관성이 결정론 보장.
-- **매 틱 계산 채택**, "다음 행동자 min-heap 점프"는 기각(속도 변조 잦아 큐 재계산 빈번 → 이득 상쇄). 측정 전 최적화 금지.
-- 속도 버프 구현규칙(미래): 이미 찬 게이지 소급 수정 금지, 매 틱 현재 속도로 재계산.
-- 라운드 = `ROUND_TICKS`(현재 100)틱 스냅샷(표시용, 계산 영향 0).
+- 매 틱: 살아있는 + 스턴 아닌 유닛 `gauge += spd × speedMult(u)`; **`while gauge≥1000`이면 행동 후 `-=1000`**(오버플로/고속 시 한 틱 다중 행동 = 턴 유실 방지, carry).
+- **틱 내 순서: ①effect(tickHoT→tickDoT→expireEffects) ②게이지 증가 ③행동(파티 우선, 그다음 몹).** 만료 전 마지막 proc 보장.
+- 매 틱 계산 채택(min-heap 점프 기각 — 속도 변조 잦음). 라운드 = `ROUND_TICKS`(100)틱 스냅샷(표시용).
 
 ## 결정 / 불변식
-- **동시틱 = 파티 우선 (의도된 결정, 2026-05-30 확정).** 같은 틱에 양쪽 1000 도달 + 파티가 치명타면 몹은 반격 못 함. ATB 속도순 아님 — 단순성 위해 고정.
-- **결정론:** 전투 자체는 RNG 없음 → 같은 (파티,몹)=같은 결과. **조우 생성만 시드 랜덤**(랜덤 몹+특성) → 시뮬은 매치업당 시드 trial **승률 분포**(전투 내 변동성[마나/쿨]은 step5부터).
+- **동시틱 = 파티 우선**(2026-05-30 확정).
+- **결정론:** 전투 자체 RNG 0 → 같은 (파티,몹)=같은 결과. **조우 생성만 시드 랜덤**. 전투 변동성 = ATB 타이밍 + 마나/쿨(결정론적). 타겟팅도 결정론(위협도 스코어, RNG 0).
 - 교착: `maxTicks`(기본 20000) 초과 → 몹 승.
 
 ## 데이터 구조 (수치 placeholder — 코드 수정 없이 튜닝)
-- `JOBS{ key: { name, spd, role, skills:[id...], levels:{ 1:{hp,atk,[heal]}, …5:{} } } }` — 레벨별 명시 스탯(hp·atk·[heal] 스케일, spd 불변). 강화=level+1(상한 5, **노비스는 강화 불가**). level1=베이스. `skills`=**기본** 우선순위 배열(발동 먼저, 평타 끝). 노비스=평타만. (상시 `taunt` 필드 제거 — 도발=가디언 스킬.) **플레이어 우선순위 override** = roster `skillOrder`(step5b) → `normalizeSkillOrder(job, order)`가 무효 id 제거·누락 직업스킬 append로 항상 유효 순서 보장, `makeUnit`이 그 순서로 skills resolve.
-- `MONSTERS{ id: { name, mul:{hp,atk,def,spd} } }`(monsters.js, **일반 몹**) — 고정 특성 없음(생성기가 슬롯 랜덤 부착). `BOSSES{ id: { name, boss:true, mul, [aoe], [fixed:[id...]], [bonus:[rarity...]] } }`(**보스**) — 고정 능력(`aoe` 엔진플래그 또는 `fixed`=항상 부착 트레잇 id) + `bonus`(스테이지 슬롯 외 추가 트레잇 레어도). 스탯 = `round(levelCurve(L) × mul)`. 보스 스테이지 자동배치는 미정(`generateEncounter` monId로 명시). (`aoeRatio`는 makeMob 기본 0.6.)
-- `levelCurve(L) → {hp,atk,def,spd}`(curve.js, 전역 커브) / `STAGES{ n:{ level, traitSlots:[rarity...] } }`(stages.js, 스테이지별 몹레벨+특성슬롯).
-- `SKILLS{ id: { id, name, kind:'attack'|'heal', range:'melee'|'ranged'|null, power, manaGain, cost, cd, effects:[spec] } }` — 평타도 스킬. `power`=즉발 위력 배율(attack→atk×power, heal→heal×power). `manaGain`=행동 시 자기 마나+(평타>0), `cost`=발동 마나소비, `cd`=쿨다운 틱. effect 스펙=`{target:'self'|'enemy'|'lowestHpAlly', type, value|valueRatio, duration, interval?}`(배율형=value, hot=valueRatio×시전자heal+interval). `MANA_MAX`/`MANA_GAIN` 상수. 직업 `skills` 배열=우선순위(발동 먼저, 평타 끝). 가변상태(mana·cooldowns·effects)는 유닛 인스턴스에.
-- `TRAITS{ id: { id, name, rarity, trigger, cond?, op, value, priority?, exclusive?, defends? } }` — 몹 트레잇 규칙. trigger∈{incomingDamage,postIncomingDamage,turnStart}, op∈{mult,add,heal,reflect}, cond 매처(attackerRange/attackerKind), rarity∈{일반,희귀,영웅,전설}. **7종**(근접회피·근접면역·원거리저항·원거리면역·자가회복·데미지반사·재생). `defends:{range:'melee'|'ranged', full:bool}` = 방어 트레잇 메타(상호배제용, 전투 거동엔 무관). **조우 생성기가 스테이지 슬롯 레어도에 맞춰 랜덤 부착 + `conflicts()` 상호배제 필터**(한 범위 완전봉쇄+다른 범위 방어 금지 = §7.2 전딜봉쇄 차단).
-- `range` 근/원 이진 태그 = 근접회피(`cond:{attackerRange:'melee'}`)가 소비. (phys/magic `type`은 효과 0이라 step3a에서 제거 → 스킬 모델이 대체.)
+- `JOBS{ key:{ name, spd, role, mana, skills:[id...], levels:{1:{hp,atk,[heal]},…10:{}} } }` — 레벨별 명시 스탯(L1~10, ≈×1.2/레벨, spd·mana 레벨 불변=전직으로만). `skills`=기본 우선순위(액티브 먼저, **평타=마지막**). 노비스=평타만. 6전직 각 평타+액티브4(2차전직용 guardian_taunt는 키트 외 def만 유지).
+- `MONSTERS{ id:{name,mul} }`(일반, 고정특성 없음) / `BOSSES{ id:{name,boss,mul,[aoe],[fixed],[bonus]} }`. 스탯=`round(levelCurve(L)×mul)`. (보스 자동배치 미정.)
+- `levelCurve(L)→{hp,atk,def,spd}`(curve.js: hp×1.15·atk×1.10·def×1.10/레벨, spd 6 고정). `stageCfg(s)→{level:s, traitSlots:[rarity...]}`(stages.js, 절차생성; 온보딩 S1~2 무트레잇 → 레어도 unlock/간격/상한 규칙으로 점증). `STAGES`=1..MAX_STAGE 생성객체(소비처 호환).
+- `SKILLS{ id:{ id,name,kind:'attack'|'heal',range:'melee'|'ranged'|null,power,manaGain,cost,cd,effects,[learnCost],[hits],[ignoreDef] } }` — 평타도 스킬. effect 스펙=`{target,type,value|valueRatio,duration,interval?}`. `MANA_MAX`/`MANA_GAIN` 상수(직업 마나 상한=`job.mana`→unit.manaMax).
+- `TRAITS{ id:{...} }` 2계열: **규칙형**`{rarity,trigger,cond?,op,value,priority?,defends?}`(근접회피·근접면역·원거리저항·원거리면역·자가회복·데미지반사·재생) + **타겟팅형**`{rarity,targeting:{position?,lowHp?,atk?}}`(저체력추적 — threat weight 변조, trigger 없음). rarity∈{일반,희귀,영웅,전설}. 조우 생성기가 슬롯 레어도에 맞춰 랜덤 부착 + `conflicts()` 필터.
+- `range` 근/원 이진 태그 = 근접회피/원거리저항 등이 소비.
 
 ## 테스트 전략
-`node:test` **157개**. 핀된 규칙: 데이터 형태 / 유닛 팩토리(레벨 스케일·잘못된 level RangeError·**skillOrder 보정**) / damage·타게팅 / 전투(승·결정론·힐·스냅샷·**빈/전멸 가드 틱0**) / 교착 / 광역 / 도발 / 게이지 carry / 동시틱 / 몹사망 break / 힐 cap / 라운드경계 / **스냅샷 mob.aoe** / 스킬 resolve·skill.kind / 트레잇 규칙엔진(op·trigger·cond·priority·exclusive·reflect 0클램프·**killing-blow**) / 근접회피·**원거리면역** 통합 / 시드 PRNG / 레벨커브·몹계수·스테이지 / 조우 생성(결정론·스탯·distinct·레어도·**일반/보스 분리·상호배제 conflicts**) / 면역 0뎀·회피≠면역 / **런 상태기계(newRun·영입·강화[노비스거부]·선발·전직[=레벨업·전직레벨]·재배열 reorderSkill·전투 승패clear·next terminal·prep-only fight·결정론) / 게임 렌더(prep/result·강화전직버튼 조건·광역라벨·재배열버튼) / effect / 스킬발동**. 엔진 동작 테스트는 `tests/_fixtures.js` 고정 몹 사용(밸런스 데이터 디커플). UI 이벤트(main.js)는 수동 실측(serve.bat).
+`node:test` **223개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax) / damage·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / 조우 생성 / 절차 스테이지(MAX_STAGE 20·온보딩·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / 게임 렌더 / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. UI 이벤트는 수동 실측.
 
-## 설계 원칙 — 확장성 우선 (시스템 레벨)
-시스템(스킬·버프/디버프·발동 효과 트리거·데미지 파이프라인·이벤트 훅)은 **확장 가능하게 견고히** 짠다 — 토대가 약하면 기능 얹을 때마다 갈아엎게 됨. 단 **단일 스킬·단일 옵션을 위한 추상화는 과설계라 금지.** 경계: 시스템=구조적으로 / 개별 기능 디테일=YAGNI OK. 기능은 작게 단계적으로 추가하되 매 시스템은 처음부터 튼튼하게. (베이스 평타 엔진은 의도적으로 단순 — RPS·스킬·버프가 들어올 때 위 시스템들을 견고히 설계.)
-
-## 데이터·코드 분리 원칙
-직업·몹·속성·스킬 = 테이블로 분리 → 밸런스 튜닝이 코드 수정 없이. 시뮬은 프로젝트 내 스크립트로 두어 수치 변경 시 자동 재측정.
+## 설계 원칙
+- **시스템 확장성 우선** — 스킬·effect·트리거·데미지 파이프는 견고히(토대 약하면 갈아엎음). 단 단일 스킬·옵션 과추상화 금지. 시스템=구조적 / 개별 기능=YAGNI OK.
+- **데이터·코드 분리** — 직업·몹·트레잇·스킬·곡선 = 테이블 → 밸런스 튜닝이 코드 수정 없이. 시뮬(sim/*)로 수치 변경 자동 재측정.

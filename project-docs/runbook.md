@@ -14,7 +14,8 @@
 
 ## 실행
 ```bash
-node sim/sim.js          # 헤드리스 시뮬(밸런스 측정) — = npm run sim
+node sim/sim.js          # 전투 시뮬(고정파티 × 스테이지×시드 승률) — = npm run sim
+node sim/econ-sim.js     # 경제 런루프 시뮬(풀투자 정책 → 사망/클리어 스테이지 분포)
 node serve.js [port]     # 로컬 정적 서버(기본 8080) + 브라우저 자동오픈 — = npm run serve
 ```
 - **브라우저 플레이(로컬):** `serve.bat` 더블클릭 또는 `npm run serve` → `http://localhost:8080` 자동 오픈. `file://` 직접 열기는 ES모듈 CORS로 막힘(http 서빙 필수). 서버는 의존성 0(node 내장만), 127.0.0.1 바인드(LAN 노출 안 함). 종료 = 콘솔창 닫기/Ctrl+C. 브라우저 자동오픈 끄려면 `NO_OPEN=1`(서버만).
