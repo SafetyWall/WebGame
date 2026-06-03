@@ -159,9 +159,14 @@ function actMob(mob, party, tick, log) {
   }
 }
 
+// effect 인스턴스 → 표시용 type 목록(재생뷰 태그).
+const effTypes = (u) => (u.effects || []).map(e => e.type)
+
 export function runBattle(party, mob, opts = {}) {
   const maxTicks = opts.maxTicks ?? DEFAULT_MAX_TICKS
+  const record = Boolean(opts.record)   // true = 액션단위 frame 기록(재생뷰용). 미설정=기존 동작·sim 무영향.
   const rounds = []
+  const frames = []
   let log = []
   let tick = 0
 
@@ -171,11 +176,18 @@ export function runBattle(party, mob, opts = {}) {
     mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, aoe: Boolean(mob.aoe), traits: (mob.traits || []).map(t => t.name) },
     log,
   })
+  // 액션단위 frame: 그 시점 전체 전황(HP·마나·게이지·effect) + 이 액션이 만든 로그.
+  const frame = (actor, lines) => frames.push({
+    tick,
+    actor,
+    log: lines.slice(),
+    party: party.map(u => ({ name: u.name, level: u.level, hp: Math.max(0, u.hp), maxHp: u.maxHp, mana: u.mana, manaMax: u.manaMax, gauge: Math.floor(u.gauge), alive: u.hp > 0, effects: effTypes(u) })),
+    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, boss: Boolean(mob.boss), aoe: Boolean(mob.aoe), effects: effTypes(mob) },
+  })
   const finish = (winner) => {
-    // 라운드 경계 틱에 끝나면 위에서 이미 푸시됨 → 같은 틱 중복 방지
     const last = rounds[rounds.length - 1]
     if (!last || last.tick !== tick) rounds.push(snapshot(tick))
-    return { winner, rounds, ticks: tick }
+    return { winner, rounds, ticks: tick, frames }
   }
 
   // 빈/전멸 파티 = 전투 성립 안 함 → 즉시 몹 승(틱0). run.fight가 빈 파티를 막지만 엔진 계약도 명시.
@@ -184,8 +196,10 @@ export function runBattle(party, mob, opts = {}) {
   while (tick < maxTicks) {
     tick++
     // ① effect: HoT/DoT 적용 후 만료 (전 유닛 + 몹). 만료틱 마지막 proc 보장.
+    const efLen = log.length
     for (const u of party) { tickHoT(u, tick, log); tickDoT(u, tick, log); expireEffects(u, tick) }
     tickHoT(mob, tick, log); tickDoT(mob, tick, log); expireEffects(mob, tick)
+    if (record && log.length > efLen) frame('지속효과', log.slice(efLen))
     // ② 게이지 증가 (살아있는 + 스턴 아닌 유닛만). speed effect로 가감속.
     for (const u of party) if (u.hp > 0 && !isStunned(u)) u.gauge += u.spd * speedMult(u)
     if (mob.hp > 0 && !isStunned(mob)) mob.gauge += mob.spd * speedMult(mob)
@@ -195,14 +209,18 @@ export function runBattle(party, mob, opts = {}) {
     for (const u of party) {
       while (u.hp > 0 && !isStunned(u) && u.gauge >= THRESHOLD) {
         u.gauge -= THRESHOLD
+        const aLen = log.length
         actUnit(u, party, mob, tick, log)
+        if (record) frame(u.name, log.slice(aLen))
         if (mob.hp <= 0) break
       }
       if (mob.hp <= 0) break
     }
     while (mob.hp > 0 && !isStunned(mob) && mob.gauge >= THRESHOLD) {
       mob.gauge -= THRESHOLD
+      const mLen = log.length
       actMob(mob, party, tick, log)
+      if (record) frame(mob.name, log.slice(mLen))
     }
     // 라운드 스냅샷 (표시 단위)
     if (tick % ROUND_TICKS === 0) { rounds.push(snapshot(tick)); log = [] }

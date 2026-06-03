@@ -3,8 +3,9 @@
 ## UI/UX 개편 (2026-06-03 완료 → CHANGELOG)
 component+store 프레임워크로 교체. spec = `docs/superpowers/specs/2026-06-03-ui-overhaul-design.md`.
 - [x] **캐릭터 카드 + 1열/2열 토글**(폭 고정) / **스킬 2×2 pill 노출** / **click·tap 툴팁**(스킬 describe·적 특성·광역, PC=모바일) / **pointer 드래그**(출전순서·우선순위, ▲▼ 제거) / **상세 모달**(강화/전직/학습/스킬업 + before→after 미리보기). (→ CHANGELOG 2026-06-03)
+- [x] **전투 재생뷰(2026-06-03).** `runBattle({record})` 액션단위 frame(전 유닛 HP/마나/게이지/effect) + `BattleStage`(◀▶⏮⏭⏯ 자동재생) + 전체로그 접이식. `battleFrames`=결정론 재생성(영속X). (→ CHANGELOG)
 - **잔여(실측):** 실기기 터치 드래그·sticky-hover 거동 / 시각 스크린샷(헤드리스 캡처 도구 타임아웃 — DOM·콘솔은 정상).
-- **미래(별도 spec):** 전투 재생뷰(`BattleStage` + `playbackCursor` + `update` 타깃패치) — **엔진 스냅샷 강화**(현 `rounds`=100틱·`{name,hp,maxHp}`만 → 액션/틱 단위 + 마나/쿨/effect/게이지) 선행 필요.
+- **미래:** 캐릭터 애니메이션/이펙트 = `BattleStage`만 render 타깃 교체(update 타깃패치 or CanvasStage). frame 입도 조정(틱 단위)·전투 속도조절 옵션.
 
 ### UI 개편서 갈린 데이터 결정
 - [x] **가디언 도발 제거** — 확인 결과 `JOBS.guardian.skills`에 이미 없음(키트=4액티브, CHANGELOG 2026-06-01서 제거). 추가 작업 불필요. (taunt 메커니즘은 SKILLS·엔진 유지.)

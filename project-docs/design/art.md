@@ -20,7 +20,11 @@
 - **드래그** = pointer 이벤트(`drag.js`, 터치+마우스 공용. HTML5 DnD는 터치 미지원이라 회피). 드롭=목표 인덱스(`dragMove.js`).
 - **결과 국면** `ResultView`: 승/패/클리어 배너 + `render.js` `renderRounds` 재사용 + 다음/재시작. 버튼 = `data-action`, `main.js` 위임. 스킬은 전투 로그에 텍스트로 자동 노출.
 
+## 전투 재생뷰 (2026-06-03 구현)
+- `BattleStage`(ui.frames/cursor 구독) — **액션단위** 스텝(◀▶⏮⏭) + 자동재생(⏯ 700ms) + 라이브 전황(파티/몹 HP바·마나바·effect 태그). `ResultView` = 배너 + 재생뷰 + **전체 로그 접이식**(`<details>`, renderRounds).
+- frame = `runBattle({record:true})` → 틱·행위자·로그 + 전 유닛 상태. `run.battleFrames(s)`로 결정론 재생성(ui 휘발, 영속 안 함 → 새로고침 시 복구).
+- effect 태그 색: dot/stun 적색, hot 녹색, 그 외 청색.
+
 ## 향후 비주얼 방향 (미구현)
-- **전투 재생뷰(`BattleStage`)** — 액션/라운드 스텝 + 라이브 전황(HP바·마나·쿨·effect 갱신), 버튼 넘김 or 전체 로그. `playbackCursor` 구독 + `update` 타깃패치. **엔진 스냅샷 강화(별도 spec)** 선행 필요(현 `rounds`=100틱·thin).
-- HP 바 = 준비 화면은 항상 풀(전투 중 변동은 재생뷰에서). 마나/쿨/effect 아이콘.
-- 직업·속성 심볼/색 카운터 힌트. 스킬 pill **아이콘화**(2×2 레이아웃 불변, pill만 교체).
+- 캐릭터 애니메이션/스프라이트/파티클 = `BattleStage`만 render 타깃 교체(`update` 타깃패치 or `CanvasStage` 가산). 프레임워크 불변.
+- HP 바 = 준비 화면은 항상 풀. 직업·속성 심볼/색 카운터 힌트. 스킬 pill **아이콘화**(2×2 불변, pill만 교체).

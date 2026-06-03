@@ -116,6 +116,15 @@ test('result: 패배=재시작 / 클리어=새 런', () => {
   assert.match(clear, /data-action="restart"/)
 })
 
+test('result: ui.frames 있으면 재생뷰(battle-stage) 노출 + 전체로그 접이식', () => {
+  const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2, lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [{ tick: 50, party: [{ name: '전사', hp: 5, maxHp: 115 }], mob: { name: '슬라임', hp: 0, maxHp: 30, traits: [] }, log: ['끝'] }] } }
+  const ui = { layout: '2col', modal: null, cursor: 0, playing: false, frames: [{ tick: 50, actor: '전사', log: ['전사 공격'], party: [{ name: '전사', level: 3, hp: 5, maxHp: 115, mana: 0, manaMax: 100, gauge: 0, alive: true, effects: [] }], mob: { name: '슬라임', hp: 0, maxHp: 30, boss: false, effects: [] } }] }
+  const html = renderApp({ run: s, ui })
+  assert.match(html, /battle-stage/)
+  assert.match(html, /<details class="full-log"><summary>전체 로그 보기/)
+  assert.match(html, /라운드 1/)
+})
+
 test('result: 단일 h2 배너(결과: 헤더 중복 없음) + 라운드 로그 유지', () => {
   const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2,
     lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [

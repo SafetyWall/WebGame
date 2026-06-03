@@ -9,7 +9,7 @@ import { renderResultView } from './components/ResultView.js'
 
 export function renderApp(state) {
   const { run, ui } = state
-  if (run.phase === 'result') return renderResultView(run)
+  if (run.phase === 'result') return renderResultView(run, ui)
   return renderStageHeader(run, ui)
     + renderEnemyPreview(run.encounter)
     + renderRoster(run, ui)

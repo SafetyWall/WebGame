@@ -94,6 +94,30 @@
     .tt-title { color: #9cf; font-weight: bold; margin-bottom: .2rem; }
     .tt-line { color: #bcd; }
 
+    /* 전투 재생뷰 */
+    .battle-stage { border: 1px solid #2a2f2a; border-radius: 8px; padding: .5rem .6rem; margin: .6rem 0; background: #141414; }
+    .pb-controls { display: flex; gap: .25rem; align-items: center; flex-wrap: wrap; }
+    .pb-controls button { padding: .15rem .5rem; }
+    .pb-count { color: #9c9; font-size: .8em; margin-left: auto; }
+    .pb-head { color: var(--accent); font-size: .85em; margin: .35rem 0 .1rem; }
+    .pb-log { min-height: 1.4em; margin-bottom: .4rem; }
+    .pb-log .dim { color: #555; }
+    .bu { border: 1px solid #233; border-radius: 5px; padding: .3rem .5rem; margin: 4px 0; background: #181818; }
+    .bu.dead { opacity: .4; }
+    .bu-top { display: flex; justify-content: space-between; font-size: .85em; }
+    .bu-name { color: #cfc; } .bu-name.boss { color: #f84; font-weight: bold; } .bu-hp { color: #9c9; }
+    .bar { height: 6px; background: #252; border-radius: 3px; overflow: hidden; margin: 2px 0; }
+    .bar > i { display: block; height: 100%; }
+    .bar.hp > i { background: #6c6; } .bar.hp.mob > i { background: #e66; }
+    .bar.mana { height: 4px; background: #223; } .bar.mana > i { background: #69f; }
+    .bu-eff { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+    .eff { font-size: .68em; border: 1px solid #356; border-radius: 3px; padding: 0 4px; background: #1a2433; color: #9cf; }
+    .eff-dot, .eff-stun { background: #2a1414; color: #f99; border-color: #633; }
+    .eff-hot { background: #142a14; color: #9f9; border-color: #363; }
+    .battlefield .vs { text-align: center; color: #777; font-size: .72em; margin: .25rem 0; }
+    .full-log { margin-top: .6rem; }
+    .full-log summary { cursor: pointer; color: #9af; font-size: .85em; }
+
     /* 결과 뷰(라운드 로그) — 기존 색 보존 */
     section { border-top: 1px solid #333; padding: .5rem 0; }
     .hp { color: #6c6; } .mob { color: #e88; } .mob.boss { color: #f84; font-weight: bold; }

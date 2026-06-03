@@ -148,3 +148,14 @@ export function next(s, rng) {
 export function restart(rng) {
   return newRun(rng)
 }
+
+// 전투 재생뷰용 액션단위 frame. 전투는 결정론 → 같은 (party,encounter) = lastResult와 동일 전개.
+// UI에서만 호출(ui 상태에 보관, 영속 안 함). 빈 파티 = [].
+export function battleFrames(s) {
+  if (!s.encounter || !s.party || s.party.length === 0) return []
+  const units = s.party.map((i) => {
+    const r = s.roster[i]
+    return makeUnit(JOBS[r.job], r.level, r.skillOrder, r.skillLevels, r.learnedSkills)
+  })
+  return runBattle(units, makeMob(s.encounter), { record: true }).frames
+}
