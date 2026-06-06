@@ -25,12 +25,12 @@ test('prep: 레이아웃 클래스 + 토글 버튼(2col→1col)', () => {
   assert.match(h1, /data-layout="2col"/)
 })
 
-test('prep: 카드 본문=openModal, 스킬 pill=data-tip', () => {
+test('prep: 카드 본문=openModal, 스킬 pill=openSkill(상세 팝업)', () => {
   const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], party: [0] }
   const html = renderApp(S(s))
   assert.match(html, /data-action="openModal"[^>]*data-i="0"/)
-  assert.match(html, /class="sk have"[^>]*data-tip="skill"[^>]*data-skill="warrior_cleave"/)   // 학습=have
-  assert.match(html, /class="sk no"[^>]*data-tip="skill"[^>]*data-skill="warrior_heavy"/)       // 미학습=no
+  assert.match(html, /class="sk have"[^>]*data-action="openSkill"[^>]*data-i="0"[^>]*data-skill="warrior_cleave"/)   // 학습=have
+  assert.match(html, /class="sk no"[^>]*data-action="openSkill"[^>]*data-i="0"[^>]*data-skill="warrior_heavy"/)       // 미학습=no
 })
 
 test('prep: 노비스 카드 = 스킬 영역 빈칸(전직 안내 미노출)', () => {
@@ -84,12 +84,57 @@ test('modal: 노비스 = 전직 버튼', () => {
   assert.doesNotMatch(html, /data-action="upgrade"/)
 })
 
-test('modal: 학습 스킬=레벨업+위력 미리보기, 미학습=학습', () => {
+test('modal: 스킬 = openSkill 진입(학습 액티브 + 미학습 pill), 인라인 학습/레벨업 없음', () => {
   const s = { ...newRun(makeRng(1)), gold: 50, roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], party: [0] }
   const html = renderApp(S(s, { modal: 0 }))
+  assert.match(html, /data-action="openSkill"[^>]*data-skill="warrior_cleave"/)  // 장착 스킬 클릭→상세
+  assert.match(html, /data-action="openSkill"[^>]*data-skill="warrior_heavy"/)   // 미학습 pill 클릭→상세
+  assert.doesNotMatch(html, /data-action="learnSkill"/)    // 학습/레벨업은 상세 팝업으로 이동
+  assert.doesNotMatch(html, /data-action="levelupSkill"/)
+})
+
+test('skillDetail: 코어/부여효과 분리, 레벨업은 맨 밑 변화만', () => {
+  const s = { ...newRun(makeRng(1)), gold: 50, roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 1 } }], party: [0] }
+  const html = renderApp(S(s, { modal: 0, skillDetail: { i: 0, skillId: 'warrior_cleave' } }))
+  assert.match(html, /skill-detail-overlay/)
+  assert.match(html, /부여 효과/)
+  assert.match(html, /취약/)                    // 키워드 pill
+  assert.match(html, /적에게/)                  // 대상 라벨(별도)
+  assert.match(html, /받는 데미지 \+25%/)        // 효과 문구(보유자 기준, 적 접두 없음)
+  assert.match(html, /지속 500틱/)               // 지속 라벨링
+  assert.doesNotMatch(html, /\[취약\]/)          // 상단 코어엔 effect 줄 중복 없음
+  // 레벨업 = 맨 밑 변화만
+  assert.match(html, /위력 ×1\.7 → ×2\.13/)
+  assert.match(html, /받는 데미지 \+25% → \+31%/)   // 레벨업 줄 = 효과 문구 기반(보유자 기준)
   assert.match(html, /data-action="levelupSkill"[^>]*data-skill="warrior_cleave"/)
-  assert.match(html, /위력 ×1\.7→×2\.13/)   // skillUpPreview
+})
+
+test('skillDetail: 미학습 = 학습 버튼', () => {
+  const s = { ...newRun(makeRng(1)), gold: 50, roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'] }], party: [0] }
+  const html = renderApp(S(s, { modal: 0, skillDetail: { i: 0, skillId: 'warrior_heavy' } }))
   assert.match(html, /data-action="learnSkill"[^>]*data-skill="warrior_heavy"/)
+})
+
+test('skillDetail: 기본 공격 = 학습/레벨업 없음', () => {
+  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0] }
+  const html = renderApp(S(s, { modal: 0, skillDetail: { i: 0, skillId: 'melee_strike' } }))
+  assert.match(html, /기본 공격 — 학습·레벨업 없음/)
+  assert.doesNotMatch(html, /data-action="learnSkill"/)
+})
+
+test('skillDetail: null이면 미노출', () => {
+  const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0] }
+  assert.doesNotMatch(renderApp(S(s, { modal: 0 })), /skill-detail-overlay/)
+})
+
+test('skillDetail: 카드에서 열면(모달 없음) 읽기전용 — 학습/레벨업/최대레벨 푸터 없음', () => {
+  const s = { ...newRun(makeRng(1)), gold: 50, roster: [{ job: 'warrior', level: 5, learnedSkills: ['warrior_cleave'], skillLevels: { warrior_cleave: 5 } }], party: [0] }
+  const html = renderApp(S(s, { modal: null, skillDetail: { i: 0, skillId: 'warrior_cleave' } }))
+  assert.match(html, /skill-detail-overlay/)
+  assert.match(html, /부여 효과/)            // 상세 본문은 보임
+  assert.doesNotMatch(html, /sd-action/)      // 액션 푸터 없음
+  assert.doesNotMatch(html, /levelupSkill/)
+  assert.doesNotMatch(html, /최대 레벨/)
 })
 
 test('modal: 다중 스킬 = 우선순위 드래그 리스트', () => {

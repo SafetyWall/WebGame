@@ -5,6 +5,7 @@ import { renderEnemyPreview } from './components/EnemyPreview.js'
 import { renderRoster } from './components/Roster.js'
 import { renderActionBar } from './components/ActionBar.js'
 import { renderModal } from './components/CharacterModal.js'
+import { renderSkillDetail } from './components/SkillDetailModal.js'
 import { renderResultView } from './components/ResultView.js'
 
 export function renderApp(state) {
@@ -15,4 +16,5 @@ export function renderApp(state) {
     + renderRoster(run, ui)
     + renderActionBar(run)
     + renderModal(run, ui)
+    + renderSkillDetail(run, ui)
 }

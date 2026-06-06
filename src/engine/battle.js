@@ -52,7 +52,9 @@ export function scaledEffectValue(type, value, mult) {
 }
 
 // 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, allies=파티전체, lowestHpAlly=힐대상.
+// 반환 = effect를 실제로 부여한 대상 객체 목록(재생뷰 타겟 하이라이트용. 비-record 호출은 무시).
 function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = null) {
+  const applied = []
   for (const spec of skill.effects) {
     const targets = spec.target === 'self' ? [u]
       : spec.target === 'enemy' ? [mob]
@@ -73,15 +75,21 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         inst.value = scaledEffectValue(spec.type, spec.value, mult)
       }
       applyEffect(target, inst)
+      applied.push(target)
     }
   }
+  return applied
 }
+
+// 행동 객체 → 재생뷰 타겟 ref. 몹='mob', 파티 유닛=배열 인덱스(동일 이름 유닛 구분용).
+const refOf = (obj, party, mob) => (obj === mob ? 'mob' : party.indexOf(obj))
 
 function actUnit(u, party, mob, tick, log) {
   const skill = selectSkill(u, tick)
   u.mana = Math.min(u.manaMax ?? MANA_MAX, u.mana + skill.manaGain - skill.cost)
   if (skill.cost > 0) u.cooldowns[skill.id] = tick + skill.cd
   const mult = skillLevelMult(u.skillLevels && u.skillLevels[skill.id])  // 평타·미학습=1
+  const hit = new Set()  // 이 행동이 직접 건드린 대상 ref(데미지/힐/effect)
 
   if (skill.kind === 'heal') {
     const target = lowestHpAlly(party)
@@ -90,10 +98,11 @@ function actUnit(u, party, mob, tick, log) {
         const amt = Math.floor(u.heal * skill.power * mult)
         target.hp = Math.min(target.maxHp, target.hp + amt)
         log.push(`${u.name} 회복 → ${target.name} (+${amt})`)
+        hit.add(refOf(target, party, mob))
       }
-      applySkillEffects(skill, u, mob, target, tick, mult, party)
+      for (const t of applySkillEffects(skill, u, mob, target, tick, mult, party)) hit.add(refOf(t, party, mob))
     }
-    return
+    return [...hit]
   }
   // kind === 'attack' → 몹 공격. effect 배율(자기 주는뎀·몹 받는뎀) + 트레잇이 데미지 수정.
   // hits>1 = 멀티히트(1행동 N회 타격, 각 히트가 mark 등 on-hit 발동).
@@ -111,12 +120,14 @@ function actUnit(u, party, mob, tick, log) {
       mob.hp -= dmg
       applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob) // 반사 등 side-effect
       log.push(`${u.name} 공격 → ${mob.name} (-${dmg})`)
+      hit.add('mob')
       // 표식(mark): 이 타격으로 기존 표식 발동(추가뎀). 이번 스킬이 거는 표식은 아래 applySkillEffects라 자기발동 안 함.
       const mk = markBonus(mob)
       if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
     }
   }
-  applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)
+  for (const t of applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)) hit.add(refOf(t, party, mob))
+  return [...hit]
 }
 
 // 받은뎀 일부를 공격자(몹)에게 반사. reflect effect 보유 대상만.
@@ -132,18 +143,20 @@ function actMob(mob, party, tick, log) {
   applyRules('turnStart', 0, {}, mob) // 자가회복 등 side-effect (현재 라이브 몹 미부착)
   if (mob.aoe) {
     const base = Math.floor(mob.atk * mob.aoeRatio)
-    for (const u of party) {
+    const hitIdx = []
+    party.forEach((u, i) => {
       if (u.hp > 0) {
         const dmg = Math.max(1, Math.floor(damage(base, u.def) * dmgTakenMult(u)))
         u.hp -= dmg
         reflectTo(mob, u, dmg, log)
+        hitIdx.push(i)
       }
-    }
+    })
     // 로그는 실제 적용값 기준(살아있는 첫 아군 기준 표기). dmgTakenMult 반영.
     const ref = party.find(u => u.hp > 0)
     const shown = ref ? Math.max(1, Math.floor(damage(base, ref.def) * dmgTakenMult(ref))) : damage(base, 0)
     log.push(`${mob.name} 광역 (개당 -${shown})`)
-    return
+    return hitIdx
   }
   // 수호(intercept): 최저체력 아군을 겨냥하면, intercept 보유 아군(가디언)이 대신 받음.
   let target = selectMobTarget(party, mob)
@@ -156,11 +169,13 @@ function actMob(mob, party, tick, log) {
     target.hp -= dmg
     log.push(`${mob.name} 공격 → ${target.name} (-${dmg})`)
     reflectTo(mob, target, dmg, log)
+    return [party.indexOf(target)]
   }
+  return []
 }
 
-// effect 인스턴스 → 표시용 type 목록(재생뷰 태그).
-const effTypes = (u) => (u.effects || []).map(e => e.type)
+// effect 인스턴스 → 재생뷰용 스냅샷(이름/정확표기 + 남은지속 계산용). value=배율 or 확정수치, expireTick=만료틱.
+const effSnap = (u) => (u.effects || []).map(e => ({ type: e.type, value: e.value, expireTick: e.expireTick, interval: e.interval }))
 
 export function runBattle(party, mob, opts = {}) {
   const maxTicks = opts.maxTicks ?? DEFAULT_MAX_TICKS
@@ -177,12 +192,15 @@ export function runBattle(party, mob, opts = {}) {
     log,
   })
   // 액션단위 frame: 그 시점 전체 전황(HP·마나·게이지·effect) + 이 액션이 만든 로그.
-  const frame = (actor, lines) => frames.push({
+  // actorRef = 행동자 ref(파티 인덱스 | 'mob' | null), targets = 피격/힐 대상 ref 배열(하이라이트용).
+  const frame = (actor, lines, actorRef = null, targets = []) => frames.push({
     tick,
     actor,
+    actorRef,
+    targets,
     log: lines.slice(),
-    party: party.map(u => ({ name: u.name, level: u.level, hp: Math.max(0, u.hp), maxHp: u.maxHp, mana: u.mana, manaMax: u.manaMax, gauge: Math.floor(u.gauge), alive: u.hp > 0, effects: effTypes(u) })),
-    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, boss: Boolean(mob.boss), aoe: Boolean(mob.aoe), effects: effTypes(mob) },
+    party: party.map(u => ({ name: u.name, level: u.level, hp: Math.max(0, u.hp), maxHp: u.maxHp, mana: u.mana, manaMax: u.manaMax, gauge: Math.floor(u.gauge), alive: u.hp > 0, effects: effSnap(u) })),
+    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, boss: Boolean(mob.boss), aoe: Boolean(mob.aoe), traits: (mob.traits || []).map(t => t.id), effects: effSnap(mob) },
   })
   const finish = (winner) => {
     const last = rounds[rounds.length - 1]
@@ -210,8 +228,8 @@ export function runBattle(party, mob, opts = {}) {
       while (u.hp > 0 && !isStunned(u) && u.gauge >= THRESHOLD) {
         u.gauge -= THRESHOLD
         const aLen = log.length
-        actUnit(u, party, mob, tick, log)
-        if (record) frame(u.name, log.slice(aLen))
+        const tgts = actUnit(u, party, mob, tick, log)
+        if (record) frame(u.name, log.slice(aLen), party.indexOf(u), tgts)
         if (mob.hp <= 0) break
       }
       if (mob.hp <= 0) break
@@ -219,8 +237,8 @@ export function runBattle(party, mob, opts = {}) {
     while (mob.hp > 0 && !isStunned(mob) && mob.gauge >= THRESHOLD) {
       mob.gauge -= THRESHOLD
       const mLen = log.length
-      actMob(mob, party, tick, log)
-      if (record) frame(mob.name, log.slice(mLen))
+      const tgts = actMob(mob, party, tick, log)
+      if (record) frame(mob.name, log.slice(mLen), 'mob', tgts)
     }
     // 라운드 스냅샷 (표시 단위)
     if (tick % ROUND_TICKS === 0) { rounds.push(snapshot(tick)); log = [] }

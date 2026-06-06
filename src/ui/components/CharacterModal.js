@@ -1,13 +1,10 @@
-// 캐릭터 상세 모달. 풀스탯 + 강화/전직/학습/스킬레벨업(+before→after 미리보기) + 우선순위 드래그.
-// ui.modal = roster 인덱스 | null. null이면 '' 반환.
+// 캐릭터 상세 모달. 풀스탯 + 강화/전직 + 스킬(우선순위 드래그 · 클릭=상세 2차 팝업).
+// 학습/레벨업은 스킬 상세 팝업(SkillDetailModal)으로 이동. ui.modal = roster 인덱스 | null.
 import { JOBS } from '../../data/jobs.js'
 import { SKILLS } from '../../data/skills.js'
 import { unitSkillIds, normalizeSkillOrder } from '../../engine/unit.js'
-import {
-  UPGRADE_COST, MAX_LEVEL, PROMOTE_COST, PROMOTE_TARGETS,
-  LEARN_COST, SKILL_LV_COST, MAX_SKILL_LEVEL,
-} from '../../engine/run.js'
-import { upgradePreview, skillUpPreview } from '../preview.js'
+import { UPGRADE_COST, MAX_LEVEL, PROMOTE_COST, PROMOTE_TARGETS } from '../../engine/run.js'
+import { upgradePreview } from '../preview.js'
 import { esc } from './parts.js'
 
 const ROLE_KO = { dps: '공격', tank: '탱커', heal: '힐러' }
@@ -29,33 +26,24 @@ function upgradeBlock(run, i, r, job) {
   <div class="preview">${delta}</div></div>`
 }
 
-function skillMgmt(run, i, r, job) {
-  const actives = job.skills.slice(0, -1)
-  if (actives.length === 0) return ''
+// 장착 스킬(학습 액티브 + 기본공격) = 우선순위 드래그 리스트(클릭=상세). 미학습 액티브 = pill(클릭=상세→학습).
+function skillList(i, r, job) {
+  const basic = job.skills[job.skills.length - 1]
+  const equipped = normalizeSkillOrder(unitSkillIds(job, r.learnedSkills), r.skillOrder)
   const learned = r.learnedSkills || []
-  const rows = actives.map((sid) => {
-    const nm = esc(SKILLS[sid].name)
-    if (learned.includes(sid)) {
-      const lv = (r.skillLevels && r.skillLevels[sid]) || 1
-      const pv = skillUpPreview(SKILLS[sid], lv)
-      const pvTxt = pv && pv.power ? ` <span class="preview">위력 ×${pv.power.before}→×${pv.power.after}</span>`
-        : pv ? ` <span class="preview">Lv${pv.fromLevel}→${pv.toLevel}</span>` : ` <span class="hint">만렙</span>`
-      const btn = lv < MAX_SKILL_LEVEL
-        ? `<button data-action="levelupSkill" data-i="${i}" data-skill="${sid}"${run.gold < SKILL_LV_COST ? ' disabled' : ''}>레벨업(${SKILL_LV_COST})</button>` : ''
-      return `<div class="skill-row"><span class="sk-name have" data-tip="skill" data-skill="${sid}" data-lvl="${lv}">${nm} Lv${lv}</span> ${btn}${pvTxt}</div>`
-    }
-    return `<div class="skill-row"><span class="sk-name no" data-tip="skill" data-skill="${sid}" data-lvl="1">${nm}</span> <button data-action="learnSkill" data-i="${i}" data-skill="${sid}"${run.gold < LEARN_COST ? ' disabled' : ''}>학습(${LEARN_COST})</button></div>`
+  const draggable = equipped.length > 1
+  const items = equipped.map((sid, k) => {
+    const lvTxt = sid === basic ? '' : ` Lv${(r.skillLevels && r.skillLevels[sid]) || 1}`
+    const dragAttr = draggable ? 'data-drag="prio" ' : ''
+    return `<li class="prio-item" ${dragAttr}data-action="openSkill" data-i="${i}" data-skill="${sid}"><span class="handle">⠿</span> ${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
   }).join('')
-  return `<div class="modal-section"><div class="ms-title">스킬</div>${rows}</div>`
-}
-
-function priorityList(i, r, job) {
-  const order = normalizeSkillOrder(unitSkillIds(job, r.learnedSkills), r.skillOrder)
-  if (order.length < 2) return ''
-  const items = order.map((sid, k) =>
-    `<li class="prio-item" data-drag="prio" data-i="${i}" data-skill="${sid}"><span class="handle">⠿</span> ${k + 1}. ${esc(SKILLS[sid].name)}</li>`
-  ).join('')
-  return `<div class="modal-section"><div class="ms-title">스킬 우선순위 (드래그)</div><ol class="prio-list">${items}</ol></div>`
+  const unlearned = job.skills.slice(0, -1).filter((sid) => !learned.includes(sid))
+  const unlearnedBlock = unlearned.length
+    ? `<div class="ms-title">미학습</div><div class="skill-pills">${unlearned.map((sid) =>
+        `<span class="sk no" data-action="openSkill" data-i="${i}" data-skill="${sid}">${esc(SKILLS[sid].name)}</span>`).join('')}</div>`
+    : ''
+  const title = draggable ? '스킬 (드래그=우선순위 · 클릭=상세)' : '스킬 (클릭=상세)'
+  return `<div class="modal-section"><div class="ms-title">${title}</div><ol class="prio-list">${items}</ol>${unlearnedBlock}</div>`
 }
 
 export function renderModal(run, ui) {
@@ -71,8 +59,7 @@ export function renderModal(run, ui) {
     <div class="modal-head"><span class="jb">${esc(job.name)} Lv${r.level}</span><button class="modal-close" data-action="closeModal">✕</button></div>
     <div class="modal-stats">${stats}</div>
     ${upgradeBlock(run, i, r, job)}
-    ${skillMgmt(run, i, r, job)}
-    ${priorityList(i, r, job)}
+    ${skillList(i, r, job)}
   </div>
 </div>`
 }

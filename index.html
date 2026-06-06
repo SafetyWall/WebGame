@@ -37,7 +37,7 @@
     .nums { color: #9c9; font-size: .85em; }
     .numrow { display: flex; justify-content: space-between; align-items: center; gap: .4rem; margin-top: .15rem; }
     .card.in { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }   /* 출전 카드 = 자체 드래그(글씨 선택 대신 카드 이동) */
-    .card.dragging { cursor: grabbing; position: relative; z-index: 50; pointer-events: none; opacity: .9; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
+    .card.dragging, .prio-item.dragging { cursor: grabbing; position: relative; z-index: 50; pointer-events: none; opacity: .9; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
     .drop-target { outline: 2px solid var(--accent); background: #1d2a1d; }
     .skills2 { display: grid; gap: 3px; }
     .sk { border: 1px solid #356; border-radius: 5px; color: #9cf; font-size: .8em; padding: 1px 5px;
@@ -63,7 +63,11 @@
     /* 출전 순서 / 드래그 */
     .party-order .order-list, .prio-list { list-style: none; padding: 0; margin: 0; }
     .order-item, .prio-item { border: 1px solid #233; border-radius: 5px; background: #141414; padding: .25rem .45rem; margin: 4px 0; font-size: .85em; }
+    .prio-item { user-select: none; -webkit-user-select: none; touch-action: none; }   /* 드래그 중 글씨 선택·터치 스크롤 방지 */
     .handle { cursor: grab; color: #888; touch-action: none; padding: 0 .2rem; user-select: none; }
+    /* 드래그 진행 중 = 페이지·모달 스크롤바·텍스트 선택 차단(끌린 항목 transform 오버플로 방지) */
+    body.drag-lock { overflow: hidden; user-select: none; -webkit-user-select: none; }
+    body.drag-lock .modal { overflow: hidden; }
     .dragging { opacity: .5; }
     .drop-target { border-color: var(--accent); }
 
@@ -87,6 +91,21 @@
     .skill-row { font-size: .85em; margin: .2rem 0; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
     .sk-name.have { color: #cfc; } .sk-name.no { color: #999; }
     .promote-btns { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .prio-item[data-action] { cursor: pointer; }
+    .skill-pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
+    .skill-pills .sk { cursor: pointer; }
+    /* 스킬 상세 팝업 — 중앙 모달 아닌 클릭 위치 근처(툴팁식). 딤 없음, 바깥탭/Esc 닫기. */
+    .skill-detail-overlay { z-index: 60; background: transparent; display: block; }
+    .skill-detail-overlay .sd-modal { position: fixed; width: auto; max-width: 320px; }
+    .sd-line { color: #bcd; font-size: .85em; margin: .12rem 0; }
+    .sd-section { border-top: 1px solid #222; margin-top: .5rem; padding-top: .45rem; }
+    .sd-kw { margin: .45rem 0; }
+    .sd-kw .eff { cursor: default; }
+    .sd-kw-target { color: #9aa; font-size: .8em; }
+    .sd-kw-desc { color: #bcd; font-size: .88em; margin-top: .18rem; }
+    .sd-dur { color: #9aa; font-size: .78em; margin-top: .1rem; }
+    .sd-change { color: var(--accent); font-size: .88em; margin: .15rem 0; }
+    .sd-action { border-top: 1px solid #222; margin-top: .5rem; padding-top: .5rem; }
 
     /* 툴팁 */
     .tooltip-box { position: absolute; z-index: 80; background: #1c1c22; border: 1px solid #46f; border-radius: 6px;
@@ -98,12 +117,19 @@
     .battle-stage { border: 1px solid #2a2f2a; border-radius: 8px; padding: .5rem .6rem; margin: .6rem 0; background: #141414; }
     .pb-controls { display: flex; gap: .25rem; align-items: center; flex-wrap: wrap; }
     .pb-controls button { padding: .15rem .5rem; }
+    .pb-controls > button { min-width: 2.6em; text-align: center; }   /* ▶/⏸ 등 글리프 폭 차이 흡수 */
+    .pb-speed { display: flex; gap: .15rem; margin-left: .4rem; }
+    .pb-speed button { padding: .1rem .4rem; font-size: .8em; }
+    .pb-speed button.on { background: var(--accent); color: #111; border-color: var(--accent); }
     .pb-count { color: #9c9; font-size: .8em; margin-left: auto; }
     .pb-head { color: var(--accent); font-size: .85em; margin: .35rem 0 .1rem; }
     .pb-log { min-height: 1.4em; margin-bottom: .4rem; }
     .pb-log .dim { color: #555; }
     .bu { border: 1px solid #233; border-radius: 5px; padding: .3rem .5rem; margin: 4px 0; background: #181818; }
     .bu.dead { opacity: .4; }
+    .bu.acting { border-color: #6f6; box-shadow: 0 0 0 1px #6f6; }   /* 행동한 유닛 = 초록 테두리 */
+    .bu.hit { border-color: #f66; box-shadow: 0 0 0 1px #f66; }      /* 피격/힐 대상 = 빨강 테두리 */
+    .bu-num { color: #7a8; font-weight: bold; }
     .bu-top { display: flex; justify-content: space-between; font-size: .85em; }
     .bu-name { color: #cfc; } .bu-name.boss { color: #f84; font-weight: bold; } .bu-hp { color: #9c9; }
     .bar { height: 6px; background: #252; border-radius: 3px; overflow: hidden; margin: 2px 0; }
@@ -111,9 +137,9 @@
     .bar.hp > i { background: #6c6; } .bar.hp.mob > i { background: #e66; }
     .bar.mana { height: 4px; background: #223; } .bar.mana > i { background: #69f; }
     .bu-eff { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
-    .eff { font-size: .68em; border: 1px solid #356; border-radius: 3px; padding: 0 4px; background: #1a2433; color: #9cf; }
-    .eff-dot, .eff-stun { background: #2a1414; color: #f99; border-color: #633; }
-    .eff-hot { background: #142a14; color: #9f9; border-color: #363; }
+    .eff { font-size: .68em; border: 1px solid #356; border-radius: 3px; padding: 0 4px; background: #1a2433; color: #9cf; cursor: pointer; }
+    .eff.buff { background: #142a14; color: #9f9; border-color: #363; }
+    .eff.debuff { background: #2a1414; color: #f99; border-color: #633; }
     .battlefield .vs { text-align: center; color: #777; font-size: .72em; margin: .25rem 0; }
     .full-log { margin-top: .6rem; }
     .full-log summary { cursor: pointer; color: #9af; font-size: .85em; }

@@ -10,7 +10,7 @@ export function renderResultView(run, ui) {
   const btn = outcome === 'loss' ? `<button data-action="restart">다시 시작</button>`
     : outcome === 'clear' ? `<button data-action="restart">새 런</button>`
     : `<button data-action="next">다음 스테이지</button>`
-  const stage = renderBattleStage(ui.frames, ui.cursor, ui.playing)
+  const stage = renderBattleStage(ui.frames, ui.cursor, ui.playing, ui.speed)
   return `<div class="result-view">${banner}
 <div class="action-bar">${btn}</div>
 ${stage}

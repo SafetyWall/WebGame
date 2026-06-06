@@ -27,6 +27,6 @@ export function renderCard(run, i) {
     ${hpBar(100)}
     <div class="numrow"><span class="nums">${nums}</span>${toggle}</div>
   </div>
-  <div class="skills2">${skillPills(r.job, r)}</div>
+  <div class="skills2">${skillPills(r.job, r, i)}</div>
 </div>`
 }

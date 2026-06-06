@@ -45,8 +45,34 @@ test('record: 마지막 frame = 전투 종료 상태(몹 사망)', () => {
 test('record: effect = effects 태그 노출(전사 강화 학습 시 speed/dmgDealt)', () => {
   const w = makeUnit(JOBS.warrior, 5, ['warrior_might', 'melee_strike'], { warrior_might: 1 }, ['warrior_might'])
   const r = runBattle([w], makeMob(SLIME), { record: true })
-  const hasBuff = r.frames.some(f => f.party[0].effects.includes('speed') || f.party[0].effects.includes('dmgDealt'))
+  const hasBuff = r.frames.some(f => f.party[0].effects.some(e => e.type === 'speed' || e.type === 'dmgDealt'))
   assert.ok(hasBuff, '강화 effect 태그가 frame에 나와야')
+  // 인스턴스 = 정확표기용 value/expireTick 보존
+  const ef = r.frames.flatMap(f => f.party[0].effects).find(e => e.type === 'dmgDealt')
+  assert.ok(ef && typeof ef.value === 'number' && typeof ef.expireTick === 'number', 'effect 인스턴스에 value·expireTick')
+})
+
+test('record: frame에 행동자 인덱스 + 타겟 ref', () => {
+  const w = makeUnit(JOBS.warrior, 5)
+  const r = runBattle([w], makeMob(SLIME), { record: true })
+  const pAtk = r.frames.find(f => f.actorRef === 0 && f.targets.includes('mob'))
+  assert.ok(pAtk, '파티원 공격 frame: actorRef=0, targets에 mob')
+  const mAtk = r.frames.find(f => f.actorRef === 'mob' && f.targets.includes(0))
+  assert.ok(mAtk, '몹 공격 frame: actorRef=mob, targets에 파티 인덱스 0')
+})
+
+test('record: 행동자 인덱스로 동일유닛 구분(0과 1 모두 등장)', () => {
+  const party = [makeUnit(JOBS.warrior, 5), makeUnit(JOBS.warrior, 5)]
+  const r = runBattle(party, makeMob(SLIME), { record: true })
+  const refs = new Set(r.frames.filter(f => typeof f.actorRef === 'number').map(f => f.actorRef))
+  assert.ok(refs.has(0) && refs.has(1), '두 유닛 모두 행동자로 기록(인덱스 0,1)')
+})
+
+test('record: frame.mob에 트레잇 id 노출(재생뷰 특성 표시용)', () => {
+  const w = makeUnit(JOBS.warrior, 5)
+  const mob = makeMob({ name: '가시거북', hp: 60, atk: 8, spd: 8, traits: ['melee_evade'] })
+  const r = runBattle([w], mob, { record: true })
+  assert.ok(r.frames[0].mob.traits.includes('melee_evade'), 'frame.mob.traits에 트레잇 id')
 })
 
 test('battleFrames(run): fight 후 상태로 frame 재생성', () => {

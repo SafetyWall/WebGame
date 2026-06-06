@@ -14,7 +14,7 @@ let rng = saved ? makeRng(saved.rng) : makeRng(Math.floor(Math.random() * 1e9))
 const runState = saved ? saved.state : run.newRun(rng)
 const prefs = loadPrefs()
 
-const ui0 = { layout: prefs.layout, modal: null, frames: [], cursor: 0, playing: false }
+const ui0 = { layout: prefs.layout, modal: null, skillDetail: null, frames: [], cursor: 0, playing: false, speed: 1 }
 if (runState.phase === 'result') ui0.frames = run.battleFrames(runState)   // 새로고침 복원 시 재생뷰 복구(결정론)
 
 const store = createStore({ run: runState, ui: ui0 })
@@ -22,10 +22,23 @@ const store = createStore({ run: runState, ui: ui0 })
 const appEl = document.getElementById('app')
 const app = createComponent({ render: renderApp }).mount(appEl)
 
+// 스킬 상세 팝업을 클릭 위치(앵커) 근처로 배치(뷰포트 클램프). 중앙 모달 대신 툴팁식.
+function positionSkillDetail() {
+  const sd = store.getState().ui.skillDetail
+  const box = appEl.querySelector('.sd-modal')
+  if (!sd || !box || sd.x == null) return
+  const m = 8
+  const vw = document.documentElement.clientWidth
+  const vh = document.documentElement.clientHeight
+  box.style.left = Math.max(m, Math.min(sd.x, vw - box.offsetWidth - m)) + 'px'
+  box.style.top = Math.max(m, Math.min(sd.y + 6, vh - box.offsetHeight - m)) + 'px'
+}
+
 store.subscribe((state) => {
   app.sync(state)
   save(state.run, rng.snapshot())          // 런만 영속(ui.frames는 휘발 — 결정론으로 재생성)
   savePrefs({ layout: state.ui.layout })
+  positionSkillDetail()
 })
 
 initTooltip()
@@ -35,17 +48,19 @@ initDrag(appEl, store)
 let playTimer = null
 const frameCount = () => (store.getState().ui.frames || []).length
 const setCursor = (c) => { const n = frameCount(); store.setUi({ cursor: Math.max(0, Math.min(c, n - 1)) }) }
+const SPEED_MS = { 1: 1200, 2: 700, 3: 400 }   // 배속별 스텝 간격(1배=느리게 기본)
 function stopPlay() { if (playTimer) { clearInterval(playTimer); playTimer = null } if (store.getState().ui.playing) store.setUi({ playing: false }) }
-function togglePlay() {
-  if (playTimer) { stopPlay(); return }
+function startPlay() {
   store.setUi({ playing: true })
+  const ms = SPEED_MS[store.getState().ui.speed] || 700
   playTimer = setInterval(() => {
     const ui = store.getState().ui
     const n = (ui.frames || []).length
     if (ui.cursor >= n - 1) { stopPlay(); return }
     store.setUi({ cursor: ui.cursor + 1 })
-  }, 700)
+  }, ms)
 }
+function togglePlay() { if (playTimer) stopPlay(); else startPlay() }
 const refreshFrames = () => {
   const st = store.getState().run
   store.setUi(st.phase === 'result' ? { frames: run.battleFrames(st), cursor: 0, playing: false } : { frames: [], cursor: 0, playing: false })
@@ -68,7 +83,13 @@ appEl.addEventListener('click', (ev) => {
   switch (btn.dataset.action) {
     case 'toggleLayout': store.setUi({ layout: btn.dataset.layout }); break
     case 'openModal':    store.setUi({ modal: i }); break
-    case 'closeModal':   store.setUi({ modal: null }); break
+    case 'closeModal':   store.setUi({ modal: null, skillDetail: null }); break
+    case 'openSkill': {
+      const rect = btn.getBoundingClientRect()   // 클릭한 스킬 위치 근처에 띄움(중앙 모달 아님)
+      store.setUi({ skillDetail: { i, skillId: btn.dataset.skill, x: rect.left, y: rect.bottom } })
+      break
+    }
+    case 'closeSkill':   store.setUi({ skillDetail: null }); break
     case 'recruit':      store.dispatch((s) => run.recruit(s)); break
     case 'upgrade':      store.dispatch((s) => run.upgrade(s, i)); break
     case 'promote':      store.dispatch((s) => run.changeJob(s, i, btn.dataset.job)); break
@@ -85,12 +106,23 @@ appEl.addEventListener('click', (ev) => {
     case 'pbNext':  stopPlay(); setCursor(cur() + 1); break
     case 'pbLast':  stopPlay(); setCursor(frameCount() - 1); break
     case 'pbPlay':  togglePlay(); break
+    case 'pbSpeed': {
+      const wasPlaying = !!playTimer
+      if (wasPlaying) stopPlay()
+      store.setUi({ speed: Number(btn.dataset.speed) || 1 })
+      if (wasPlaying) startPlay()       // 새 배속으로 자동재생 재개
+      break
+    }
     default: return
   }
 })
 
 document.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Escape') { hideTooltip(); stopPlay(); store.setUi({ modal: null }) }
+  if (ev.key !== 'Escape') return
+  hideTooltip(); stopPlay()
+  // 스킬 상세가 열려 있으면 그것부터 닫고(캐릭 모달 유지), 아니면 모달 닫기
+  if (store.getState().ui.skillDetail) store.setUi({ skillDetail: null })
+  else store.setUi({ modal: null })
 })
 
 app.sync(store.getState())

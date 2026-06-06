@@ -1,7 +1,7 @@
 // 단일 플로팅 툴팁(DOM). click/tap 토글(PC=모바일 동일, hover 비의존). 바깥 탭/스크롤/재호출로 닫기.
-import { SKILLS } from '../data/skills.js'
 import { TRAITS } from '../data/traits.js'
-import { describeSkillLines, describeTraitLines, describeAoe } from './describe.js'
+import { describeTraitLines, describeAoe } from './describe.js'
+import { statusName, instanceDesc } from './status.js'
 import { esc } from './components/parts.js'
 
 let box = null
@@ -19,18 +19,21 @@ function ensureBox() {
 
 function contentFor(el) {
   const kind = el.dataset.tip
-  if (kind === 'skill') {
-    const sk = SKILLS[el.dataset.skill]
-    if (!sk) return null
-    const lv = Number(el.dataset.lvl) || 1
-    return { title: sk.name + (lv > 1 ? ` Lv${lv}` : ''), lines: describeSkillLines(sk, lv) }
-  }
+  // 스킬은 더 이상 툴팁 아님 — 클릭 시 스킬 상세 팝업(openSkill). 여기선 트레잇/광역/전투 effect만.
   if (kind === 'trait') {
     const t = TRAITS[el.dataset.trait]
     if (!t) return null
     return { title: t.name, lines: describeTraitLines(t) }
   }
   if (kind === 'aoe') return { title: '광역', lines: [describeAoe()] }
+  if (kind === 'status') {
+    const type = el.dataset.type
+    const value = el.dataset.value !== undefined ? Number(el.dataset.value) : 1
+    const interval = el.dataset.interval ? Number(el.dataset.interval) : undefined
+    const lines = [instanceDesc({ type, value, interval })]
+    if (el.dataset.remain) lines.push(`남은 ${el.dataset.remain}틱`)
+    return { title: statusName(type, value), lines }
+  }
   return null
 }
 

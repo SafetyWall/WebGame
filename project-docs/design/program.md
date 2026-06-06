@@ -27,8 +27,9 @@ src/ui/render.js        # 전투결과 → HTML 문자열 (순수, ResultView가
 src/ui/store.js         # 중앙 상태 {run,ui} + dispatch + subscribe (순수, DOM-free)
 src/ui/component.js     # 미니 컴포넌트 베이스(render→innerHTML, update(el,state) seam)
 src/ui/view.js          # 앱 합성 renderApp({run,ui}) prep/result 분기 (순수)
-src/ui/components/*.js   # StageHeader·EnemyPreview·Roster·CharacterCard·ActionBar·CharacterModal·ResultView·BattleStage(재생뷰) + parts.js(공유) — 각 순수 render
-src/ui/describe.js      # 스킬·트레잇 필드 → 툴팁 텍스트 생성 (순수)
+src/ui/components/*.js   # StageHeader·EnemyPreview·Roster·CharacterCard·ActionBar·CharacterModal·SkillDetailModal(스킬 상세 팝업)·ResultView·BattleStage(재생뷰) + parts.js(공유) — 각 순수 render
+src/ui/describe.js      # 스킬·트레잇 필드 → 설명 텍스트(코어/부여효과 clause/레벨업 비교값) 생성 (순수)
+src/ui/status.js        # 버프/디버프 공용 키워드(취약/강화/둔화…) 이름·분류(buff/debuff)·정밀표기 단일출처 (순수)
 src/ui/preview.js       # 레벨업/스킬업 before→after 계산 (순수)
 src/ui/dragMove.js      # 드롭=목표 인덱스(기존 ±1 reorder를 |delta|회 접음, 순수)
 src/ui/tooltip.js       # 단일 플로팅 툴팁(click/tap 토글) (DOM 의존)
@@ -45,7 +46,7 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 ## 엔진 계약 (battle.js)
 - `runBattle(party, mob, opts={maxTicks, record}) → { winner:'party'|'mob', rounds, ticks, frames }`. **순수함수, 부수효과 0.** ui·sim 공용.
   - `rounds[]` = `{ tick, party:[{name,hp,maxHp}], mob:{name,hp,maxHp,aoe,traits:[name...]}, log:[...] }` 스냅샷(100틱 묶음, 결과 로그용).
-  - **`opts.record`(opt-in)** = `frames[]` 채움(재생뷰용 **액션단위**): `{tick, actor, log:[이 액션 로그], party:[{name,level,hp,maxHp,mana,manaMax,gauge,alive,effects:[type]}], mob:{name,hp,maxHp,boss,aoe,effects:[type]}}`. 미설정=`frames:[]`(기존 동작·sim 무영향). `run.battleFrames(s)`=상태에서 결정론 재생성(UI 휘발, 영속 X).
+  - **`opts.record`(opt-in)** = `frames[]` 채움(재생뷰용 **액션단위**): `{tick, actor, actorRef(파티 idx|'mob'|null), targets:[파티 idx|'mob'](피격/힐/effect 대상), log:[이 액션 로그], party:[{name,level,hp,maxHp,mana,manaMax,gauge,alive,effects:[{type,value,expireTick,interval?}]}], mob:{name,hp,maxHp,boss,aoe,traits:[id],effects:[{...}]}}`. `actorRef`/`targets`=강조용(이름 충돌 회피 — 인덱스 기반), effect=인스턴스(정밀 표기·남은 지속). 미설정=`frames:[]`(기존 동작·sim 무영향). `run.battleFrames(s)`=상태에서 결정론 재생성(UI 휘발, 영속 X).
   - **빈/전멸 파티 가드**: 비었거나 전원 hp≤0이면 루프 진입 전 즉시 `finish('mob')`(틱0).
 - `makeUnit(job, level=1, skillOrder=null, skillLevels={}, learnedSkills=null) → unit`. 런타임 가변 `hp`·`gauge`·`mana`(0)·`manaMax`(직업별)·`skillLevels`·`cooldowns`·`effects` 부여. **플레이어 def=0.** `job.levels[level]`에서 스탯(잘못된 level=RangeError). 전투 스킬 = `unitSkillIds(job, learnedSkills)`(학습 액티브 + 평타; learnedSkills 미지정=전체) → `normalizeSkillOrder`로 우선순위 보정 → `SKILLS` 공유 def resolve. `makeMob(mob)`도 `mob.traits`(id) → `TRAITS` 공유 def(없으면 `[]`).
 - `damage(atk, def) = max(1, atk-def)`. `lowestHpAlly`(힐 대상), `selectMobTarget(party, mob)`, `skillLevelMult`, `scaledEffectValue` export.
@@ -78,7 +79,7 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 - `range` 근/원 이진 태그 = 근접회피/원거리저항 등이 소비.
 
 ## 테스트 전략
-`node:test` **266개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax) / damage·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / 조우 생성 / 절차 스테이지(MAX_STAGE 20·온보딩·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / **UI 순수단위(describe 툴팁텍스트·preview before→after·store dispatch/구독·uiPrefs·view 렌더 부분문자열·dragMove 인덱스·전투 frame 기록·BattleStage 재생뷰)** / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. **UI DOM 글루(tooltip·drag·main 이벤트)는 수동/헤드리스 실측**(드래그·tap 거동·sticky-hover = 실기기).
+`node:test` **282개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax) / damage·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / 조우 생성 / 절차 스테이지(MAX_STAGE 20·온보딩·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / **UI 순수단위(describe 설명텍스트·status 키워드/정밀표기·preview before→after·store·uiPrefs·view 렌더 부분문자열·dragMove 인덱스·전투 frame(actorRef·targets·effect 인스턴스·mob traits)·BattleStage 재생뷰·SkillDetailModal)** / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. **UI DOM 글루(tooltip·drag·main 이벤트·팝업 위치)는 수동/헤드리스 실측**(드래그·tap 거동·sticky-hover = 실기기).
 
 ## 설계 원칙
 - **시스템 확장성 우선** — 스킬·effect·트리거·데미지 파이프는 견고히(토대 약하면 갈아엎음). 단 단일 스킬·옵션 과추상화 금지. 시스템=구조적 / 개별 기능=YAGNI OK.

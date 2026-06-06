@@ -60,6 +60,12 @@ test('SKILLS: 발동스킬 5종 정의 + 자원/효과', () => {
   assert.ok(SKILLS.guardian_sunder.effects[0].value < 1)
 })
 
+test('SKILLS: 모든 평타 = "기본 공격"으로 이름 통일', () => {
+  for (const id of ['melee_strike', 'ranged_strike', 'basic_heal', 'holy_bolt', 'guardian_strike']) {
+    assert.strictEqual(SKILLS[id].name, '기본 공격', `${id} 이름`)
+  }
+})
+
 test('SKILLS: P1 신규 액티브 정의 + learnCost', () => {
   for (const id of ['warrior_heavy', 'mage_focus', 'guardian_sunder', 'guardian_barrier', 'priest_heal', 'holy_bolt']) {
     assert.ok(SKILLS[id], `${id} 존재`)

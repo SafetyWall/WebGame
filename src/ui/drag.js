@@ -21,6 +21,7 @@ export function initDrag(appEl, store) {
       if (Math.abs(ev.clientX - start.x) + Math.abs(ev.clientY - start.y) < THRESH) return
       dragging = true
       start.item.classList.add('dragging')
+      document.body.classList.add('drag-lock')   // 드래그 중 스크롤·텍스트선택 잠금
     }
     ev.preventDefault()
     // 끌리는 카드가 포인터 따라 이동(transform). .dragging이 pointer-events:none → 아래 카드 hit-test 가능.
@@ -38,6 +39,7 @@ export function initDrag(appEl, store) {
     start = null; dragging = false; dropIndex = null
     if (s && s.item) s.item.style.transform = ''   // 드롭 미발생(re-render 없음) 시 잔존 방지
     appEl.querySelectorAll('.dragging,.drop-target').forEach((e) => e.classList.remove('dragging', 'drop-target'))
+    document.body.classList.remove('drag-lock')
     if (!s || !didDrag || di == null) return
     appEl._dragEndAt = Date.now()   // 드래그 직후 click(모달) 삼킴 — 타임스탬프(누수 방지, 자동만료)
     if (s.kind === 'party') {
@@ -49,7 +51,7 @@ export function initDrag(appEl, store) {
   }
 
   appEl.addEventListener('pointerdown', (ev) => {
-    if (ev.target.closest('button') || ev.target.closest('[data-tip]')) return  // 버튼·pill은 통과(드래그 X)
+    if (ev.target.closest('button') || ev.target.closest('[data-tip]') || ev.target.closest('.sk')) return  // 버튼·툴팁·스킬 pill은 클릭 통과(드래그 X)
     const item = ev.target.closest('[data-drag]')
     if (!item) return
     start = { x: ev.clientX, y: ev.clientY, item, kind: item.dataset.drag, i: Number(item.dataset.i), skill: item.dataset.skill, list: item.parentElement }

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-06-06
+- **전투 재생뷰 UX 개선.** 행동/피격 강조(행동 유닛=초록·피격 대상=빨강 테두리 — frame에 `actorRef`·`targets` 기록), 동일 이름 유닛 **#번호 badge**(이름 아닌 파티 인덱스로 구분 — 노비스 3명 식별), **배속 셀렉터 1×/2×/3×**(기본 1×=1200ms·2×=700·3×=400, 재생 중 전환 즉시 반영), 컨트롤 글리프·폭 정리(`⏮ |◀ ▶ ▶| ⏭` + title, 재생/스텝 구분·▶/⏸ 폭 통일), **몬스터 상단 배치**, 몹 특성 pill(메인 EnemyPreview와 동일 `data-tip` 툴팁). 엔진 frame 확장은 **`record` 경로만** → sim·전투 결정론 무영향.
+- **명명 버프/디버프 시스템(슬스식 공용 키워드).** 신규 `ui/status.js` 단일출처 — (effect 타입 + 값 방향) → 키워드: 받뎀↑**취약**/↓**방어**, 주뎀↑**강화**/↓**약화**, 속도↑**신속**/↓**둔화**, 기절·출혈·재생·표식·가시·수호·도발. 전투 태그가 "주뎀" 대신 **이름** 표시(buff 초록/debuff 빨강), 클릭 툴팁=정확 표기(값 + 남은 지속틱). frame이 effect **인스턴스**(value/expireTick/interval) 보존 → 정밀 표기. 스킬 설명도 키워드 연동.
+- **스킬 상세 2차 팝업 + 캐릭 모달 재구성.** 신규 `SkillDetailModal` — 코어(종류/위력/마나/쿨) + **부여 효과**(`[키워드]` + 대상 라벨 + **보유자 기준** 효과 문구 + 지속) + 맨 밑 **레벨업 변화만**(위력·effect before→after) + 학습/레벨업 버튼. `CharacterModal`서 인라인 학습/레벨업 섹션 제거 → 스킬 **클릭=상세 진입**(드래그=우선순위 유지), 미학습=pill. 카드 스킬 pill 클릭도 상세(읽기전용=버튼 없음). 팝업은 **클릭 위치 근처**(툴팁식, 중앙 모달 아님).
+- **평타 이름 "기본 공격" 통일**(melee/ranged/basic_heal/holy_bolt/guardian_strike 5종). 효과 문구 = **걸린 대상(보유자) 기준**("적이 주는 데미지" 아닌 "주는 데미지", 대상은 별도 라벨) → 전투 태그 툴팁과 스킬 설명 표현 일치.
+- **우선순위 드래그 버그 수정.** `pointer-events:none`이 `.card.dragging`에만 걸려 스킬 항목은 드래그 중 hit-test가 자기 자신만 잡아 **드롭 무효**였음 → `.prio-item.dragging`에도 적용(출전순서와 동일 매커니즘 정상화). 드래그 중 글씨 선택·스크롤 차단(`body.drag-lock`). 몹 타겟팅 트레잇 문구 "아군"→"적"(몹 시점 = 플레이어가 적).
+- 테스트 266→**282**(status·skillDetail·배속·강조·특성·frame 인스턴스 추가). 엔진 결정론·sim 무영향 유지. (UI 위치/드래그 거동 = 브라우저 실측.)
+
 ## 2026-06-03
 - **UI 개편 — component+store 프레임워크 + 카드 UI.** 평문 `<li>` 렌더(`ui/game.js`) → dep-0 바닐라 컴포넌트/스토어로 교체. 신규: `ui/store.js`(상태+dispatch+구독), `component.js`(서브트리 render + `update(el,state)` seam=미래 애니메이션/전투재생), `view.js`(앱 합성), `describe.js`(스킬·트레잇 필드→툴팁 텍스트, 순수), `preview.js`(레벨업/스킬업 before→after, 순수), `uiPrefs.js`(레이아웃 취향 영속 별도키 `partyrpg.ui.v1`), `tooltip.js`·`drag.js`(DOM 글루), `dragMove.js`(드롭=목표 인덱스, 기존 ±1 reorder를 \|delta\|회 접음→run.js 무변경), `components/*`(StageHeader·EnemyPreview·Roster·CharacterCard·PartyOrder·ActionBar·CharacterModal·ResultView). `game.js` 제거.
   - **기능 6:** 카드 로스터(**1열/2열 토글**, 폭 고정=넓은화면 stretch/열증가 안 함), 스킬 2×2 pill(학습=초록/미학습=회색·말줄임), **click/tap 툴팁**(PC=모바일 통일, hover 비의존, 바깥탭/스크롤 닫기), 적 특성·광역 툴팁, **pointer 드래그**(출전순서·스킬 우선순위 — ▲▼ 제거), **상세 모달**(강화/전직/학습/스킬레벨업 + **before→after 미리보기**). 엔진·run.js·persist v3·데이터 테이블 = **무변경**(UI 레이어만 교체).

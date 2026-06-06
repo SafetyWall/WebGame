@@ -14,16 +14,20 @@
 ## 현재 화면 (2026-06-03 개편)
 - `index.html` — 단일 페이지, 다크 모노스페이스, **폭 고정 `#app` max-width 440px**(넓은 화면서 stretch/열증가 안 함). 모바일 우선.
 - 색: 제목 `#fc6` / HP `.hp`·`.hpbar` `#6c6` / 몹 `.mob` `#e88`(보스 `.mob.boss` `#f84` 볼드) / 트레잇·특성 `#fc6` / 로그 `.log` `#9af` / 카드 `#161a16`(출전 `.in` 초록테). 배경 `#111`.
-- **준비 국면 컴포넌트:** `StageHeader`(스테이지/골드/슬롯 + **레이아웃 토글**) · `EnemyPreview`(보스 👑 + 광역·트레잇 = **탭 툴팁** pill) · `Roster`=`CharacterCard[]`(**1열/2열** `ui.layout`, 카드=좌 능력[직업·Lv·앞열🛡️·HP바·수치]+우 **스킬 2×2 pill**[학습 초록/미학습 회색], 출전 토글, 카드 본문 탭=상세모달) · `PartyOrder`(출전순서 앞→뒤, **드래그** 재배열, 맨앞=타겟) · `ActionBar`(영입·슬롯확장·전투, 풀파티 disabled).
-- **상세 모달** `CharacterModal`(카드 탭): 풀스탯 + 강화(비노비스 ~L10)/전직(노비스 L1, 6직업)/스킬 학습·레벨업 + **레벨업 before→after 미리보기** + **스킬 우선순위 드래그** 리스트.
-- **툴팁** `Tooltip`(`describe.js` 생성 텍스트): 스킬 = 위력×·마나·쿨·effect 요약(스킬레벨 반영), 트레잇 = 회피/면역/회복/반사/타겟팅 설명. **click/tap 토글**(PC=모바일 통일, hover 비의존), 바깥탭/스크롤 닫기.
+- **준비 국면 컴포넌트:** `StageHeader`(스테이지/골드/슬롯 + **레이아웃 토글**) · `EnemyPreview`(보스 👑 + 광역·트레잇 = **탭 툴팁** pill) · `Roster`=`CharacterCard[]`(**1열/2열** `ui.layout`, 카드=좌 능력[직업·Lv·앞열🛡️·HP바·수치]+우 **스킬 2×2 pill**[학습 초록/미학습 회색, **탭=스킬 상세 팝업**], 출전 토글, 카드 본문 탭=상세모달) · `PartyOrder`(출전순서 앞→뒤, **드래그** 재배열, 맨앞=타겟) · `ActionBar`(영입·슬롯확장·전투, 풀파티 disabled).
+- **상세 모달** `CharacterModal`(카드 본문 탭): 풀스탯 + 강화(비노비스 ~L10)/전직(노비스 L1, 6직업) + **스킬 리스트**(장착=드래그 우선순위·탭=상세, 미학습=pill·탭=상세). 학습/레벨업은 인라인 아닌 **스킬 상세 팝업**으로.
+- **스킬 상세 팝업** `SkillDetailModal`(스킬 pill 탭, 카드/모달 공용): 코어(종류/위력/마나/쿨) + **부여 효과**(`[키워드]` + 대상 라벨 + 보유자 기준 효과 문구 + 지속) + 맨 밑 **레벨업 변화만**(위력·effect before→after) + 학습/레벨업 버튼. **카드에서 열면 읽기전용**(버튼 없음), **클릭 위치 근처**에 띄움(중앙 모달 아님, `main.js` `positionSkillDetail`). 바깥탭/Esc 닫기.
+- **툴팁** `Tooltip`(`describe.js`/`status.js` 텍스트): 적 트레잇 = 회피/면역/회복/반사/타겟팅 설명, 광역, **전투중 버프/디버프(status)** = 정밀 표기(값+남은 지속). **스킬은 툴팁 아님 → 탭=상세 팝업.** **click/tap 토글**(PC=모바일 통일, hover 비의존), 바깥탭/스크롤 닫기.
 - **드래그** = pointer 이벤트(`drag.js`, 터치+마우스 공용. HTML5 DnD는 터치 미지원이라 회피). 드롭=목표 인덱스(`dragMove.js`).
 - **결과 국면** `ResultView`: 승/패/클리어 배너 + `render.js` `renderRounds` 재사용 + 다음/재시작. 버튼 = `data-action`, `main.js` 위임. 스킬은 전투 로그에 텍스트로 자동 노출.
 
-## 전투 재생뷰 (2026-06-03 구현)
-- `BattleStage`(ui.frames/cursor 구독) — **액션단위** 스텝(◀▶⏮⏭) + 자동재생(⏯ 700ms) + 라이브 전황(파티/몹 HP바·마나바·effect 태그). `ResultView` = 배너 + 재생뷰 + **전체 로그 접이식**(`<details>`, renderRounds).
-- frame = `runBattle({record:true})` → 틱·행위자·로그 + 전 유닛 상태. `run.battleFrames(s)`로 결정론 재생성(ui 휘발, 영속 안 함 → 새로고침 시 복구).
-- effect 태그 색: dot/stun 적색, hot 녹색, 그 외 청색.
+## 전투 재생뷰 (2026-06-03 구현 · 2026-06-06 UX 개선)
+- `BattleStage`(ui.frames/cursor/playing/speed 구독) — **액션단위** 스텝 + 자동재생 + 라이브 전황. **몬스터 상단**, 파티 하단(VS 구분).
+- **컨트롤:** `⏮ |◀ ▶/⏸ ▶| ⏭`(처음/이전/재생·일시정지/다음/끝, title + 폭 통일) + **배속 셀렉터 1×/2×/3×**(기본 1×=1200ms·2×=700·3×=400, 재생 중 전환 즉시).
+- **강조:** 행동 유닛=초록 테두리(`.acting`), 피격/힐 대상=빨강(`.hit`) — frame `actorRef`/`targets` 인덱스 기반(이름 충돌 회피). 동일 이름 유닛 **#번호 badge**(파티 순서).
+- **버프/디버프 태그:** `status.js` 공용 키워드 이름(취약/강화/둔화…), **buff 초록·debuff 빨강**, 탭 툴팁=정밀 표기(값+남은 지속틱). 몹 특성 = `data-tip` pill(메인 EnemyPreview와 동일).
+- frame = `runBattle({record:true})` → 틱·행위자(actorRef)·타겟(targets)·로그 + 전 유닛 상태(effect 인스턴스). `run.battleFrames(s)`로 결정론 재생성(ui 휘발, 영속 안 함 → 새로고침 시 복구).
+- `ResultView` = 배너 + 재생뷰 + **전체 로그 접이식**(`<details>`, renderRounds).
 
 ## 향후 비주얼 방향 (미구현)
 - 캐릭터 애니메이션/스프라이트/파티클 = `BattleStage`만 render 타깃 교체(`update` 타깃패치 or `CanvasStage` 가산). 프레임워크 불변.
