@@ -26,9 +26,9 @@ test('파티힐 = 파티 전원에 hot 부여(target allies)', () => {
   }
 })
 
-test('사제 키트 = 4 액티브(치유/재생/파티힐/파티뎀버프) + 평타', () => {
+test('사제 키트 = 4 액티브(치유/민첩성증가/블레싱/파티힐) + 평타', () => {
   assert.deepStrictEqual(JOBS.priest.skills,
-    ['priest_heal', 'priest_hot', 'priest_party_heal', 'priest_party_buff', 'holy_bolt'])
+    ['priest_heal', 'priest_agi', 'priest_party_buff', 'priest_party_heal', 'holy_bolt'])
   assert.strictEqual(SKILLS.priest_party_heal.effects[0].target, 'allies')
   assert.strictEqual(SKILLS.priest_party_buff.effects[0].target, 'allies')
 })

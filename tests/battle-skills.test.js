@@ -88,7 +88,7 @@ test('guardian_taunt(2차전직용 메커니즘): 자기 taunt + dmgTaken 0.6 �
 })
 
 test('priest_hot: 최저HP 아군에 hot effect 부여(value=floor(heal×0.5), interval 100)', () => {
-  const p = makeUnit(JOBS.priest, 3, null, {}, ['priest_hot']); p.mana = 100  // 재생만 학습. L3 heal=43 → hot floor(21.5)=21
+  const p = makeUnit(JOBS.priest, 3); p.skills = [SKILLS.priest_hot, SKILLS.holy_bolt]; p.mana = 100  // 재생 주입(키트 외=2차전직 보관). L3 heal=43 → hot floor(21.5)=21
   const wounded = makeUnit(JOBS.novice, 1); wounded.hp = 10  // 최저HP = 부여 대상
   runBattle([p, wounded], dummyMob(), { maxTicks: 143 })     // tick143 = 사제 1행동
   const hot = wounded.effects.find(e => e.type === 'hot')
