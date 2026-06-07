@@ -61,6 +61,14 @@ test('describeTrait: 회복/반사/타겟팅', () => {
   assert.match(describeTrait(TRAITS.regeneration), /매 턴 시작 HP \+50/)
   assert.match(describeTrait(TRAITS.damage_reflect), /받은 데미지 30% 반사/)
   assert.match(describeTrait(TRAITS.low_hp_seek), /체력 낮은 적 우선/)
+  assert.match(describeTrait(TRAITS.atk_seek), /공격력 높은 적 우선/)
+})
+
+test('describeTrait: 스탯 트레잇 = "스탯 +N%"', () => {
+  assert.match(describeTrait(TRAITS.stat_atk), /공격력 \+20%/)
+  assert.match(describeTrait(TRAITS.stat_def), /방어력 \+20%/)
+  assert.match(describeTrait(TRAITS.stat_hp), /체력 \+20%/)
+  assert.match(describeTrait(TRAITS.stat_spd), /속도 \+10%/)
 })
 
 test('describeAoe: 광역 설명', () => {

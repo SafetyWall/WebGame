@@ -19,32 +19,49 @@ test('encounter monster is from the pool', () => {
   assert.ok(names.includes(e.name))
 })
 
-test('encounter stats = round(levelCurve(level) × monster mul)', () => {
+test('encounter stats = round(levelCurve(level) × monster mul × 스탯트레잇 mult)', () => {
   const e = generateEncounter(3, makeRng(11))
   const mon = Object.values(MONSTERS).find(m => m.name === e.name)
   const c = levelCurve(3)
-  assert.strictEqual(e.hp,  Math.round(c.hp  * mon.mul.hp))
-  assert.strictEqual(e.atk, Math.round(c.atk * mon.mul.atk))
-  assert.strictEqual(e.def, Math.round(c.def * mon.mul.def))
-  assert.strictEqual(e.spd, Math.round(c.spd * mon.mul.spd))
+  const m = { hp: 1, atk: 1, def: 1, spd: 1 }
+  for (const id of e.traits) { const t = TRAITS[id]; if (t.stat) m[t.stat] *= t.mult }
+  assert.strictEqual(e.hp,  Math.round(c.hp  * mon.mul.hp  * m.hp))
+  assert.strictEqual(e.atk, Math.round(c.atk * mon.mul.atk * m.atk))
+  assert.strictEqual(e.def, Math.round(c.def * mon.mul.def * m.def))
+  assert.strictEqual(e.spd, Math.round(c.spd * mon.mul.spd * m.spd))
 })
 
 test('trait count equals the stage slot count and traits are distinct', () => {
-  const stage = 9                       // S9 = [일반,일반,희귀] (스킵 없음: 일반풀3≥2·희귀풀2≥1)
+  const stage = 30                      // S30 = [일반,일반,희귀] (스킵 없음: 일반풀3≥2·희귀풀2≥1)
   const e = generateEncounter(stage, makeRng(3))
   assert.strictEqual(e.traits.length, STAGES[stage].traitSlots.length)
   assert.strictEqual(new Set(e.traits).size, e.traits.length) // distinct
 })
 
 test('drawn traits match the slot rarities in order', () => {
-  const stage = 9
+  const stage = 30
   const e = generateEncounter(stage, makeRng(3))
   STAGES[stage].traitSlots.forEach((r, i) => assert.strictEqual(TRAITS[e.traits[i]].rarity, r, `slot ${i}`))
 })
 
-test('stage 1 attaches no traits', () => {
+test('stage 1 = 일반 특성 1개(대역 규칙)', () => {
   const e = generateEncounter(1, makeRng(99))
-  assert.deepStrictEqual(e.traits, [])
+  assert.strictEqual(e.traits.length, 1)
+  assert.strictEqual(TRAITS[e.traits[0]].rarity, '일반')
+})
+
+test('스탯 트레잇 = 몹 base 스탯 × mult 반영(생성 시 1회)', () => {
+  // S1 일반 슬롯이 스탯 트레잇을 뽑은 시드를 찾아 검증(일반엔 사거리저항도 섞임).
+  for (let seed = 1; seed <= 60; seed++) {
+    const e = generateEncounter(1, makeRng(seed))
+    const t = TRAITS[e.traits[0]]
+    if (!t.stat) continue
+    const mon = Object.values(MONSTERS).find((m) => m.name === e.name)
+    const c = levelCurve(1)
+    assert.strictEqual(e[t.stat], Math.round(c[t.stat] * mon.mul[t.stat] * t.mult), `${t.name} ${t.stat}`)
+    return
+  }
+  assert.fail('스탯 트레잇이 S1에서 안 뽑힘(60시드)')
 })
 
 test('일반 조우는 일반 풀에서만(보스 아님, aoe 없음)', () => {

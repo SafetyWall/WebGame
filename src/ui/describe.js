@@ -72,9 +72,12 @@ export function describeSkill(skill, level = 1) {
   return describeSkillLines(skill, level).join('\n')
 }
 
+const STAT_KO = { atk: '공격력', def: '방어력', hp: '체력', spd: '속도' }
+
 // 트레잇 → 설명 라인 배열.
 export function describeTraitLines(trait) {
   const t = trait
+  if (t.stat) return [`${STAT_KO[t.stat] || t.stat} ${pct(t.mult)}`]
   if (t.targeting) {
     const lines = []
     if (t.targeting.lowHp) lines.push('체력 낮은 적 우선 공격')

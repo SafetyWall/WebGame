@@ -14,7 +14,7 @@ test('TRAITS entries have id(=key)/name; 규칙 트레잇은 trigger/op/value �
   for (const [key, t] of Object.entries(TRAITS)) {
     assert.strictEqual(t.id, key, `${key} id matches key`)
     assert.ok(t.name, `${key} name`)
-    if (t.targeting) continue                            // 타겟팅 트레잇 = 규칙 파이프 무관(별도 테스트)
+    if (t.targeting || t.stat) continue                  // 타겟팅·스탯 트레잇 = 규칙 파이프 무관(별도 테스트)
     assert.ok(TRIGGERS.includes(t.trigger), `${key} trigger`)
     assert.ok(OPS.includes(t.op), `${key} op`)
     assert.ok(Number.isFinite(t.value), `${key} value`)
@@ -155,11 +155,26 @@ test('every trait has a valid rarity', () => {
 })
 
 test('trait rarities match the assigned roster', () => {
-  assert.strictEqual(TRAITS.melee_evade.rarity, '일반')
-  assert.strictEqual(TRAITS.ranged_resist.rarity, '일반')
   assert.strictEqual(TRAITS.self_heal.rarity, '희귀')
   assert.strictEqual(TRAITS.damage_reflect.rarity, '희귀')
   assert.strictEqual(TRAITS.melee_immune.rarity, '영웅')
+})
+
+test('스탯 트레잇 = 일반(stat/mult), 속도 증가폭이 더 작음', () => {
+  for (const id of ['stat_atk', 'stat_def', 'stat_hp', 'stat_spd']) {
+    const t = TRAITS[id]
+    assert.strictEqual(t.rarity, '일반')
+    assert.ok(['atk', 'def', 'hp', 'spd'].includes(t.stat), `${id} stat`)
+    assert.ok(t.mult > 1, `${id} mult>1`)
+  }
+  assert.ok(TRAITS.stat_spd.mult < TRAITS.stat_atk.mult, '속도 < 공격 증가폭')
+})
+
+test('타겟팅 트레잇 = 희귀(탱월 무력화): 저체력추적·고공격력추적', () => {
+  assert.strictEqual(TRAITS.low_hp_seek.rarity, '희귀')
+  assert.deepStrictEqual(TRAITS.low_hp_seek.targeting, { position: 0, lowHp: 1 })
+  assert.strictEqual(TRAITS.atk_seek.rarity, '희귀')
+  assert.deepStrictEqual(TRAITS.atk_seek.targeting, { position: 0, atk: 1 })
 })
 
 test('melee_immune nullifies melee damage to exactly 0', () => {

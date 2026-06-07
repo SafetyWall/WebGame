@@ -62,23 +62,26 @@ function runOne(seed) {
     if (s.party.length === 0) return { death: s.stage, earned }
     const stage = s.stage
     s = run.fight(s)
-    if (s.lastResult.outcome === 'loss') return { death: stage, earned }
+    if (s.lastResult.outcome === 'loss') return { death: stage, earned, clear: false }
     earned += s.lastResult.reward
-    if (s.lastResult.outcome === 'clear') return { death: 21, earned }   // S20 통과=클리어
+    if (s.lastResult.outcome === 'clear') return { death: stage, earned, clear: true }   // MAX_STAGE 통과=클리어
     s = run.next(s, rng)
   }
-  return { death: 21, earned }
+  return { death: s.stage, earned, clear: true }   // 루프 소진(이론상 도달 안 함)
 }
 
-const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1)
+const N = 30
+const SEEDS = Array.from({ length: N }, (_, i) => i + 1)
 const res = SEEDS.map(runOne)
-const deaths = res.map(r => r.death)
+// 사망 분포(클리어 제외) + 클리어 버킷 분리.
+const deaths = res.filter(r => !r.clear).map(r => r.death)
+const clears = res.filter(r => r.clear).length
 const hist = {}
 for (const d of deaths) hist[d] = (hist[d] || 0) + 1
-console.log('=== econ-sim: 풀투자 정책, 시드30 ===')
-console.log('사망/클리어 스테이지 분포 (S21=클리어):')
+console.log(`=== econ-sim: 풀투자 정책, 시드${N} (MAX_STAGE ${run.MAX_STAGE}) ===`)
+console.log('사망 스테이지 분포 (클리어=MAX_STAGE 통과):')
 for (const k of Object.keys(hist).map(Number).sort((a, b) => a - b)) console.log(`  S${k}: ${'#'.repeat(hist[k])} (${hist[k]})`)
-const sorted = deaths.slice().sort((a, b) => a - b)
-const cleared = deaths.filter(d => d > 20).length
-console.log(`클리어: ${cleared}/30 · 중앙값 도달 S${sorted[15]} · 최저 S${sorted[0]} · 최고 S${Math.min(20, sorted[29])}`)
-console.log(`평균 누적보상(런당): ${Math.round(res.reduce((a, r) => a + r.earned, 0) / 30)}골드`)
+const reached = res.map(r => r.clear ? run.MAX_STAGE + 1 : r.death).sort((a, b) => a - b)
+const med = reached[Math.floor(N / 2)]
+console.log(`클리어: ${clears}/${N} · 중앙 도달 S${med > run.MAX_STAGE ? 'CLEAR' : med} · 최저 S${reached[0]} · 최고 도달 S${Math.min(run.MAX_STAGE, reached[N - 1])}`)
+console.log(`평균 누적보상(런당): ${Math.round(res.reduce((a, r) => a + r.earned, 0) / N)}골드`)

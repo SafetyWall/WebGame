@@ -27,15 +27,18 @@ export function generateEncounter(stage, rng, monId = null) {
   const slots = [...cfg.traitSlots, ...(mon.bonus || [])]               // 스테이지 슬롯 + 보스 추가 슬롯
   for (const rarity of slots) {
     const pool = Object.values(TRAITS).filter(t =>
-      t.rarity === rarity && !traits.includes(t.id) && !conflicts(traits, t.id))
+      t.rarity === rarity && !t.inactive && !traits.includes(t.id) && !conflicts(traits, t.id))
     if (pool.length) traits.push(rng.pick(pool).id) // distinct 랜덤 1 (풀 소진/전부 배제 시 스킵)
   }
+  // 스탯형 트레잇 = base 스탯 × mult(생성 시 1회). 규칙/타겟팅 트레잇엔 stat 없음 → 무영향.
+  const base = { hp: c.hp * mon.mul.hp, atk: c.atk * mon.mul.atk, def: c.def * mon.mul.def, spd: c.spd * mon.mul.spd }
+  for (const id of traits) { const t = TRAITS[id]; if (t && t.stat) base[t.stat] *= t.mult }
   return {
     name: mon.name,
-    hp:  Math.round(c.hp  * mon.mul.hp),
-    atk: Math.round(c.atk * mon.mul.atk),
-    def: Math.round(c.def * mon.mul.def),
-    spd: Math.round(c.spd * mon.mul.spd),
+    hp:  Math.round(base.hp),
+    atk: Math.round(base.atk),
+    def: Math.round(base.def),
+    spd: Math.round(base.spd),
     aoe: Boolean(mon.aoe),
     boss: Boolean(mon.boss),
     traits,

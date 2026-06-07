@@ -1,26 +1,14 @@
-// 절차생성 스테이지 곡선. 수기 테이블 제거 → stageCfg(s)가 임의 s 생성(20→50~100 = MAX_STAGE만 변경).
+// 절차생성 스테이지 곡선. stageCfg(s)가 임의 s 생성(50→100 = MAX_STAGE만 변경).
 // 수치 placeholder(econ-sim 튜닝 대상). 중후반 승률은 2차전직 등 플레이어 파워원 도입 전까지 미보장.
 // 제약: 한 레어도 동시 슬롯 수 ≤ 그 레어도 트레잇 풀 크기(일반3·희귀2·영웅2·전설1) — 초과 시 조우생성이 그 슬롯 스킵.
 
-export const MAX_STAGE = 20
+export const MAX_STAGE = 50
 
-// 레어도 등장 계획: unlock=첫 등장 스테이지, every=+1마다 스테이지 간격, max=동시 슬롯 상한(풀 크기 이하).
-const RARITY_PLAN = [
-  { r: '일반', unlock: 3,  every: 5,  max: 3 },
-  { r: '희귀', unlock: 9,  every: 6,  max: 2 },
-  { r: '영웅', unlock: 15, every: 99, max: 1 },
-  { r: '전설', unlock: 19, every: 99, max: 1 },
-]
-
-// 슬롯 = 레어도 순(일반→…→전설)으로 등장. 온보딩(S1~2)=빈 배열.
+// 트레잇 슬롯 = 10스테이지마다 1개 추가, 추가 순서 = 일반/희귀/일반/영웅/희귀(누적).
+//   ~10:[일반] ~20:[일반,희귀] ~30:+일반 ~40:+영웅 ~50:+희귀 → 41~50 = 일반2·희귀2·영웅1. 50+ = 5칸 유지.
+const SLOT_SEQ = ['일반', '희귀', '일반', '영웅', '희귀']
 function traitSlots(s) {
-  const slots = []
-  for (const p of RARITY_PLAN) {
-    if (s < p.unlock) continue
-    const n = Math.min(p.max, 1 + Math.floor((s - p.unlock) / p.every))
-    for (let i = 0; i < n; i++) slots.push(p.r)
-  }
-  return slots
+  return SLOT_SEQ.slice(0, Math.min(SLOT_SEQ.length, Math.ceil(s / 10)))
 }
 
 // 스테이지 설정 = 몹 레벨(=s, placeholder) + 트레잇 슬롯.
