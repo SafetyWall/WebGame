@@ -11,11 +11,13 @@ export function unitSkillIds(job, learnedSkills) {
   return [...actives, basic]
 }
 
-// 우선순위 보정: order에서 유효(validIds) 스킬만 그 순서로, 누락분은 뒤에 append. order 없으면 validIds 순서.
+// 우선순위 보정: 액티브만 order대로(누락분 뒤 append), **평타(=validIds 마지막)는 항상 끝 고정**.
+// 평타는 cost0=항상 사용가능 → 앞에 오면 selectSkill이 늘 평타만 집어 액티브 무력화. 그래서 위로 못 올림.
 export function normalizeSkillOrder(validIds, order) {
-  if (!Array.isArray(order)) return validIds.slice()
-  const valid = order.filter(id => validIds.includes(id))
-  return [...valid, ...validIds.filter(id => !valid.includes(id))]
+  const basic = validIds[validIds.length - 1]
+  const reorderable = validIds.slice(0, -1)
+  const head = Array.isArray(order) ? order.filter(id => reorderable.includes(id)) : []
+  return [...head, ...reorderable.filter(id => !head.includes(id)), basic]
 }
 
 export function makeUnit(job, level = 1, skillOrder = null, skillLevels = {}, learnedSkills = null) {

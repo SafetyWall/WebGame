@@ -98,9 +98,11 @@ export function reorderSkill(s, i, skillId, dir) {
   const u = s.roster[i]
   if (!u) return s
   const order = normalizeSkillOrder(unitSkillIds(JOBS[u.job], u.learnedSkills), u.skillOrder)
+  const basic = order[order.length - 1]                    // 평타 = 우선순위 끝 고정
+  if (skillId === basic) return s                          // 평타는 이동 불가
   const idx = order.indexOf(skillId)
   const j = idx + dir
-  if (idx < 0 || j < 0 || j >= order.length) return s     // 없는 스킬·경계 밖 → no-op
+  if (idx < 0 || j < 0 || j >= order.length - 1) return s  // 없는 스킬·경계·평타 슬롯(마지막) 침범 → no-op
   const next = order.slice()
   ;[next[idx], next[j]] = [next[j], next[idx]]
   const roster = s.roster.map((r, k) => (k === i ? { ...r, skillOrder: next } : r))

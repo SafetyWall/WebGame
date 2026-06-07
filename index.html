@@ -69,6 +69,7 @@
     .order-item, .prio-item { border: 1px solid #233; border-radius: 5px; background: #141414; padding: .25rem .45rem; margin: 4px 0; font-size: .85em; }
     .prio-item { user-select: none; -webkit-user-select: none; touch-action: none; }   /* 드래그 중 글씨 선택·터치 스크롤 방지 */
     .handle { cursor: grab; color: #888; touch-action: none; padding: 0 .2rem; user-select: none; }
+    .prio-item.fixed { opacity: .75; } .prio-item.fixed .handle { cursor: default; color: #666; }   /* 평타 = 끝 고정 */
     /* 드래그 진행 중 = 페이지·모달 스크롤바·텍스트 선택 차단(끌린 항목 transform 오버플로 방지) */
     body.drag-lock { overflow: hidden; user-select: none; -webkit-user-select: none; }
     body.drag-lock .modal { overflow: hidden; }

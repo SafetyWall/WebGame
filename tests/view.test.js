@@ -147,11 +147,12 @@ test('skillDetail: 카드에서 열면(모달 없음) 읽기전용 — 학습/�
   assert.doesNotMatch(html, /최대 레벨/)
 })
 
-test('modal: 다중 스킬 = 우선순위 드래그 리스트', () => {
+test('modal: 다중 스킬 = 우선순위 드래그 리스트(평타는 비드래그 고정)', () => {
   const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0] }
   const html = renderApp(S(s, { modal: 0 }))
-  assert.match(html, /class="prio-item" data-drag="prio"[^>]*data-skill="warrior_cleave"/)
-  assert.match(html, /data-skill="melee_strike"/)
+  assert.match(html, /class="prio-item" data-drag="prio"[^>]*data-skill="warrior_cleave"/)  // 액티브 = 드래그
+  assert.match(html, /class="prio-item fixed"[^>]*data-skill="melee_strike"/)                // 평타 = fixed(드래그 없음)
+  assert.doesNotMatch(html, /data-drag="prio"[^>]*data-skill="melee_strike"/)                // 평타엔 data-drag 없음
 })
 
 test('result: 승리 배너 + 다음 버튼', () => {

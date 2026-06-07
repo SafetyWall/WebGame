@@ -34,10 +34,12 @@ function skillList(i, r, job, readOnly = false) {
   const learned = r.learnedSkills || []
   const draggable = !readOnly && equipped.length > 1
   const items = equipped.map((sid, k) => {
-    const lvTxt = sid === basic ? '' : ` Lv${(r.skillLevels && r.skillLevels[sid]) || 1}`
+    const isBasic = sid === basic                              // 평타 = 우선순위 끝 고정(드래그 불가)
+    const lvTxt = isBasic ? '' : ` Lv${(r.skillLevels && r.skillLevels[sid]) || 1}`
     if (readOnly) return `<li class="prio-item ro">${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
-    const dragAttr = draggable ? 'data-drag="prio" ' : ''
-    return `<li class="prio-item" ${dragAttr}data-action="openSkill" data-i="${i}" data-skill="${sid}"><span class="handle">⠿</span> ${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
+    const dragAttr = (draggable && !isBasic) ? 'data-drag="prio" ' : ''
+    const handle = isBasic ? '🔒' : '⠿'
+    return `<li class="prio-item${isBasic ? ' fixed' : ''}" ${dragAttr}data-action="openSkill" data-i="${i}" data-skill="${sid}"><span class="handle">${handle}</span> ${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
   }).join('')
   const unlearned = readOnly ? [] : job.skills.slice(0, -1).filter((sid) => !learned.includes(sid))
   const unlearnedBlock = unlearned.length

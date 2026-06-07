@@ -22,9 +22,10 @@ test('movePartyTo: 경계 밖/미출전 = no-op', () => {
   assert.strictEqual(movePartyTo(s, 9, 0), s)
 })
 
-test('movePrioTo: 평타를 맨앞으로', () => {
+test('movePrioTo: 평타를 맨앞으로 드래그해도 정규화서 끝 고정', () => {
   const s = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0] }
-  const ns = movePrioTo(s, 0, 'melee_strike', 0)
+  const ns = movePrioTo(s, 0, 'melee_strike', 0)   // 평타를 0번으로 끌어도
   const order = normalizeSkillOrder(unitSkillIds(JOBS.warrior, ns.roster[0].learnedSkills), ns.roster[0].skillOrder)
-  assert.strictEqual(order[0], 'melee_strike')
+  assert.strictEqual(order[order.length - 1], 'melee_strike')   // 평타는 항상 끝
+  assert.notStrictEqual(order[0], 'melee_strike')
 })

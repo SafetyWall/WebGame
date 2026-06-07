@@ -50,14 +50,20 @@ test('makeUnit: skills resolve(우선순위 보존)', () => {
   assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush', 'melee_strike'])
 })
 
-test('makeUnit: skillOrder 재배열 반영(우선순위 override)', () => {
-  const u = makeUnit(JOBS.warrior, 1, ['melee_strike', 'warrior_cleave'])
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['melee_strike', 'warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush'])  // 누락분 뒤 append
+test('makeUnit: skillOrder 재배열 반영(액티브만, 평타는 항상 끝)', () => {
+  const u = makeUnit(JOBS.warrior, 1, ['warrior_might', 'warrior_cleave'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_might', 'warrior_cleave', 'warrior_heavy', 'warrior_crush', 'melee_strike'])  // 누락 액티브 뒤 + 평타 끝
 })
 
-test('makeUnit: skillOrder 보정 — 무효 id 무시 + 누락 직업스킬 append', () => {
-  const u = makeUnit(JOBS.warrior, 1, ['melee_strike', 'bogus'])
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['melee_strike', 'warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush'])
+test('makeUnit: 평타(기본 공격)는 우선순위 끝 고정 — 위로 못 올림', () => {
+  const u = makeUnit(JOBS.warrior, 1, ['melee_strike', 'warrior_cleave'])  // 평타를 1순위로 넣어도
+  assert.strictEqual(u.skills[u.skills.length - 1].id, 'melee_strike')      // 항상 끝
+  assert.strictEqual(u.skills[0].id, 'warrior_cleave')                       // 평타 무시하고 액티브가 앞
+})
+
+test('makeUnit: skillOrder 보정 — 무효 id 무시 + 누락 직업스킬 append(평타 끝)', () => {
+  const u = makeUnit(JOBS.warrior, 1, ['warrior_might', 'bogus'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_might', 'warrior_cleave', 'warrior_heavy', 'warrior_crush', 'melee_strike'])
 })
 
 test('makeUnit: skillOrder 없으면 직업 기본 순서', () => {

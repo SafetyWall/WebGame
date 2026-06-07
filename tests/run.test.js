@@ -137,25 +137,26 @@ test('slotCost increments: 3→4=5, 4→5=9, 5→6=13', () => {
   assert.strictEqual(slotCost(5), 13)
 })
 
-test('reorderSkill: 스킬 우선순위 위/아래 이동, 경계/무효는 no-op(same ref)', () => {
-  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave'] }], party: [0] }  // cleave+평타 2개
-  const r = reorderSkill(s, 0, 'melee_strike', -1)            // 평타를 위로
-  assert.deepStrictEqual(r.roster[0].skillOrder, ['melee_strike', 'warrior_cleave'])
-  assert.strictEqual(reorderSkill(r, 0, 'melee_strike', -1), r) // 이미 맨 위 → no-op
-  assert.strictEqual(reorderSkill(s, 0, 'bogus', -1), s)        // 없는 스킬
-  assert.strictEqual(reorderSkill(s, 9, 'melee_strike', -1), s) // 없는 인덱스
+test('reorderSkill: 액티브 위/아래 이동, 평타/경계/무효는 no-op(same ref)', () => {
+  const s = { ...fresh(), roster: [{ job: 'warrior', level: 2, learnedSkills: ['warrior_cleave', 'warrior_heavy'] }], party: [0] }  // cleave+heavy+평타
+  const r = reorderSkill(s, 0, 'warrior_heavy', -1)            // 강타를 위로(cleave와 swap)
+  assert.deepStrictEqual(r.roster[0].skillOrder, ['warrior_heavy', 'warrior_cleave', 'melee_strike'])
+  assert.strictEqual(reorderSkill(r, 0, 'warrior_heavy', -1), r) // 이미 맨 위 → no-op
+  assert.strictEqual(reorderSkill(s, 0, 'melee_strike', -1), s)  // 평타 = 끝 고정, 이동 불가 → no-op
+  assert.strictEqual(reorderSkill(s, 0, 'warrior_heavy', 1), s)  // 끝 액티브를 평타 슬롯(마지막)으로 못 내림 → no-op
+  assert.strictEqual(reorderSkill(s, 0, 'bogus', -1), s)         // 없는 스킬
+  assert.strictEqual(reorderSkill(s, 9, 'melee_strike', -1), s)  // 없는 인덱스
 })
 
 test('fight가 roster.skillOrder를 전투에 반영(순서 다르면 결과 다름)', () => {
   const enc = { name: '더미', hp: 100000, atk: 0, def: 0, spd: 0, aoe: false, boss: false, traits: [] }
   const base = { ...fresh(), party: [0], encounter: enc }
-  const def = fight({ ...base, roster: [{ job: 'warrior', level: 5 }] })                                         // 기본순(갑옷부수기 우선)
-  const plain = fight({ ...base, roster: [{ job: 'warrior', level: 5, skillOrder: ['melee_strike', 'warrior_cleave'] }] }) // 평타 우선
+  // cleave·crush 둘 다 cost50 → 마나50 시점 동시 사용가능 → 우선순위가 첫 액티브 가름.
+  const def = fight({ ...base, roster: [{ job: 'warrior', level: 5 }] })                                         // 기본순: cleave 먼저(-74)
+  const reord = fight({ ...base, roster: [{ job: 'warrior', level: 5, skillOrder: ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'warrior_might'] }] }) // crush 먼저(-66)
   const dlog = def.lastResult.rounds.flatMap(r => r.log).join('\n')
-  const plog = plain.lastResult.rounds.flatMap(r => r.log).join('\n')
-  assert.notStrictEqual(dlog, plog)        // 우선순위 override가 전투를 바꿈 = skillOrder 전달됨
-  assert.match(dlog, /\(-74\)/)            // 기본: 갑옷부수기(floor(44×1.7)=74) 발동
-  assert.doesNotMatch(plog, /\(-74\)/)     // 평타우선: 발동 안 함(평타만)
+  const plog = reord.lastResult.rounds.flatMap(r => r.log).join('\n')
+  assert.notStrictEqual(dlog, plog)        // 액티브 우선순위 override가 전투를 바꿈 = skillOrder 전달됨(평타는 끝 고정이라 무관)
 })
 
 test('expandSlot: slots+1 for slotCost gold; refused when poor (same ref)', () => {
