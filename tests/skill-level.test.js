@@ -25,7 +25,7 @@ function nukeDmg(skillLevels) {
   const u = makeUnit(JOBS.mage, 1, null, skillLevels)
   u.mana = 100                              // 첫 행동에 파이어볼(cost50) 발동되게
   const mob = makeMob({ name: 'D', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
-  const r = runBattle([u], mob, { maxTicks: 200 })  // 200틱 = 마법사 1행동(spd8)
+  const r = runBattle([u], mob, { maxTicks: 200 })  // 마법사 spd90 → tick112 1행동(다음 224>200)
   const m = r.rounds.flatMap(x => x.log).join('\n').match(/→ D \(-(\d+)\)/)
   return m ? Number(m[1]) : null
 }
@@ -34,5 +34,5 @@ test('스킬 레벨5 = 레벨1의 2배 데미지(power 스케일)', () => {
   const d1 = nukeDmg({})                    // 파이어볼 L1
   const d5 = nukeDmg({ mage_nuke: 5 })      // 파이어볼 L5
   assert.ok(d1 > 0 && d5 > 0, `d1=${d1} d5=${d5}`)
-  assert.strictEqual(d5, d1 * 2)            // floor(32*2.2)=70 → 140
+  assert.strictEqual(d5, d1 * 2)            // floor(32*3.0)=96 → L5 192(def0=항등)
 })

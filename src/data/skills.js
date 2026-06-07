@@ -12,7 +12,7 @@ export const SKILLS = {
   ranged_strike:   { id: 'ranged_strike',   name: '기본 공격', kind: 'attack', range: 'ranged', power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,   effects: [] },
   basic_heal:      { id: 'basic_heal',      name: '기본 공격', kind: 'heal',   range: null,     power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0,   effects: [] },
   guardian_strike: { id: 'guardian_strike', name: '기본 공격', kind: 'attack', range: 'melee',  power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0, effects: [] },  // 효과 없는 평타(주는뎀↓는 무기파괴로 이동)
-  mage_nuke:       { id: 'mage_nuke',       name: '파이어볼', kind: 'attack', range: 'ranged', power: 2.2, manaGain: 0,         cost: 50, cd: 400, effects: [] },
+  mage_nuke:       { id: 'mage_nuke',       name: '파이어볼', kind: 'attack', range: 'ranged', power: 3.0, manaGain: 0,         cost: 50, cd: 400, effects: [] },  // 유리대포 고버스트(느린 spd80과 짝)
   warrior_cleave:  { id: 'warrior_cleave',  name: '갑옷부수기', kind: 'attack', range: 'melee', power: 1.7, manaGain: 0,        cost: 50, cd: 450,
     effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.25, duration: 500 }] },
   priest_hot:      { id: 'priest_hot',      name: '재생',     kind: 'heal',  range: null,     power: 0,   manaGain: 0,         cost: 50, cd: 500,

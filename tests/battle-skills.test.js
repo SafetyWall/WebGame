@@ -7,7 +7,7 @@ import { SLIME } from './_fixtures.js'
 import { SKILLS } from '../src/data/skills.js'
 
 // 더미 몹: spd 0(반격 안 함) + 큰 hp(안 죽음) → 유닛 1행동만 격리해 수치 직접 검증.
-// 유닛 1행동 시점 = ceil(10000/spd): 마법사(110)=91, 전사(120)=84, 가디언(70)=143, 사제(100)=100. (THRESHOLD 10000)
+// 유닛 1행동 시점 = ceil(10000/spd): 마법사(90)=112, 전사(120)=84, 가디언(70)=143, 사제(100)=100. (THRESHOLD 10000)
 const dummyMob = (over = {}) => makeMob({ name: '더미', hp: 100000, atk: 0, def: 8, spd: 0, ...over })
 
 // --- selectSkill: 우선순위 게이팅 (직접) ---
@@ -33,12 +33,12 @@ test('selectSkill: 쿨 중 → 평타', () => {
 
 // --- 데미지 수치 직접 (1행동 격리) ---
 
-test('mage_nuke: 데미지 = damage(floor(atk×2.2), def), 평타보다 큼', () => {
-  // 마법사 atk32, nuke power2.2 → floor(70)→damage(70,8)=64.8→64. 평타 = damage(32,8)=29.6→29. (% 경감식)
+test('mage_nuke: 데미지 = damage(floor(atk×3.0), def), 평타보다 큼(고버스트)', () => {
+  // 마법사 atk32, nuke power3.0 → floor(96)→damage(96,8)=88.8→88. 평타 = damage(32,8)=29.6→29. (% 경감식)
   const nukeMage = makeUnit(JOBS.mage, 1); nukeMage.mana = 100
   const nm = dummyMob()
-  runBattle([nukeMage], nm, { maxTicks: 125 })   // tick125 = 마법사 1행동
-  assert.equal(nm.hp, 100000 - 64)
+  runBattle([nukeMage], nm, { maxTicks: 125 })   // 마법사 spd90 → tick112 발동(1행동)
+  assert.equal(nm.hp, 100000 - 88)
 
   const plainMage = makeUnit(JOBS.mage, 1); plainMage.mana = 0
   plainMage.cooldowns['mage_nuke'] = 999999       // 발동 봉쇄 → 평타
@@ -49,9 +49,9 @@ test('mage_nuke: 데미지 = damage(floor(atk×2.2), def), 평타보다 큼', ()
 
 test('mage_nuke: 발동 시 마나 −50, 쿨 = tick+400', () => {
   const m = makeUnit(JOBS.mage, 1); m.mana = 100
-  runBattle([m], dummyMob(), { maxTicks: 125 })   // 마법사 spd110 → tick91 발동(10000/110)
+  runBattle([m], dummyMob(), { maxTicks: 125 })   // 마법사 spd90 → tick112 발동(10000/90)
   assert.equal(m.mana, 50)                         // 100 − 50
-  assert.equal(m.cooldowns['mage_nuke'], 491)      // 91 + 400
+  assert.equal(m.cooldowns['mage_nuke'], 512)      // 112 + 400
 })
 
 test('평타: 발동 시 마나 +manaGain(25)', () => {
