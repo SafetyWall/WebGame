@@ -261,7 +261,7 @@ export function runBattle(party, mob, opts = {}) {
     targets,
     log: lines.slice(),
     party: party.map(u => ({ name: u.name, level: u.level, hp: Math.max(0, u.hp), maxHp: u.maxHp, mana: u.mana, manaMax: u.manaMax, gauge: Math.floor(u.gauge), alive: u.hp > 0, effects: effSnap(u) })),
-    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, boss: Boolean(mob.boss), aoe: Boolean(mob.aoe), traits: (mob.traits || []).map(t => t.id), effects: effSnap(mob) },
+    mob: { name: mob.name, hp: Math.max(0, mob.hp), maxHp: mob.maxHp, mana: mob.mana ?? 0, manaMax: mob.manaMax ?? 100, gauge: Math.floor(mob.gauge), boss: Boolean(mob.boss), aoe: Boolean(mob.aoe), traits: (mob.traits || []).map(t => t.id), effects: effSnap(mob) },
   })
   const finish = (winner) => {
     const last = rounds[rounds.length - 1]

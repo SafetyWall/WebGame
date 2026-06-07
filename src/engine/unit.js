@@ -58,6 +58,8 @@ export function makeMob(mob) {
     traits: (mob.traits || []).map(id => TRAITS[id]), // id → 공유 def. 없으면 []
     effects: [],       // step5: 전사 방깎·가디언 약뎀감 등 대상
     gauge: 0,
+    mana: 0,           // 현재 몹은 마나 미사용(향후 몬스터 스킬용). manaMax=mob.mana 또는 100.
+    manaMax: mob.mana ?? 100,
     isMob: true,
   }
 }

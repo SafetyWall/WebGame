@@ -48,6 +48,8 @@ function mobRow(m, actorRef, targets, tick) {
   return `<div class="bu mob-row${m.hp > 0 ? '' : ' dead'}${roleCls('mob', actorRef, targets)}">
     <div class="bu-top"><span class="bu-name ${m.boss ? 'boss' : ''}">${m.boss ? '👑 ' : ''}${esc(m.name)}</span><span class="bu-hp">${m.hp}/${m.maxHp}</span></div>
     <div class="bar hp mob"><i style="width:${pctw(m.hp, m.maxHp)}%"></i></div>
+    <div class="bar mana"><i style="width:${pctw(m.mana || 0, m.manaMax || 100)}%"></i></div>
+    <div class="bar gauge"><i style="width:${pctw(m.gauge || 0, THRESHOLD)}%"></i></div>
     ${mobTraitPills(m)}
     <div class="bu-eff">${effTags(m.effects, tick)}</div>
   </div>`
