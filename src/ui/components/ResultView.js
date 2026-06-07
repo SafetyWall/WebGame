@@ -1,6 +1,8 @@
 // 전투 결과: 배너 + 재생뷰(BattleStage, ui.frames) + 전체 로그(접이식, renderRounds 재사용) + 다음/재시작.
+// 재생뷰 유닛 클릭 = 읽기전용 캐릭터 모달(능력치 — 대기화면과 동일 뷰, phase=result라 강화/스킬액션 비활성).
 import { renderRounds } from '../render.js'
 import { renderBattleStage } from './BattleStage.js'
+import { renderModal } from './CharacterModal.js'
 
 export function renderResultView(run, ui) {
   const { outcome, reward, ticks, rounds } = run.lastResult
@@ -10,9 +12,9 @@ export function renderResultView(run, ui) {
   const btn = outcome === 'loss' ? `<button data-action="restart">다시 시작</button>`
     : outcome === 'clear' ? `<button data-action="restart">새 런</button>`
     : `<button data-action="next">다음 스테이지</button>`
-  const stage = renderBattleStage(ui.frames, ui.cursor, ui.playing, ui.speed)
+  const stage = renderBattleStage(ui.frames, ui.cursor, ui.playing, ui.speed, run.party)
   return `<div class="result-view">${banner}
 <div class="action-bar">${btn}</div>
 ${stage}
-<details class="full-log"><summary>전체 로그 보기</summary>${renderRounds(rounds)}</details></div>`
+<details class="full-log"><summary>전체 로그 보기</summary>${renderRounds(rounds)}</details></div>${renderModal(run, ui)}`
 }

@@ -13,7 +13,7 @@ export function renderCard(run, i) {
   const full = run.party.length >= run.slots
 
   const front = isFront ? ` <span class="front">🛡️앞열</span>` : ''
-  const nums = `HP ${s.hp} · ATK ${s.atk}${s.heal ? ` · 힐 ${s.heal}` : ''}`
+  const nums = `HP ${s.hp} · ATK ${s.atk}${job.def ? ` · 방어 ${job.def}` : ''}${s.heal ? ` · 힐 ${s.heal}` : ''}`
   const toggle = inParty
     ? `<button class="mini" data-action="toggle" data-i="${i}">대기</button>`
     : full

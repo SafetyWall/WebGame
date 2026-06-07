@@ -27,22 +27,24 @@ function upgradeBlock(run, i, r, job) {
 }
 
 // 장착 스킬(학습 액티브 + 기본공격) = 우선순위 드래그 리스트(클릭=상세). 미학습 액티브 = pill(클릭=상세→학습).
-function skillList(i, r, job) {
+// readOnly(결과화면 정보뷰) = 드래그·클릭 액션·미학습 pill 없이 이름만.
+function skillList(i, r, job, readOnly = false) {
   const basic = job.skills[job.skills.length - 1]
   const equipped = normalizeSkillOrder(unitSkillIds(job, r.learnedSkills), r.skillOrder)
   const learned = r.learnedSkills || []
-  const draggable = equipped.length > 1
+  const draggable = !readOnly && equipped.length > 1
   const items = equipped.map((sid, k) => {
     const lvTxt = sid === basic ? '' : ` Lv${(r.skillLevels && r.skillLevels[sid]) || 1}`
+    if (readOnly) return `<li class="prio-item ro">${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
     const dragAttr = draggable ? 'data-drag="prio" ' : ''
     return `<li class="prio-item" ${dragAttr}data-action="openSkill" data-i="${i}" data-skill="${sid}"><span class="handle">⠿</span> ${k + 1}. ${esc(SKILLS[sid].name)}${lvTxt}</li>`
   }).join('')
-  const unlearned = job.skills.slice(0, -1).filter((sid) => !learned.includes(sid))
+  const unlearned = readOnly ? [] : job.skills.slice(0, -1).filter((sid) => !learned.includes(sid))
   const unlearnedBlock = unlearned.length
     ? `<div class="ms-title">미학습</div><div class="skill-pills">${unlearned.map((sid) =>
         `<span class="sk no" data-action="openSkill" data-i="${i}" data-skill="${sid}">${esc(SKILLS[sid].name)}</span>`).join('')}</div>`
     : ''
-  const title = draggable ? '스킬 (드래그=우선순위 · 클릭=상세)' : '스킬 (클릭=상세)'
+  const title = readOnly ? '스킬' : (draggable ? '스킬 (드래그=우선순위 · 클릭=상세)' : '스킬 (클릭=상세)')
   return `<div class="modal-section"><div class="ms-title">${title}</div><ol class="prio-list">${items}</ol>${unlearnedBlock}</div>`
 }
 
@@ -52,14 +54,15 @@ export function renderModal(run, ui) {
   const r = run.roster[i]
   const job = JOBS[r.job]
   const s = job.levels[r.level]
-  const stats = [`HP ${s.hp}`, `ATK ${s.atk}`, `SPD ${job.spd}`,
+  const readOnly = run.phase === 'result'   // 결과화면 = 정보뷰(강화/전직/스킬 액션 비활성)
+  const stats = [`HP ${s.hp}`, `ATK ${s.atk}`, ...(job.def ? [`방어 ${job.def}`] : []), `SPD ${job.spd}`,
     ...(s.heal ? [`힐 ${s.heal}`] : []), `마나 ${job.mana}`, ROLE_KO[job.role] || job.role].join(' · ')
   return `<div class="modal-overlay" data-action="closeModal">
   <div class="modal" data-stop="1">
     <div class="modal-head"><span class="jb">${esc(job.name)} Lv${r.level}</span><button class="modal-close" data-action="closeModal">✕</button></div>
     <div class="modal-stats">${stats}</div>
-    ${upgradeBlock(run, i, r, job)}
-    ${skillList(i, r, job)}
+    ${readOnly ? '' : upgradeBlock(run, i, r, job)}
+    ${skillList(i, r, job, readOnly)}
   </div>
 </div>`
 }

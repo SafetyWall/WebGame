@@ -33,6 +33,13 @@ test('prep: 카드 본문=openModal, 스킬 pill=openSkill(상세 팝업)', () =
   assert.match(html, /class="sk no"[^>]*data-action="openSkill"[^>]*data-i="0"[^>]*data-skill="warrior_heavy"/)       // 미학습=no
 })
 
+test('prep: 카드/모달에 방어(def) 표기 — 탱만(딜러 def0 미표기)', () => {
+  const g = { ...newRun(makeRng(1)), roster: [{ job: 'guardian', level: 2 }], party: [0] }
+  assert.match(renderApp(S(g)), /방어 100/)              // 카드 nums (가디언 def100)
+  assert.match(renderApp(S(g, { modal: 0 })), /방어 100/) // 모달 stats
+  assert.doesNotMatch(renderApp(S(newRun(makeRng(1)))), /방어 /)  // 노비스(def0) 미표기
+})
+
 test('prep: 노비스 카드 = 스킬 영역 빈칸(전직 안내 미노출)', () => {
   const html = renderApp(S(newRun(makeRng(1))))
   assert.doesNotMatch(html, /전직 필요/)
@@ -168,6 +175,20 @@ test('result: ui.frames 있으면 재생뷰(battle-stage) 노출 + 전체로그 
   assert.match(html, /battle-stage/)
   assert.match(html, /<details class="full-log"><summary>전체 로그 보기/)
   assert.match(html, /라운드 1/)
+})
+
+test('result: 재생뷰 유닛 클릭→openModal + 읽기전용 모달(능력치+방어, 강화/스킬액션 없음)', () => {
+  const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2, party: [0],
+    roster: [{ job: 'guardian', level: 2 }],
+    lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [] } }
+  const ui = { layout: '2col', modal: null, cursor: 0, playing: false, speed: 1,
+    frames: [{ tick: 5, actor: '가디언', log: ['x'], party: [{ name: '가디언', level: 2, hp: 100, maxHp: 312, mana: 0, manaMax: 100, gauge: 0, alive: true, effects: [] }], mob: { name: '슬라임', hp: 0, maxHp: 30, boss: false, effects: [] } }] }
+  assert.match(renderApp({ run: s, ui }), /data-action="openModal"[^>]*data-i="0"/)   // 재생뷰 유닛=로스터0 클릭
+  const opened = renderApp({ run: s, ui: { ...ui, modal: 0 } })
+  assert.match(opened, /modal-overlay/)
+  assert.match(opened, /방어 100/)                       // 능력치(방어 포함)
+  assert.doesNotMatch(opened, /data-action="upgrade"/)   // 읽기전용 — 강화 버튼 없음(비노비스라면 prep엔 있음)
+  assert.doesNotMatch(opened, /data-action="openSkill"/) // 스킬 액션 없음
 })
 
 test('result: 단일 h2 배너(결과: 헤더 중복 없음) + 라운드 로그 유지', () => {

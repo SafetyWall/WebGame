@@ -92,6 +92,11 @@ test('renderBattleStage: 몹 특성/광역 = data-tip pill, 버프/디버프 = �
   assert.match(h, /강화/)                                       // 유닛 주는뎀↑ = 강화
 })
 
+test('renderBattleStage: party(로스터 매핑) 주면 유닛행 클릭=openModal, 없으면 없음', () => {
+  assert.match(renderBattleStage(FR, 0, false, 1, [2]), /data-action="openModal"[^>]*data-i="2"/) // party[0]=로스터 idx2
+  assert.doesNotMatch(renderBattleStage(FR, 0), /openModal/)  // party 미전달=하위호환(클릭 없음)
+})
+
 test('renderBattleStage: 사망 유닛 dead 클래스', () => {
   const dead = [{ tick: 1, actor: '슬라임', log: [], party: [{ name: '전사', level: 1, hp: 0, maxHp: 100, mana: 0, manaMax: 100, gauge: 0, alive: false, effects: [] }], mob: { name: '슬라임', hp: 50, maxHp: 200, boss: false, effects: [] } }]
   assert.match(renderBattleStage(dead, 0), /class="bu dead"/)

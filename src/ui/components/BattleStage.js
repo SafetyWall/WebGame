@@ -30,8 +30,10 @@ const pctw = (a, b) => (b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : 0)
 // 행동=acting(초록), 피격/힐 대상=hit(빨강). 둘 다면 행동 우선.
 const roleCls = (mine, actorRef, targets) => (mine === actorRef ? ' acting' : targets.includes(mine) ? ' hit' : '')
 
-function unitRow(u, idx, actorRef, targets, tick) {
-  return `<div class="bu${u.alive ? '' : ' dead'}${roleCls(idx, actorRef, targets)}">
+function unitRow(u, idx, actorRef, targets, tick, rosterIdx) {
+  // rosterIdx 있으면 행 클릭 = 캐릭터 정보 모달(결과화면 읽기전용). 없으면 비클릭.
+  const click = rosterIdx != null ? ` clickable" data-action="openModal" data-i="${rosterIdx}` : ''
+  return `<div class="bu${u.alive ? '' : ' dead'}${roleCls(idx, actorRef, targets)}${click}">
     <div class="bu-top"><span class="bu-name"><span class="bu-num">#${idx + 1}</span> ${esc(u.name)} <span class="lv">Lv${u.level}</span></span><span class="bu-hp">${u.hp}/${u.maxHp}</span></div>
     <div class="bar hp"><i style="width:${pctw(u.hp, u.maxHp)}%"></i></div>
     <div class="bar mana"><i style="width:${pctw(u.mana, u.manaMax)}%"></i></div>
@@ -52,7 +54,7 @@ function speedBtn(sp, cur) {
   return `<button data-action="pbSpeed" data-speed="${sp}"${cur === sp ? ' class="on"' : ''}>${sp}×</button>`
 }
 
-export function renderBattleStage(frames, cursor, playing, speed = 1) {
+export function renderBattleStage(frames, cursor, playing, speed = 1, party = null) {
   if (!frames || frames.length === 0) return ''
   const n = frames.length
   const c = Math.max(0, Math.min(cursor || 0, n - 1))
@@ -76,7 +78,7 @@ export function renderBattleStage(frames, cursor, playing, speed = 1) {
   <div class="battlefield">
     <div class="mob-side">${mobRow(f.mob, actorRef, targets, f.tick)}</div>
     <div class="vs">VS</div>
-    <div class="party-side">${f.party.map((u, i) => unitRow(u, i, actorRef, targets, f.tick)).join('')}</div>
+    <div class="party-side">${f.party.map((u, i) => unitRow(u, i, actorRef, targets, f.tick, party ? party[i] : null)).join('')}</div>
   </div>
 </div>`
 }
