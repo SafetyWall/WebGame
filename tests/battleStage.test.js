@@ -97,6 +97,14 @@ test('renderBattleStage: party(로스터 매핑) 주면 유닛행 클릭=openMod
   assert.doesNotMatch(renderBattleStage(FR, 0), /openModal/)  // party 미전달=하위호환(클릭 없음)
 })
 
+test('renderBattleStage: 게이지 바(다음 턴까지 charge) 표시', () => {
+  const fr = [{ tick: 100, actor: '전사', log: ['x'],
+    party: [{ name: '전사', level: 1, hp: 50, maxHp: 50, mana: 0, manaMax: 100, gauge: 5000, alive: true, effects: [] }],
+    mob: { name: '슬라임', hp: 50, maxHp: 50, boss: false, effects: [] } }]
+  const h = renderBattleStage(fr, 0)
+  assert.match(h, /class="bar gauge"><i style="width:50%/)   // gauge 5000 / THRESHOLD 10000 = 50%
+})
+
 test('renderBattleStage: 사망 유닛 dead 클래스', () => {
   const dead = [{ tick: 1, actor: '슬라임', log: [], party: [{ name: '전사', level: 1, hp: 0, maxHp: 100, mana: 0, manaMax: 100, gauge: 0, alive: false, effects: [] }], mob: { name: '슬라임', hp: 50, maxHp: 200, boss: false, effects: [] } }]
   assert.match(renderBattleStage(dead, 0), /class="bu dead"/)

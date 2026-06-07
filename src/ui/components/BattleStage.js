@@ -4,6 +4,7 @@ import { esc } from './parts.js'
 import { TRAITS } from '../../data/traits.js'
 import { statusName, statusKind } from '../status.js'
 import { fmtSec } from '../time.js'
+import { THRESHOLD } from '../../engine/battle.js'
 
 // 버프/디버프 = 공용 키워드 이름 태그(buff=초록/debuff=빨강). click 툴팁(data-tip="status") = 정확 표기 + 남은 지속(틱).
 function effTags(effects, tick) {
@@ -38,6 +39,7 @@ function unitRow(u, idx, actorRef, targets, tick, rosterIdx) {
     <div class="bu-top"><span class="bu-name"><span class="bu-num">#${idx + 1}</span> ${esc(u.name)} <span class="lv">Lv${u.level}</span></span><span class="bu-hp">${u.hp}/${u.maxHp}</span></div>
     <div class="bar hp"><i style="width:${pctw(u.hp, u.maxHp)}%"></i></div>
     <div class="bar mana"><i style="width:${pctw(u.mana, u.manaMax)}%"></i></div>
+    <div class="bar gauge"><i style="width:${pctw(u.gauge, THRESHOLD)}%"></i></div>
     <div class="bu-eff">${effTags(u.effects, tick)}</div>
   </div>`
 }
