@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng.js'
 import * as run from '../src/engine/run.js'
 import { JOBS } from '../src/data/jobs.js'
 
-const COMP = ['guardian', 'warrior', 'priest', 'mage', 'archer', 'rogue']  // 채울 직업 우선순위(탱·딜·힐)
+const COMP = ['warrior', 'priest', 'mage', 'archer', 'rogue']  // 채울 직업 우선순위(가디언 베이스 제외 — 전사=프론트). 탱·딜·힐
 const MAX_SLOTS = 6
 const activesOf = (job) => JOBS[job].skills.slice(0, -1)
 
