@@ -2,11 +2,20 @@ import { test } from 'node:test'
 import assert from 'node:assert'
 import { JOBS } from '../src/data/jobs.js'
 import { makeUnit, makeMob } from '../src/engine/unit.js'
-import { lowestHpAlly, selectMobTarget, damage } from '../src/engine/battle.js'
+import { lowestHpAlly, selectMobTarget, damage, DEF_K } from '../src/engine/battle.js'
 
-test('damage = max(1, atk - def)', () => {
-  assert.strictEqual(damage(20, 5), 15)
-  assert.strictEqual(damage(3, 10), 1) // 최소 1 보장
+test('damage = atk × K/(def+K) — % 경감, 스케일 불변', () => {
+  assert.strictEqual(damage(20, 0), 20)            // def=0 → 항등(플레이어 회귀 유지)
+  assert.strictEqual(damage(100, DEF_K), 50)       // def=K → 50% (K 무관)
+  assert.strictEqual(damage(100, 3 * DEF_K), 25)   // def=3K → 25%
+  assert.strictEqual(damage(2000, DEF_K), 1000)    // 스케일 불변: atk 커도 동일 %(min1·floor은 호출부)
+})
+
+test('플레이어 def = 직업 메타 상수 (탱 레버)', () => {
+  assert.ok(JOBS.guardian.def > 0, '가디언 def > 0')
+  assert.strictEqual(JOBS.mage.def ?? 0, 0, '마법사 def 0')
+  assert.strictEqual(makeUnit(JOBS.guardian).def, JOBS.guardian.def)
+  assert.strictEqual(makeUnit(JOBS.mage).def, JOBS.mage.def ?? 0)
 })
 
 test('lowestHpAlly picks the alive ally with the lowest hp', () => {

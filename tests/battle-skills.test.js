@@ -33,18 +33,18 @@ test('selectSkill: 쿨 중 → 평타', () => {
 
 // --- 데미지 수치 직접 (1행동 격리) ---
 
-test('mage_nuke: 데미지 = floor(atk×2.2)−def, 평타보다 큼', () => {
-  // 마법사 atk32, nuke power2.2 → floor(70)−def8 = 62. 평타 = 32−8 = 24.
+test('mage_nuke: 데미지 = damage(floor(atk×2.2), def), 평타보다 큼', () => {
+  // 마법사 atk32, nuke power2.2 → floor(70)→damage(70,8)=64.8→64. 평타 = damage(32,8)=29.6→29. (% 경감식)
   const nukeMage = makeUnit(JOBS.mage, 1); nukeMage.mana = 100
   const nm = dummyMob()
   runBattle([nukeMage], nm, { maxTicks: 125 })   // tick125 = 마법사 1행동
-  assert.equal(nm.hp, 100000 - 62)
+  assert.equal(nm.hp, 100000 - 64)
 
   const plainMage = makeUnit(JOBS.mage, 1); plainMage.mana = 0
   plainMage.cooldowns['mage_nuke'] = 999999       // 발동 봉쇄 → 평타
   const pm = dummyMob()
   runBattle([plainMage], pm, { maxTicks: 125 })
-  assert.equal(pm.hp, 100000 - 24)
+  assert.equal(pm.hp, 100000 - 29)
 })
 
 test('mage_nuke: 발동 시 마나 −50, 쿨 = tick+400', () => {
@@ -62,12 +62,12 @@ test('평타: 발동 시 마나 +manaGain(25)', () => {
 
 // --- effect 부여 직접 ---
 
-test('warrior_cleave: 몹에 dmgTaken 1.25 디버프 부여 + 첫타 = floor(atk×1.7)−def', () => {
-  // 전사 atk22, cleave power1.7 → floor(37)−def8 = 29(첫타엔 디버프 미적용).
+test('warrior_cleave: 몹에 dmgTaken 1.25 디버프 부여 + 첫타 = damage(floor(atk×1.7), def)', () => {
+  // 전사 atk22, cleave power1.7 → floor(37)→damage(37,8)=34.2→34(첫타엔 디버프 미적용). (% 경감식)
   const w = makeUnit(JOBS.warrior, 1); w.mana = 100
   const mob = dummyMob()
   runBattle([w], mob, { maxTicks: 112 })           // tick112 = 전사 1행동
-  assert.equal(mob.hp, 100000 - 29)
+  assert.equal(mob.hp, 100000 - 34)
   const deb = mob.effects.find(e => e.type === 'dmgTaken')
   assert.ok(deb, 'dmgTaken 디버프 존재')
   assert.equal(deb.value, 1.25)

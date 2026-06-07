@@ -74,3 +74,19 @@ test('describeTrait: 스탯 트레잇 = "스탯 +N%"', () => {
 test('describeAoe: 광역 설명', () => {
   assert.match(describeAoe(), /광역 공격/)
 })
+
+test('describeTrait: 2차 — 관통/흡혈/저항/면역/연타봉쇄/오라', () => {
+  assert.match(describeTrait(TRAITS.armor_pierce), /방어 50% 무시/)
+  assert.match(describeTrait(TRAITS.armor_pierce_full), /방어 완전 무시/)
+  assert.match(describeTrait(TRAITS.lifesteal), /가한 피해 30% 흡혈/)
+  assert.match(describeTrait(TRAITS.dot_resist), /지속 피해 -50%/)
+  assert.match(describeTrait(TRAITS.dot_immune), /지속 피해 면역/)
+  assert.match(describeTrait(TRAITS.debuff_resist), /디버프 -50%/)
+  assert.match(describeTrait(TRAITS.debuff_immune), /디버프 면역/)
+  assert.match(describeTrait(TRAITS.multihit_lock), /연타 봉쇄/)
+  assert.match(describeTrait(TRAITS.heal_weaken), /파티 받는 회복 -50%/)
+  assert.match(describeTrait(TRAITS.heal_block), /파티 회복 봉쇄/)
+  assert.match(describeTrait(TRAITS.mana_suppress), /파티 마나 획득 -50%/)
+  assert.match(describeTrait(TRAITS.gauge_slow), /파티 행동 속도 -30%/)
+  assert.match(describeTrait(TRAITS.gauge_bind), /파티 행동 속도 -60%/)
+})

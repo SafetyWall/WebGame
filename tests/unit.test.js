@@ -10,7 +10,7 @@ test('makeUnit copies job stats into runtime unit', () => {
   assert.strictEqual(u.hp, 115)
   assert.strictEqual(u.maxHp, 115)
   assert.strictEqual(u.gauge, 0)
-  assert.strictEqual(u.def, 0)         // 플레이어 def 없음 → 0
+  assert.strictEqual(u.def, 40)        // 전사 def = 직업 메타 상수(탱 레버)
 })
 
 test('makeUnit no longer carries a static taunt field (도발=스킬)', () => {

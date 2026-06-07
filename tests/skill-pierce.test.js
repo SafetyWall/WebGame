@@ -23,11 +23,11 @@ test('방어무시 = ignoreDef 필드', () => {
 })
 
 test('방어무시는 고방 적에게 def 무시 데미지', () => {
-  // 고방(def 40) 몹: 일반 스킬 power1.2 atk50 → floor(60)−40 = 20. 방무 → 60−0 = 60.
+  // 고방(def 40) 몹: 일반 스킬 power1.2 atk50 → floor(60)→damage(60,40)=42.8→42. 방무 → damage(60,0)=60. (% 경감식)
   const normal = { id: 'n', name: 'n', kind: 'attack', range: 'melee', power: 1.2, manaGain: 25, cost: 0, cd: 0, effects: [] }
   const dPierce = firstHit(SKILLS.rogue_pierce, 40)
   const dNormal = firstHit(normal, 40)
-  assert.strictEqual(dNormal, 20)
+  assert.strictEqual(dNormal, 42)
   assert.strictEqual(dPierce, 60)
   assert.ok(dPierce > dNormal)
 })

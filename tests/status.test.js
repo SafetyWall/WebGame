@@ -38,3 +38,15 @@ test('instanceDesc: 값 확정 인스턴스 → 정확 표기', () => {
   assert.match(instanceDesc({ type: 'reflect', value: 0.3 }), /30% 반사/)
   assert.match(instanceDesc({ type: 'stun', value: 1 }), /행동 불가/)
 })
+
+// 2차 — 몹 오라(파티에 스탬프되는 디버프): 힐/마나 억제·봉쇄.
+test('statusName/Kind/Desc: 오라(healReduce·manaSuppress)', () => {
+  assert.strictEqual(statusName('healReduce', 0.5), '회복약화')
+  assert.strictEqual(statusName('healReduce', 0), '회복봉쇄')
+  assert.strictEqual(statusName('manaSuppress', 0.5), '마나억제')
+  assert.strictEqual(statusName('manaSuppress', 0), '마나봉쇄')
+  assert.strictEqual(statusKind('healReduce', 0.5), 'debuff')
+  assert.strictEqual(statusKind('manaSuppress', 0), 'debuff')
+  assert.match(instanceDesc({ type: 'healReduce', value: 0.5 }), /받는 회복 -50%/)
+  assert.match(instanceDesc({ type: 'manaSuppress', value: 0 }), /마나 획득 -100%/)
+})

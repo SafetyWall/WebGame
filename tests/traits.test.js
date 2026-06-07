@@ -14,7 +14,13 @@ test('TRAITS entries have id(=key)/name; 규칙 트레잇은 trigger/op/value �
   for (const [key, t] of Object.entries(TRAITS)) {
     assert.strictEqual(t.id, key, `${key} id matches key`)
     assert.ok(t.name, `${key} name`)
-    if (t.targeting || t.stat) continue                  // 타겟팅·스탯 트레잇 = 규칙 파이프 무관(별도 테스트)
+    // 규칙 트레잇 = trigger 보유. 비-규칙(타겟팅·스탯·2차 메타)은 규칙 파이프 무관 → 알려진 메타 계열인지만 확인.
+    if (t.trigger === undefined) {
+      const isMeta = t.targeting || t.stat || t.pierce !== undefined || t.lifesteal !== undefined
+        || t.resist || t.hitCap !== undefined || t.aura
+      assert.ok(isMeta, `${key} = 비-규칙이면 알려진 메타 계열(targeting/stat/pierce/lifesteal/resist/hitCap/aura)이어야`)
+      continue
+    }
     assert.ok(TRIGGERS.includes(t.trigger), `${key} trigger`)
     assert.ok(OPS.includes(t.op), `${key} op`)
     assert.ok(Number.isFinite(t.value), `${key} value`)
@@ -126,15 +132,15 @@ test('makeMob defaults to empty traits when mob has none', () => {
 const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
 
 test('melee_evade reduces a melee attacker damage by 30% (floor, min 1)', () => {
-  // 전사 atk22 vs 가시거북 def8 → base 14, ×0.7=9.8 → floor 9
+  // 전사 atk22 vs 가시거북 def8 → base damage(22,8)=20.37, ×0.7=14.26 → floor 14 (% 경감식)
   const r = runBattle([makeUnit(JOBS.warrior)], makeMob({ ...TURTLE, traits: ['melee_evade'] }), { maxTicks: 200 })
-  assert.match(logsOf(r).join('\n'), /전사 공격 → 가시거북 \(-9\)/)
+  assert.match(logsOf(r).join('\n'), /전사 공격 → 가시거북 \(-14\)/)
 })
 
 test('melee_evade does not reduce a ranged (mage) attacker damage', () => {
-  // 마법사 atk32 vs def8 → 24, range=ranged → 미감소
+  // 마법사 atk32 vs def8 → damage(32,8)=29.6→29, range=ranged → 미감소 (% 경감식)
   const r = runBattle([makeUnit(JOBS.mage)], makeMob({ ...TURTLE, traits: ['melee_evade'] }), { maxTicks: 200 })
-  assert.match(logsOf(r).join('\n'), /마법사 공격 → 가시거북 \(-24\)/)
+  assert.match(logsOf(r).join('\n'), /마법사 공격 → 가시거북 \(-29\)/)
 })
 
 test('snapshot includes mob trait names', () => {

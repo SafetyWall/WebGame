@@ -31,3 +31,28 @@ export function applyRules(trigger, value, ctx, mob) {
   }
   return value
 }
+
+// === 특성 2차 — 몹 공격측 메타 합산(트레잇의 메타 필드 직접 읽음, 최댓값) ===
+// 관통: 몹 공격이 플레이어 def 일부 무시(effDef = def×(1−pierce)).
+export function pierceFrac(mob) {
+  return (mob.traits || []).reduce((m, t) => Math.max(m, t.pierce || 0), 0)
+}
+// 흡혈: 몹이 가한 데미지의 일부를 자기 회복.
+export function lifestealFrac(mob) {
+  return (mob.traits || []).reduce((m, t) => Math.max(m, t.lifesteal || 0), 0)
+}
+
+// 연타봉쇄: 멀티히트 타격 횟수 상한(트레잇 hitCap 최솟값). 미지정=Infinity(무제한).
+export function hitCap(mob) {
+  return (mob.traits || []).reduce((m, t) => (t.hitCap !== undefined ? Math.min(m, t.hitCap) : m), Infinity)
+}
+
+// 저항 메타 = 남는 위력 배율(resist.<key>). 0=면역, 0.5=절반, 미지정=undefined(무저항). 다중=최솟값(최강 저항).
+export function metaResist(mob, key) {
+  let v
+  for (const t of (mob.traits || [])) {
+    const r = t.resist && t.resist[key]
+    if (r !== undefined) v = (v === undefined) ? r : Math.min(v, r)
+  }
+  return v
+}

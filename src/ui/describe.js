@@ -85,6 +85,20 @@ export function describeTraitLines(trait) {
     if (t.targeting.position) lines.push('후열의 적 우선 공격')
     return lines.length ? lines : ['특수 타겟팅']
   }
+  // 2차 메타
+  if (t.pierce !== undefined) return [t.pierce >= 1 ? '방어 완전 무시' : `방어 ${Math.round(t.pierce * 100)}% 무시`]
+  if (t.lifesteal !== undefined) return [`가한 피해 ${Math.round(t.lifesteal * 100)}% 흡혈`]
+  if (t.resist) {
+    if (t.resist.dot !== undefined) return [t.resist.dot <= 0 ? '지속 피해 면역' : `지속 피해 -${Math.round((1 - t.resist.dot) * 100)}%`]
+    if (t.resist.debuff !== undefined) return [t.resist.debuff <= 0 ? '디버프 면역' : `디버프 -${Math.round((1 - t.resist.debuff) * 100)}%`]
+  }
+  if (t.hitCap !== undefined) return [`연타 봉쇄 (최대 ${t.hitCap}회 타격)`]
+  if (t.aura) {
+    const down = Math.round((1 - t.value) * 100)
+    if (t.aura === 'healReduce')   return [t.value <= 0 ? '파티 회복 봉쇄' : `파티 받는 회복 -${down}%`]
+    if (t.aura === 'manaSuppress') return [t.value <= 0 ? '파티 마나 봉쇄' : `파티 마나 획득 -${down}%`]
+    if (t.aura === 'speed')        return [`파티 행동 속도 -${down}%`]
+  }
   if (t.op === 'mult') {
     const rangeKo = t.cond && t.cond.attackerRange === 'melee' ? '근접' : '원거리'
     return [t.value === 0 ? `${rangeKo} 공격 면역` : `${rangeKo} 공격 데미지 -${Math.round((1 - t.value) * 100)}%`]

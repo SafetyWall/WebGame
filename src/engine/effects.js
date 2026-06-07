@@ -15,17 +15,28 @@ export function expireEffects(target, tick) {
   target.effects = (target.effects || []).filter(e => e.expireTick > tick)
 }
 
-// hot effect 중 nextTick 도달분 회복 적용 + nextTick 전진. 죽은 대상 no-op.
+// hot effect 중 nextTick 도달분 회복 적용 + nextTick 전진. 죽은 대상 no-op. 힐약화/봉쇄(healReduce) 반영.
 export function tickHoT(target, tick, log) {
   for (const e of (target.effects || [])) {
     if (e.type === 'hot' && e.nextTick <= tick) {
       if (target.hp > 0) {
-        target.hp = Math.min(target.maxHp, target.hp + e.value)
-        log.push(`${target.name} 지속회복 (+${e.value})`)
+        const amt = Math.floor(e.value * healReceivedMult(target))
+        target.hp = Math.min(target.maxHp, target.hp + amt)
+        log.push(`${target.name} 지속회복 (+${amt})`)
       }
       e.nextTick += e.interval
     }
   }
+}
+
+// 받는 회복 배율(healReduce effect 곱) — 몹 힐약화/봉쇄 오라. 흡혈은 별도 경로(미적용).
+export function healReceivedMult(unit) {
+  return (unit.effects || []).reduce((m, e) => (e.type === 'healReduce' ? m * e.value : m), 1)
+}
+
+// 마나 획득 배율(manaSuppress effect 곱) — 몹 마나억제/봉쇄 오라.
+export function manaSuppressMult(unit) {
+  return (unit.effects || []).reduce((m, e) => (e.type === 'manaSuppress' ? m * e.value : m), 1)
 }
 
 // dot effect 중 nextTick 도달분 데미지 적용 + nextTick 전진. 죽은 대상 no-op. (hot의 데미지판)

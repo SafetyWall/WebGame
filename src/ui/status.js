@@ -15,6 +15,8 @@ export function statusName(type, value = 1) {
     case 'reflect':   return '가시'
     case 'intercept': return '수호'
     case 'taunt':     return '도발'
+    case 'healReduce':   return value <= 0 ? '회복봉쇄' : '회복약화'   // 몹 오라(파티 디버프)
+    case 'manaSuppress': return value <= 0 ? '마나봉쇄' : '마나억제'
     default:          return type
   }
 }
@@ -25,7 +27,7 @@ export function statusKind(type, value = 1) {
     case 'dmgTaken':  return value >= 1 ? 'debuff' : 'buff'
     case 'dmgDealt':  return value >= 1 ? 'buff' : 'debuff'
     case 'speed':     return value >= 1 ? 'buff' : 'debuff'
-    case 'stun': case 'dot': case 'mark': return 'debuff'
+    case 'stun': case 'dot': case 'mark': case 'healReduce': case 'manaSuppress': return 'debuff'
     default:          return 'buff'   // hot/reflect/intercept/taunt = 보유자에 이로움
   }
 }
@@ -44,6 +46,8 @@ export function instanceDesc(inst) {
     case 'reflect':   return `받은 데미지 ${Math.round(v * 100)}% 반사`
     case 'intercept': return '최저체력 아군 대신 피격'
     case 'taunt':     return '적이 강제로 이 유닛 공격'
+    case 'healReduce':   return `받는 회복 -${Math.round((1 - v) * 100)}%`
+    case 'manaSuppress': return `마나 획득 -${Math.round((1 - v) * 100)}%`
     default:          return inst.type
   }
 }

@@ -33,7 +33,7 @@ export function makeUnit(job, level = 1, skillOrder = null, skillLevels = {}, le
     role: job.role,
     heal: s.heal || 0,
     skills: normalizeSkillOrder(avail, skillOrder).map(id => SKILLS[id]), // 학습 스킬+평타, 우선순위 반영.
-    def: 0,            // 플레이어 유닛은 방어 없음(버프=받는뎀 배율로)
+    def: job.def ?? 0, // 직업 메타 상수(탱 레버). % 경감식이라 레벨 불변. 미지정=0(딜러).
     gauge: 0,
     mana: 0,           // step5: 평타가 충전, 발동스킬이 소비
     manaMax: job.mana ?? 100,   // 직업별 마나 상한(레벨 불변, 전직으로만)

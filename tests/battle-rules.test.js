@@ -19,14 +19,15 @@ const rawMob = (o) => ({
 })
 const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
 
-// #4 — 광역 데미지 실제값 고정 (floor(28*0.6)=16), 로그도 적용값과 일치.
-test('aoe applies floor(atk*ratio) and logs the applied value', () => {
-  // 가디언(spd5) vs 오우거(spd6, aoe). maxTicks 170: 오우거만 1회 행동(틱167), 가디언 미행동.
+// #4 — 광역 데미지 = base floor(atk*ratio)=floor(28*0.6)=16, 그 뒤 def % 경감. 로그도 적용값과 일치.
+test('aoe applies floor(atk*ratio) then def mitigation, logs the applied value', () => {
+  // 가디언(spd5, def100) vs 오우거(spd6, aoe). maxTicks 170: 오우거만 1회 행동(틱167), 가디언 미행동.
+  // base16 → damage(16,100)=8 (def100=50% 경감).
   const party = [makeUnit(JOBS.guardian)]
   const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 170 })
-  assert.strictEqual(r.rounds.at(-1).party[0].hp, 260 - 16) // 244
-  assert.match(logsOf(r).join('\n'), /광역 \(개당 -16\)/)
+  assert.strictEqual(r.rounds.at(-1).party[0].hp, 260 - 8) // 252
+  assert.match(logsOf(r).join('\n'), /광역 \(개당 -8\)/)
 })
 
 // 스냅샷에 aoe 플래그 노출(렌더가 광역 라벨 표기에 사용).
@@ -95,7 +96,7 @@ test('snapshot: log content, final flush, hp clamp', () => {
   const mob = makeMob(SLIME)
   const r = runBattle(party, mob)
   assert.strictEqual(r.winner, 'party')
-  assert.match(logsOf(r).join('\n'), /전사 공격 → 슬라임 \(-19\)/) // 내용+데미지 정확
+  assert.match(logsOf(r).join('\n'), /전사 공격 → 슬라임 \(-21\)/) // 내용+데미지 정확(% 경감: damage(22,3)=21.3→21)
   assert.strictEqual(r.rounds.at(-1).tick, r.ticks)               // 막 라운드 플러시
   for (const rd of r.rounds) {                                    // clamp: 음수 hp 없음
     assert.ok(rd.mob.hp >= 0)

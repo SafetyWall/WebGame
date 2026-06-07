@@ -56,7 +56,9 @@ test('fight win: gold += reward(stage), phase result, outcome win', () => {
 
 test('fight loss: outcome loss, gold unchanged', () => {
   let s = fresh()
-  s = { ...s, roster: [{ job: 'priest', level: 1 }], party: [0] } // 사제 단독 → 몹 못 죽임 → 교착 패
+  // 사제 단독 vs 거대 hp 벽(atk0·spd0) → 못 죽임 + 안 죽음 → 교착 = maxTicks 몹 승(식 무관 확정 패)
+  s = { ...s, roster: [{ job: 'priest', level: 1 }], party: [0],
+        encounter: { name: '벽', hp: 1e9, atk: 0, def: 0, spd: 0, aoe: false, traits: [] } }
   const r = fight(s)
   assert.strictEqual(r.lastResult.outcome, 'loss')
   assert.strictEqual(r.gold, s.gold)

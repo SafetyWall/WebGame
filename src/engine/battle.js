@@ -1,11 +1,36 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
-import { applyRules } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, tickDoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus } from './effects.js'
+import { applyRules, pierceFrac, lifestealFrac, metaResist, hitCap } from './traits.js'
+import { applyEffect, expireEffects, tickHoT, tickDoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus, healReceivedMult, manaSuppressMult } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
+// 데미지 경감 곡률 상수. def=DEF_K → 50% 경감. 스케일 불변(% 경감). placeholder — econ-sim 튜닝.
+export const DEF_K = 100
+
+// % 경감: atk × K/(def+K) = atk × (1 − def/(def+K)). def=0 → 항등. 분수 반환(min1·floor은 호출부).
 export function damage(atk, def) {
-  return Math.max(1, atk - def)
+  return atk * DEF_K / (def + DEF_K)
+}
+
+// 관통 적용 후 유효 방어 = floor(def × (1 − 몹 관통)). 몹 공격이 플레이어 def 무시(트레잇).
+const piercedDef = (def, mob) => Math.floor(def * (1 - pierceFrac(mob)))
+
+// 흡혈: 몹이 가한 데미지 합 × frac 만큼 자기 회복(maxHp 캡). 트레잇 없으면 no-op.
+function applyLifesteal(mob, dealt, log) {
+  const heal = Math.floor(dealt * lifestealFrac(mob))
+  if (heal > 0) {
+    mob.hp = Math.min(mob.maxHp, mob.hp + heal)
+    log.push(`${mob.name} 흡혈 (+${heal})`)
+  }
+}
+
+// 파티 오라: 몹 aura 트레잇({aura:type, value})을 전투 시작 시 파티 전원에 영구 effect로 스탬프.
+// 힐봉쇄/약화=healReduce, 마나억제=manaSuppress, 게이지지연=speed(기존 타입 재사용). source='mob'.
+function applyMobAuras(party, mob) {
+  for (const t of (mob.traits || [])) {
+    if (!t.aura) continue
+    for (const u of party) if (u.hp > 0) applyEffect(u, { type: t.aura, value: t.value, source: 'mob', expireTick: Infinity })
+  }
 }
 
 export function lowestHpAlly(party) {
@@ -51,6 +76,22 @@ export function scaledEffectValue(type, value, mult) {
   return value
 }
 
+// 들어오는 디버프/DoT를 몹 트레잇 저항/면역으로 변조. null=면역(미부여). dot→resist.dot, 그 외 디버프→resist.debuff.
+// 저항(0<fr<1): 배율형(dmgTaken/dmgDealt/speed)=1기준 편차 ×fr / 원시값형(dot/mark)=value ×fr / 순수플래그(stun)=duration ×fr.
+function resolveMobEffect(mob, inst, baseDuration, tick) {
+  const fr = metaResist(mob, inst.type === 'dot' ? 'dot' : 'debuff')
+  if (fr === undefined) return inst    // 저항 트레잇 없음 → 통과
+  if (fr <= 0) return null             // 면역 → 미부여
+  if (inst.type === 'dmgTaken' || inst.type === 'dmgDealt' || inst.type === 'speed') {
+    inst.value = scaledEffectValue(inst.type, inst.value, fr)
+  } else if (inst.type === 'dot' || inst.type === 'mark') {
+    inst.value = Math.floor(inst.value * fr)
+  } else if (inst.type === 'stun') {
+    inst.expireTick = tick + Math.floor(baseDuration * fr)
+  }
+  return inst
+}
+
 // 스킬 effect 스펙 → 인스턴스화 + 대상 부여. self=시전자, enemy=몹, allies=파티전체, lowestHpAlly=힐대상.
 // 반환 = effect를 실제로 부여한 대상 객체 목록(재생뷰 타겟 하이라이트용. 비-record 호출은 무시).
 function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = null) {
@@ -61,7 +102,7 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
       : spec.target === 'allies' ? (party || []).filter(a => a.hp > 0)
       : (healTarget ? [healTarget] : [])
     for (const target of targets) {
-      const inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
+      let inst = { type: spec.type, source: u.id, expireTick: tick + spec.duration }
       if (spec.type === 'hot') {
         inst.value = Math.floor(u.heal * spec.valueRatio * mult)
         inst.interval = spec.interval
@@ -73,6 +114,11 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         if (spec.type === 'dot') { inst.interval = spec.interval; inst.nextTick = tick + spec.interval }
       } else {
         inst.value = scaledEffectValue(spec.type, spec.value, mult)
+      }
+      // 몹 대상 디버프/DoT = 트레잇 저항/면역 통과(면역 → 미부여).
+      if (target === mob) {
+        inst = resolveMobEffect(mob, inst, spec.duration, tick)
+        if (!inst) continue
       }
       applyEffect(target, inst)
       applied.push(target)
@@ -86,7 +132,7 @@ const refOf = (obj, party, mob) => (obj === mob ? 'mob' : party.indexOf(obj))
 
 function actUnit(u, party, mob, tick, log) {
   const skill = selectSkill(u, tick)
-  u.mana = Math.min(u.manaMax ?? MANA_MAX, u.mana + skill.manaGain - skill.cost)
+  u.mana = Math.min(u.manaMax ?? MANA_MAX, u.mana + Math.floor(skill.manaGain * manaSuppressMult(u)) - skill.cost)
   if (skill.cost > 0) u.cooldowns[skill.id] = tick + skill.cd
   const mult = skillLevelMult(u.skillLevels && u.skillLevels[skill.id])  // 평타·미학습=1
   const hit = new Set()  // 이 행동이 직접 건드린 대상 ref(데미지/힐/effect)
@@ -95,7 +141,7 @@ function actUnit(u, party, mob, tick, log) {
     const target = lowestHpAlly(party)
     if (target) {
       if (skill.power > 0) {
-        const amt = Math.floor(u.heal * skill.power * mult)
+        const amt = Math.floor(u.heal * skill.power * mult * healReceivedMult(target))
         target.hp = Math.min(target.maxHp, target.hp + amt)
         log.push(`${u.name} 회복 → ${target.name} (+${amt})`)
         hit.add(refOf(target, party, mob))
@@ -108,7 +154,7 @@ function actUnit(u, party, mob, tick, log) {
   // hits>1 = 멀티히트(1행동 N회 타격, 각 히트가 mark 등 on-hit 발동).
   if (skill.power > 0) {
     const ctx = { attackerRange: skill.range, attackerKind: skill.kind, attacker: u }
-    const hits = skill.hits || 1
+    const hits = Math.min(skill.hits || 1, hitCap(mob))   // 연타봉쇄 트레잇이 멀티히트 횟수 제한
     for (let h = 0; h < hits; h++) {
       if (mob.hp <= 0) break
       const effDef = Math.floor(mob.def * (1 - (skill.ignoreDef || 0)))  // 방어무시: def 일부/전부 무시
@@ -142,20 +188,31 @@ function reflectTo(mob, target, dmg, log) {
 function actMob(mob, party, tick, log) {
   applyRules('turnStart', 0, {}, mob) // 자가회복 등 side-effect (현재 라이브 몹 미부착)
   if (mob.aoe) {
-    const base = Math.floor(mob.atk * mob.aoeRatio)
+    // uniform(기본)=전원 atk×aoeRatio. splash=주타깃(위협도 최고) 풀뎀(×1.0) + 그외 atk×aoeRatio.
+    const splash = mob.aoeMode === 'splash'
+    const mainTgt = splash ? selectMobTarget(party) : null
+    const otherBase = Math.floor(mob.atk * mob.aoeRatio)
+    const mainBase = splash ? mob.atk : otherBase
+    const aoeDmg = (u) => Math.max(1, Math.floor(damage((u === mainTgt ? mainBase : otherBase), piercedDef(u.def, mob)) * dmgTakenMult(u)))
+    const rep = party.find(u => u.hp > 0 && u !== mainTgt)   // 로그 대표(그외/개당) — hp 무관값이라 루프 후도 동일
     const hitIdx = []
+    let dealt = 0
     party.forEach((u, i) => {
       if (u.hp > 0) {
-        const dmg = Math.max(1, Math.floor(damage(base, u.def) * dmgTakenMult(u)))
+        const dmg = aoeDmg(u)
         u.hp -= dmg
+        dealt += dmg
         reflectTo(mob, u, dmg, log)
         hitIdx.push(i)
       }
     })
-    // 로그는 실제 적용값 기준(살아있는 첫 아군 기준 표기). dmgTakenMult 반영.
-    const ref = party.find(u => u.hp > 0)
-    const shown = ref ? Math.max(1, Math.floor(damage(base, ref.def) * dmgTakenMult(ref))) : damage(base, 0)
-    log.push(`${mob.name} 광역 (개당 -${shown})`)
+    // 로그 = 실제 적용값(dmgTakenMult·관통 반영).
+    if (splash && mainTgt) {
+      log.push(`${mob.name} 광역(스플래시) ${mainTgt.name} -${aoeDmg(mainTgt)}` + (rep ? ` / 그외 -${aoeDmg(rep)}` : ''))
+    } else {
+      log.push(`${mob.name} 광역 (개당 -${rep ? aoeDmg(rep) : Math.floor(damage(otherBase, 0))})`)
+    }
+    applyLifesteal(mob, dealt, log)   // 흡혈: 전 피격 합 기준
     return hitIdx
   }
   // 수호(intercept): 최저체력 아군을 겨냥하면, intercept 보유 아군(가디언)이 대신 받음.
@@ -165,10 +222,11 @@ function actMob(mob, party, tick, log) {
     if (guard) target = guard
   }
   if (target) {
-    const dmg = Math.max(1, Math.floor(damage(mob.atk, target.def) * dmgTakenMult(target)))
+    const dmg = Math.max(1, Math.floor(damage(mob.atk, piercedDef(target.def, mob)) * dmgTakenMult(target)))
     target.hp -= dmg
     log.push(`${mob.name} 공격 → ${target.name} (-${dmg})`)
     reflectTo(mob, target, dmg, log)
+    applyLifesteal(mob, dmg, log)   // 흡혈
     return [party.indexOf(target)]
   }
   return []
@@ -210,6 +268,8 @@ export function runBattle(party, mob, opts = {}) {
 
   // 빈/전멸 파티 = 전투 성립 안 함 → 즉시 몹 승(틱0). run.fight가 빈 파티를 막지만 엔진 계약도 명시.
   if (party.length === 0 || party.every(u => u.hp <= 0)) return finish('mob')
+
+  applyMobAuras(party, mob)   // 몹 오라 트레잇(힐봉쇄·마나억제·게이지지연)을 파티에 스탬프
 
   while (tick < maxTicks) {
     tick++
