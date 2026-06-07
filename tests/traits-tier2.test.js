@@ -6,7 +6,7 @@ import { runBattle } from '../src/engine/battle.js'
 import { tickHoT } from '../src/engine/effects.js'
 
 const rawMob = (o) => ({
-  name: 'M', maxHp: 1e6, hp: 1e6, atk: 50, def: 0, spd: 1000,
+  name: 'M', maxHp: 1e6, hp: 1e6, atk: 50, def: 0, spd: 10000,
   aoe: false, aoeRatio: 0.6, gauge: 0, isMob: true, traits: [], effects: [], ...o,
 })
 const basicAtk = { id: 'x', name: 'x', kind: 'attack', range: 'melee', power: 1, manaGain: 0, cost: 0, cd: 0, effects: [] }
@@ -47,7 +47,7 @@ test('흡혈(광역): 전 피격 데미지 합 × frac 회복', () => {
 // === 들어오는 effect 필터 — 몹 트레잇이 플레이어가 거는 디버프/DoT 저항/면역 ===
 // resist.<key> = 남는 위력 배율(0=면역=미부여, 0.5=절반, 미지정=1=무저항).
 const striker = (skill, atk = 20) => ({
-  id: 1, name: 'S', hp: 1e6, maxHp: 1e6, atk, spd: 1000, role: 'dps', heal: 0,
+  id: 1, name: 'S', hp: 1e6, maxHp: 1e6, atk, spd: 10000, role: 'dps', heal: 0,
   def: 0, gauge: 0, mana: 0, manaMax: 100, skillLevels: {}, cooldowns: {}, skills: [skill], effects: [],
 })
 const effSkill = (type, extra) => ({ id: 'e', name: 'e', kind: 'attack', range: 'melee', power: 0, manaGain: 0, cost: 0, cd: 0, effects: [{ type, target: 'enemy', ...extra }] })
@@ -112,7 +112,7 @@ test('마나억제: manaGain × manaSuppressMult', () => {
 })
 
 const healSkill = { id: 'h', name: 'h', kind: 'heal', range: null, power: 1.0, manaGain: 0, cost: 0, cd: 0, effects: [] }
-const healer = () => ({ id: 1, name: 'H', hp: 1e6, maxHp: 1e6, atk: 0, spd: 1000, role: 'heal', heal: 40, def: 0, gauge: 0, mana: 0, manaMax: 100, skillLevels: {}, cooldowns: {}, skills: [healSkill], effects: [] })
+const healer = () => ({ id: 1, name: 'H', hp: 1e6, maxHp: 1e6, atk: 0, spd: 10000, role: 'heal', heal: 40, def: 0, gauge: 0, mana: 0, manaMax: 100, skillLevels: {}, cooldowns: {}, skills: [healSkill], effects: [] })
 const wounded = () => ({ id: 2, name: 'W', hp: 100, maxHp: 1e6, atk: 0, spd: 0, role: 'dps', heal: 0, def: 0, gauge: 0, mana: 0, manaMax: 100, skillLevels: {}, cooldowns: {}, skills: [basicAtk], effects: [] })
 
 test('힐약화/봉쇄: 받는 회복 × healReceivedMult (직접 힐)', () => {
@@ -139,7 +139,7 @@ test('게이지지연: aura speed<1 → 파티 게이지 감속 (speed effect �
 // === 광역 스플래시 모드 (네이티브, 트레잇 아님) ===
 test('aoe splash: 주타깃 풀뎀(×1.0) + 그외 floor(atk×aoeRatio)', () => {
   // mob atk50, ratio0.6. 주타깃=앞열(A). 주: damage(50,0)=50. 그외: base floor(30) → damage(30,0)=30.
-  const mob = rawMob({ atk: 50, spd: 1000, aoe: true, aoeMode: 'splash', aoeRatio: 0.6 })
+  const mob = rawMob({ atk: 50, spd: 10000, aoe: true, aoeMode: 'splash', aoeRatio: 0.6 })
   const a = target(0, { id: 1, name: 'A' }); const b = target(0, { id: 2, name: 'B' })
   runBattle([a, b], mob, { maxTicks: 1 })
   assert.strictEqual(1e6 - a.hp, 50)  // 주타깃(앞열)
@@ -147,7 +147,7 @@ test('aoe splash: 주타깃 풀뎀(×1.0) + 그외 floor(atk×aoeRatio)', () => 
 })
 
 test('aoe uniform(기본 aoeMode 미지정): 전원 동일 floor(atk×ratio)', () => {
-  const mob = rawMob({ atk: 50, spd: 1000, aoe: true, aoeRatio: 0.6 })
+  const mob = rawMob({ atk: 50, spd: 10000, aoe: true, aoeRatio: 0.6 })
   const a = target(0, { id: 1, name: 'A' }); const b = target(0, { id: 2, name: 'B' })
   runBattle([a, b], mob, { maxTicks: 1 })
   assert.strictEqual(1e6 - a.hp, 30)

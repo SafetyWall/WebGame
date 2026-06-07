@@ -6,7 +6,7 @@ import { runBattle } from '../src/engine/battle.js'
 
 function striker(skill) {
   return {
-    id: 1, name: 'S', hp: 1e6, maxHp: 1e6, atk: 50, spd: 1000, role: 'dps', heal: 0,
+    id: 1, name: 'S', hp: 1e6, maxHp: 1e6, atk: 50, spd: 10000, role: 'dps', heal: 0,
     skills: [skill], def: 0, gauge: 0, mana: 0, manaMax: 100, skillLevels: {}, cooldowns: {}, effects: [],
   }
 }

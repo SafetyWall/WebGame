@@ -6,6 +6,7 @@ import { LEARN_COST, SKILL_LV_COST, MAX_SKILL_LEVEL } from '../../engine/run.js'
 import { skillCoreLines, effectClause, effectShortValue, effectTargetKo } from '../describe.js'
 import { statusName, statusKind } from '../status.js'
 import { skillUpPreview } from '../preview.js'
+import { fmtSec } from '../time.js'
 import { esc } from './parts.js'
 
 export function renderSkillDetail(run, ui) {
@@ -28,7 +29,7 @@ export function renderSkillDetail(run, ui) {
   // 부여 효과 = 키워드 pill + 효과 문구 + 지속(라벨). 현재 값만(레벨업 비교는 맨 밑).
   const kw = (skill.effects || []).map((e) => {
     const tgt = effectTargetKo(e.target)
-    const dur = e.duration ? `<div class="sd-dur">지속 ${e.duration}틱</div>` : ''
+    const dur = e.duration ? `<div class="sd-dur">지속 ${fmtSec(e.duration)}</div>` : ''
     return `<div class="sd-kw">
       <span class="eff ${statusKind(e.type, e.value)}">${esc(statusName(e.type, e.value))}</span>${tgt ? ` <span class="sd-kw-target">${esc(tgt)}</span>` : ''}
       <div class="sd-kw-desc">${esc(effectClause(e, dispLv))}</div>${dur}

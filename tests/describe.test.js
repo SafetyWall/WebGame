@@ -16,7 +16,7 @@ test('describeSkill: 공격 스킬 = 위력·마나·쿨', () => {
   assert.match(d, /근접 공격/)
   assert.match(d, /위력 ×1\.7/)
   assert.match(d, /마나 50/)
-  assert.match(d, /쿨 450틱/)
+  assert.match(d, /쿨 4.5초/)
   assert.match(d, /받는 데미지 \+25%/)   // 보유자 기준(적/자신 접두 없음)
 })
 
@@ -27,7 +27,7 @@ test('describeSkill: 버프(power0)는 위력 라인 없음', () => {
 })
 
 test('describeSkill: effect type별 문구', () => {
-  assert.match(describeSkill(SKILLS.warrior_crush), /기절 150틱/)
+  assert.match(describeSkill(SKILLS.warrior_crush), /기절 1.5초/)
   assert.match(describeSkill(SKILLS.rogue_bleed), /지속 데미지 ATK×0\.3/)
   assert.match(describeSkill(SKILLS.priest_party_heal), /지속 회복/)
   assert.match(describeSkill(SKILLS.mage_lightning), /표식: 피격 시 \+ATK×0\.6/)

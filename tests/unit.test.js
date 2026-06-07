@@ -83,7 +83,7 @@ test('makeUnit defaults to level 1 = base stats', () => {
   assert.strictEqual(u.level, 1)
   assert.strictEqual(u.hp, 115)
   assert.strictEqual(u.atk, 22)
-  assert.strictEqual(u.spd, 9)
+  assert.strictEqual(u.spd, 120)
 })
 
 test('makeUnit at higher level scales hp/atk (spd fixed)', () => {
@@ -91,7 +91,7 @@ test('makeUnit at higher level scales hp/atk (spd fixed)', () => {
   assert.strictEqual(u.level, 3)
   assert.strictEqual(u.hp, 166)
   assert.strictEqual(u.atk, 31)
-  assert.strictEqual(u.spd, 9) // spd 레벨 불변
+  assert.strictEqual(u.spd, 120) // spd 레벨 불변
 })
 
 test('priest heal scales with level', () => {

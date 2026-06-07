@@ -3,10 +3,10 @@ import assert from 'node:assert'
 import { renderBattleStage } from '../src/ui/components/BattleStage.js'
 
 const FR = [
-  { tick: 5, actor: '전사', log: ['전사 공격 → 슬라임 (-30)'],
-    party: [{ name: '전사', level: 5, hp: 100, maxHp: 115, mana: 25, manaMax: 100, gauge: 0, alive: true, effects: [{ type: 'dmgDealt', value: 1.3, expireTick: 105 }] }],
+  { tick: 100, actor: '전사', log: ['전사 공격 → 슬라임 (-30)'],
+    party: [{ name: '전사', level: 5, hp: 100, maxHp: 115, mana: 25, manaMax: 100, gauge: 0, alive: true, effects: [{ type: 'dmgDealt', value: 1.3, expireTick: 300 }] }],
     mob: { name: '슬라임', hp: 170, maxHp: 200, boss: false, effects: [] } },
-  { tick: 8, actor: '슬라임', log: ['슬라임 공격 → 전사 (-12)'],
+  { tick: 200, actor: '슬라임', log: ['슬라임 공격 → 전사 (-12)'],
     party: [{ name: '전사', level: 5, hp: 88, maxHp: 115, mana: 50, manaMax: 100, gauge: 0, alive: true, effects: [] }],
     mob: { name: '슬라임', hp: 170, maxHp: 200, boss: false, effects: [] } },
 ]
@@ -27,7 +27,7 @@ test('renderBattleStage: 전황 + 컨트롤 + 액션 로그', () => {
   assert.match(html, /전사 공격 → 슬라임/) // 액션 로그
   assert.match(html, /강화/)               // dmgDealt↑ = 강화 키워드
   assert.match(html, /data-tip="status" data-type="dmgDealt"/) // 버프 툴팁 연결
-  assert.match(html, /1 \/ 2 · 틱 5/)      // 커서/카운트
+  assert.match(html, /1 \/ 2 · 1초/)       // 커서/카운트(틱100=1초)
 })
 
 test('renderBattleStage: 첫 frame이면 prev/first disabled', () => {
@@ -45,7 +45,7 @@ test('renderBattleStage: 마지막 frame이면 next/last disabled', () => {
 
 test('renderBattleStage: cursor 범위 밖 클램프', () => {
   const html = renderBattleStage(FR, 99)
-  assert.match(html, /2 \/ 2 · 틱 8/)      // 마지막으로 클램프
+  assert.match(html, /2 \/ 2 · 2초/)       // 마지막으로 클램프(틱200=2초)
 })
 
 test('renderBattleStage: 번호 badge + 행동/피격 테두리 + 배속 셀렉터', () => {

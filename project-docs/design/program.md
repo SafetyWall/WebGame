@@ -61,9 +61,10 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 - **런 영속 = UI 레이어(ui/persist.js).** 매 액션 후 `save(state, rng.snapshot())` → localStorage(버전키 `partyrpg.save.v3`). 부팅 시 `load()` 있으면 복원, 손상·구버전(v≠3)=null→새 런. storage 주입가능(테스트=Map shim).
 
 ## 틱 구현 ([game-design.md](game-design.md) §5 규칙의 구현)
-- 매 틱: 살아있는 + 스턴 아닌 유닛 `gauge += spd × speedMult(u)`; **`while gauge≥1000`이면 행동 후 `-=1000`**(오버플로/고속 시 한 틱 다중 행동 = 턴 유실 방지, carry).
+- **시간 모델: `TICKS_PER_SEC`=100(100틱=1초). 게이지 `THRESHOLD`=10000 → 속도 100 = 100틱마다 행동 = 1초/턴.** 속도는 100-스케일(jobs/curve). 내부는 틱, **UI는 초 표시**(`ui/time.js fmtSec(ticks)=ticks/100+"초"`; 쿨·지속·재생뷰 시간·툴팁 남은시간). cd/지속/interval 데이터는 틱이지만 ÷100=깔끔한 초(예 cd 500=5초, interval 100=1초).
+- 매 틱: 살아있는 + 스턴 아닌 유닛 `gauge += spd × speedMult(u)`; **`while gauge≥THRESHOLD(10000)`이면 행동 후 `-=10000`**(오버플로/고속 시 한 틱 다중 행동 = 턴 유실 방지, carry).
 - **틱 내 순서: ①effect(tickHoT→tickDoT→expireEffects) ②게이지 증가 ③행동(파티 우선, 그다음 몹).** 만료 전 마지막 proc 보장.
-- 매 틱 계산 채택(min-heap 점프 기각 — 속도 변조 잦음). 라운드 = `ROUND_TICKS`(100)틱 스냅샷(표시용).
+- 매 틱 계산 채택(min-heap 점프 기각 — 속도 변조 잦음). 라운드 = `ROUND_TICKS`(100)틱 = 1초 스냅샷(표시용). 쿨타임=절대 틱(속도 무관 실시간).
 
 ## 결정 / 불변식
 - **동시틱 = 파티 우선**(2026-05-30 확정).
@@ -73,13 +74,13 @@ tests/*.test.js         # node:test (tests/_fixtures.js = 엔진 테스트용 �
 ## 데이터 구조 (수치 placeholder — 코드 수정 없이 튜닝)
 - `JOBS{ key:{ name, spd, role, mana, [def], skills:[id...], levels:{1:{hp,atk,[heal]},…10:{}} } }` — 레벨별 명시 스탯(L1~10, ≈×1.2/레벨, spd·mana·def 레벨 불변=전직으로만; `def` 미지정=0=딜러, 가디언·전사만 보유). `skills`=기본 우선순위(액티브 먼저, **평타=마지막**). 노비스=평타만. 6전직 각 평타+액티브4(2차전직용 guardian_taunt는 키트 외 def만 유지).
 - `MONSTERS{ id:{name,mul} }`(일반, 고정특성 없음) / `BOSSES{ id:{name,boss,mul,[aoe],[fixed],[bonus]} }`. 스탯=`round(levelCurve(L)×mul)`. (보스 자동배치 미정.)
-- `levelCurve(L)→{hp,atk,def,spd}`(curve.js: hp×1.15·atk×1.10·def×1.10/레벨, spd 6 고정). `stageCfg(s)→{level:s, traitSlots:[rarity...]}`(stages.js, 절차생성; **`SLOT_SEQ`=10스테마다 1슬롯 추가, 일반/희귀/일반/영웅/희귀 누적**). `STAGES`=1..MAX_STAGE 생성객체(소비처 호환).
+- `levelCurve(L)→{hp,atk,def,spd}`(curve.js: hp×1.15·atk×1.10·def×1.10/레벨, **spd 90 고정**(100-스케일·속도100=1초/턴, ×mul로 몹 개성)). `stageCfg(s)→{level:s, traitSlots:[rarity...]}`(stages.js, 절차생성; **`SLOT_SEQ`=10스테마다 1슬롯 추가, 일반/희귀/일반/영웅/희귀 누적**). `STAGES`=1..MAX_STAGE 생성객체(소비처 호환).
 - `SKILLS{ id:{ id,name,kind:'attack'|'heal',range:'melee'|'ranged'|null,power,manaGain,cost,cd,effects,[learnCost],[hits],[ignoreDef] } }` — 평타도 스킬. effect 스펙=`{target,type,value|valueRatio,duration,interval?}`. `MANA_MAX`/`MANA_GAIN` 상수(직업 마나 상한=`job.mana`→unit.manaMax).
 - `TRAITS{ id:{...} }` 계열: **규칙형**`{rarity,trigger,cond?,op,value,priority?,defends?}`(회피·면역·저항·자가회복·반사·재생) + **타겟팅형**`{rarity,targeting:{position?,lowHp?,atk?}}`(저체력추적·고공격력추적 — threat weight, trigger 없음) + **스탯형**`{rarity,stat:'atk'|'def'|'hp'|'spd',mult}`(맹공·철갑·강골·쾌속 — 생성 시 base×mult) + **2차 메타형**`{rarity, pierce|lifesteal|resist:{dot?,debuff?}|hitCap|aura:{aura,value}}`(관통·흡혈·지속/디버프 저항·면역·연타봉쇄·힐/마나/게이지 오라 — trigger 없음, engine이 시점별 직접 읽음, applyRules/conflicts 무간섭). rarity∈{일반,희귀,영웅,전설}. `inactive:true`=정의 유지·슬롯 미등장(보류). 조우 생성기가 슬롯 레어도에 맞춰 랜덤 부착 + `conflicts()` 필터.
 - `range` 근/원 이진 태그 = 근접회피/원거리저항 등이 소비.
 
 ## 테스트 전략
-`node:test` **304개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax·**직업 def**) / **damage(% 경감 atk×K/(def+K)·DEF_K)**·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / **2차 트레잇(관통·흡혈·지속/디버프 저항·면역·연타봉쇄·힐/마나/게이지 오라·aoe splash)** / 조우 생성 / 절차 스테이지(MAX_STAGE 50·SLOT_SEQ·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / **UI 순수단위(describe 설명텍스트[+2차 트레잇]·status 키워드/정밀표기[+오라]·preview before→after·store·uiPrefs·view 렌더 부분문자열·dragMove 인덱스·전투 frame(actorRef·targets·effect 인스턴스·mob traits)·BattleStage 재생뷰·SkillDetailModal)** / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. **UI DOM 글루(tooltip·drag·main 이벤트·팝업 위치)는 수동/헤드리스 실측**(드래그·tap 거동·sticky-hover = 실기기).
+`node:test` **309개**. 데이터 형태 / 유닛 팩토리(레벨·skillOrder·learnedSkills 필터·manaMax·**직업 def**) / **damage(% 경감 atk×K/(def+K)·DEF_K)**·타게팅(위협도·앞열·도발·intercept) / 전투(승·결정론·힐·스냅샷·빈전멸가드·멀티히트·게이지 while) / 트레잇 규칙엔진 / **2차 트레잇(관통·흡혈·지속/디버프 저항·면역·연타봉쇄·힐/마나/게이지 오라·aoe splash)** / 조우 생성 / 절차 스테이지(MAX_STAGE 50·SLOT_SEQ·레어도캡) / 런 상태기계(전직·학습·레벨업·순서) / 스킬 메커닉(레벨스케일·속도·스턴·파티·반사·intercept·mark·DoT·멀티히트·방어무시) / 신규직업 / **UI 순수단위(describe 설명텍스트[+2차 트레잇]·status 키워드/정밀표기[+오라]·preview before→after·store·uiPrefs·view 렌더 부분문자열·dragMove 인덱스·전투 frame(actorRef·targets·effect 인스턴스·mob traits)·BattleStage 재생뷰·SkillDetailModal)** / persist v3. 엔진 테스트는 `tests/_fixtures.js` 고정 몹 사용. **UI DOM 글루(tooltip·drag·main 이벤트·팝업 위치)는 수동/헤드리스 실측**(드래그·tap 거동·sticky-hover = 실기기).
 
 ## 설계 원칙
 - **시스템 확장성 우선** — 스킬·effect·트리거·데미지 파이프는 견고히(토대 약하면 갈아엎음). 단 단일 스킬·옵션 과추상화 금지. 시스템=구조적 / 개별 기능=YAGNI OK.

@@ -61,8 +61,8 @@ test('active stalemate (units act but cannot win) -> mob wins at maxTicks', () =
 
 // #7a — 동시틱 치명타 = 파티 우선(의도된 결정) 고정.
 test('same-tick lethal: party acts first, mob does not retaliate', () => {
-  const A = rawUnit({ name: 'A', maxHp: 5, hp: 5, atk: 100, spd: 1000 })
-  const M = rawMob({ name: 'M', maxHp: 5, hp: 5, atk: 100, spd: 1000 })
+  const A = rawUnit({ name: 'A', maxHp: 5, hp: 5, atk: 100, spd: 10000 })
+  const M = rawMob({ name: 'M', maxHp: 5, hp: 5, atk: 100, spd: 10000 })
   const r = runBattle([A], M)
   assert.strictEqual(r.winner, 'party')
   assert.strictEqual(r.ticks, 1)
@@ -72,8 +72,8 @@ test('same-tick lethal: party acts first, mob does not retaliate', () => {
 
 // #7b — 게이지 carry(초과분 보존, 0 리셋 아님) 고정.
 test('gauge carry: overflow is preserved, not reset to zero', () => {
-  // spd700: 틱2 gauge1400→행동(carry400), 틱3 1100→행동. carry면 2히트, 리셋이면 1히트.
-  const C = rawUnit({ name: 'C', maxHp: 100, hp: 100, atk: 1, spd: 700 })
+  // spd7000(THRESHOLD 10000): 틱2 gauge14000→행동(carry4000), 틱3 11000→행동. carry면 2히트, 리셋이면 1히트.
+  const C = rawUnit({ name: 'C', maxHp: 100, hp: 100, atk: 1, spd: 7000 })
   const M = rawMob({ name: 'M2', maxHp: 1000, hp: 1000, spd: 0 })
   const r = runBattle([C], M, { maxTicks: 3 })
   assert.strictEqual(r.rounds.at(-1).mob.hp, 998) // 2히트 = carry. 리셋이면 999.
@@ -81,7 +81,7 @@ test('gauge carry: overflow is preserved, not reset to zero', () => {
 
 // 반사 killing-blow — 반사 데미지로 공격자가 0이 되면 사망(추가 행동 없음, 파티 전멸).
 test('reflect killing-blow: attacker reduced to 0 dies and stops acting', () => {
-  const A = rawUnit({ name: 'A', hp: 5, atk: 20, spd: 1000 })
+  const A = rawUnit({ name: 'A', hp: 5, atk: 20, spd: 10000 })
   const M = rawMob({ name: 'M', hp: 100000, spd: 0,
     traits: [{ trigger: 'postIncomingDamage', op: 'reflect', value: 0.5 }] }) // floor(20*0.5)=10 ≥ 5
   const r = runBattle([A], M, { maxTicks: 50 })
@@ -106,7 +106,7 @@ test('snapshot: log content, final flush, hp clamp', () => {
 
 // #10 — 몹 사망시 같은 틱 남은 아군 행동 중단(break).
 test('mob death mid party-loop halts remaining ready allies', () => {
-  const mk = (n) => rawUnit({ name: n, maxHp: 5, hp: 5, atk: 100, spd: 1000 })
+  const mk = (n) => rawUnit({ name: n, maxHp: 5, hp: 5, atk: 100, spd: 10000 })
   const M = rawMob({ name: 'M3', maxHp: 50, hp: 50, spd: 0 })
   const r = runBattle([mk('A'), mk('B')], M, { maxTicks: 2 })
   const attacks = logsOf(r).filter(l => /공격 →/.test(l))
@@ -153,7 +153,7 @@ test('heal does not overheal above maxHp', () => {
 // step3a — 행동이 role 아닌 skill.kind로 분기. role:'dps'인데 힐 스킬이면 힐한다.
 test('action dispatches on skill.kind, not role', () => {
   const healer = rawUnit({
-    name: 'H', role: 'dps', heal: 10, hp: 50, maxHp: 100, spd: 1000,
+    name: 'H', role: 'dps', heal: 10, hp: 50, maxHp: 100, spd: 10000,
     skills: [{ id: 'basic_heal', name: '평타', kind: 'heal', range: null, power: 1, manaGain: 0, cost: 0, cd: 0, effects: [] }],
   })
   const wounded = rawUnit({ name: 'W', hp: 30, maxHp: 100, spd: 0 }) // 최저HP, 행동 안 함

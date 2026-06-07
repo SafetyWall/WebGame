@@ -2,6 +2,7 @@
 import { TRAITS } from '../data/traits.js'
 import { describeTraitLines, describeAoe } from './describe.js'
 import { statusName, instanceDesc } from './status.js'
+import { fmtSec } from './time.js'
 import { esc } from './components/parts.js'
 
 let box = null
@@ -31,7 +32,7 @@ function contentFor(el) {
     const value = el.dataset.value !== undefined ? Number(el.dataset.value) : 1
     const interval = el.dataset.interval ? Number(el.dataset.interval) : undefined
     const lines = [instanceDesc({ type, value, interval })]
-    if (el.dataset.remain) lines.push(`남은 ${el.dataset.remain}틱`)
+    if (el.dataset.remain) lines.push(`남은 ${fmtSec(Number(el.dataset.remain))}`)
     return { title: statusName(type, value), lines }
   }
   return null

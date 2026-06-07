@@ -34,7 +34,7 @@ test('statusKind: 보유자 기준 이로움/해로움', () => {
 test('instanceDesc: 값 확정 인스턴스 → 정확 표기', () => {
   assert.match(instanceDesc({ type: 'dmgTaken', value: 1.25 }), /받는 데미지 \+25%/)
   assert.match(instanceDesc({ type: 'dmgDealt', value: 0.8 }), /주는 데미지 -20%/)
-  assert.match(instanceDesc({ type: 'dot', value: 12, interval: 100 }), /100틱마다 12/)
+  assert.match(instanceDesc({ type: 'dot', value: 12, interval: 100 }), /1초마다 12/)
   assert.match(instanceDesc({ type: 'reflect', value: 0.3 }), /30% 반사/)
   assert.match(instanceDesc({ type: 'stun', value: 1 }), /행동 불가/)
 })

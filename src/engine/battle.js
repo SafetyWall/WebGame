@@ -53,9 +53,12 @@ export function selectMobTarget(party, mob) {
   return best
 }
 
-const THRESHOLD = 1000
-export const ROUND_TICKS = 100 // 표시용 라운드 묶음(틱). 전투 계산 영향 0.
-const DEFAULT_MAX_TICKS = 20000
+// 시간 모델: 100틱 = 1초(TICKS_PER_SEC). 게이지 THRESHOLD=10000 → 속도 100 = 100틱마다 행동 = 1초/턴.
+// 속도 S = S/100 행동/초(예 90 → 1.111초/턴). 속도는 100-스케일 스탯(jobs/curve), 엔진이 직접 사용.
+export const TICKS_PER_SEC = 100
+const THRESHOLD = 10000
+export const ROUND_TICKS = 100 // 표시용 라운드 묶음 = 1초(틱). 전투 계산 영향 0.
+const DEFAULT_MAX_TICKS = 20000  // 200초 상한(행동당 ~100틱 → 충분)
 
 function canUse(u, skill, tick) {
   return u.mana >= skill.cost && tick >= (u.cooldowns[skill.id] ?? 0)

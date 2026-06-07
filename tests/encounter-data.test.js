@@ -7,7 +7,7 @@ import { STAGES } from '../src/data/stages.js'
 const RARITIES = ['일반', '희귀', '영웅', '전설']
 
 test('levelCurve(1) returns base stats', () => {
-  assert.deepStrictEqual(levelCurve(1), { hp: 180, atk: 16, def: 3, spd: 6 })
+  assert.deepStrictEqual(levelCurve(1), { hp: 180, atk: 16, def: 3, spd: 90 })
 })
 
 test('levelCurve grows hp/atk/def with level', () => {

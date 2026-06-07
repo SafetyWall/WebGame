@@ -7,7 +7,7 @@ import { SLIME } from './_fixtures.js'
 import { SKILLS } from '../src/data/skills.js'
 
 // 더미 몹: spd 0(반격 안 함) + 큰 hp(안 죽음) → 유닛 1행동만 격리해 수치 직접 검증.
-// 유닛 1행동 시점 = ceil(1000/spd): 마법사(8)=125, 전사(9)=112, 가디언(5)=200, 사제(7)=143.
+// 유닛 1행동 시점 = ceil(10000/spd): 마법사(110)=91, 전사(120)=84, 가디언(70)=143, 사제(100)=100. (THRESHOLD 10000)
 const dummyMob = (over = {}) => makeMob({ name: '더미', hp: 100000, atk: 0, def: 8, spd: 0, ...over })
 
 // --- selectSkill: 우선순위 게이팅 (직접) ---
@@ -49,9 +49,9 @@ test('mage_nuke: 데미지 = damage(floor(atk×2.2), def), 평타보다 큼', ()
 
 test('mage_nuke: 발동 시 마나 −50, 쿨 = tick+400', () => {
   const m = makeUnit(JOBS.mage, 1); m.mana = 100
-  runBattle([m], dummyMob(), { maxTicks: 125 })   // tick125 발동
+  runBattle([m], dummyMob(), { maxTicks: 125 })   // 마법사 spd110 → tick91 발동(10000/110)
   assert.equal(m.mana, 50)                         // 100 − 50
-  assert.equal(m.cooldowns['mage_nuke'], 525)      // 125 + 400
+  assert.equal(m.cooldowns['mage_nuke'], 491)      // 91 + 400
 })
 
 test('평타: 발동 시 마나 +manaGain(25)', () => {

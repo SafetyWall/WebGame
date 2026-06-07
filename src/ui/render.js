@@ -1,4 +1,5 @@
 // 전투 결과 → HTML 문자열. 순수 함수라 node에서도 테스트 가능.
+import { fmtSec } from './time.js'
 function esc(s) {
   return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 }
@@ -13,12 +14,12 @@ export function renderRounds(rounds) {
     const traits = labels.length ? ` <span class="traits">[${labels.map(esc).join(', ')}]</span>` : ''
     const mob = `<span class="mob">${esc(r.mob.name)} ${r.mob.hp}/${r.mob.maxHp}</span>${traits}`
     const log = r.log.map(l => `<div class="log">${esc(l)}</div>`).join('')
-    return `<section><h3>라운드 ${i + 1} (틱 ${r.tick})</h3><div>${party}</div><div>${mob}</div>${log}</section>`
+    return `<section><h3>라운드 ${i + 1} (${fmtSec(r.tick)})</h3><div>${party}</div><div>${mob}</div>${log}</section>`
   }).join('')
 }
 
 export function renderBattle(result) {
   const outcome = result.winner === 'party' ? '승리' : '패배'
-  const head = `<h2>결과: ${outcome} (${result.ticks}틱)</h2>`
+  const head = `<h2>결과: ${outcome} (${fmtSec(result.ticks)})</h2>`
   return head + renderRounds(result.rounds)
 }

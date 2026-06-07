@@ -27,7 +27,7 @@ test('표식 걸린 몹은 피격 시마다 추가뎀', () => {
   const mob = makeMob({ name: 'M', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
   mob.effects.push({ type: 'mark', value: 50, source: 0, expireTick: 99999 })
   const before = mob.hp
-  runBattle([u], mob, { maxTicks: 200 })   // 전사 1행동(평타 22)
+  runBattle([u], mob, { maxTicks: 120 })   // 전사 1행동(spd120 → tick84, 다음 168>120)
   const dealt = before - mob.hp
   assert.strictEqual(dealt, 22 + 50)        // 평타 + 표식
 })

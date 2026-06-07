@@ -2,6 +2,7 @@
 // 수치 튜닝(sim) 시 설명 자동 동기화. 스킬 레벨 위력은 skillLevelMult로 반영.
 import { skillLevelMult, scaledEffectValue } from '../engine/battle.js'
 import { statusName } from './status.js'
+import { fmtSec } from './time.js'
 
 const round2 = (n) => String(Math.round(n * 100) / 100)
 const pct = (v) => `${v >= 1 ? '+' : '-'}${Math.round(Math.abs(v - 1) * 100)}%`
@@ -12,9 +13,9 @@ function describeEffect(e, mult) {
     case 'dmgTaken':  return `받는 데미지 ${pct(scaledEffectValue('dmgTaken', e.value, mult))}`
     case 'dmgDealt':  return `주는 데미지 ${pct(scaledEffectValue('dmgDealt', e.value, mult))}`
     case 'speed':     return `행동 속도 ${pct(scaledEffectValue('speed', e.value, mult))}`
-    case 'stun':      return `기절 ${e.duration}틱`
-    case 'dot':       return `지속 데미지 ATK×${round2(e.valueRatio * mult)} (${e.duration}틱)`
-    case 'hot':       return `지속 회복 회복력×${round2(e.valueRatio * mult)} (${e.duration}틱)`
+    case 'stun':      return `기절 ${fmtSec(e.duration)}`
+    case 'dot':       return `지속 데미지 ATK×${round2(e.valueRatio * mult)} (${fmtSec(e.duration)})`
+    case 'hot':       return `지속 회복 회복력×${round2(e.valueRatio * mult)} (${fmtSec(e.duration)})`
     case 'mark':      return `표식: 피격 시 +ATK×${round2(e.valueRatio * mult)}`
     case 'reflect':   return `받은 데미지 ${Math.round(e.value * mult * 100)}% 반사`
     case 'intercept': return '최저체력 아군 대신 피격'
@@ -32,7 +33,7 @@ export function skillCoreLines(skill, level = 1) {
   if (skill.hits > 1) lines.push(`${skill.hits}회 타격`)
   if (skill.ignoreDef) lines.push(`방어 ${Math.round(skill.ignoreDef * 100)}% 무시`)
   lines.push(skill.cost > 0 ? `마나 ${skill.cost}` : `기본 공격(마나 충전 +${skill.manaGain})`)
-  if (skill.cd > 0) lines.push(`쿨 ${skill.cd}틱`)
+  if (skill.cd > 0) lines.push(`쿨 ${fmtSec(skill.cd)}`)
   return lines
 }
 
@@ -41,7 +42,7 @@ export function describeSkillLines(skill, level = 1) {
   const mult = skillLevelMult(level)
   const lines = skillCoreLines(skill, level)
   for (const e of (skill.effects || [])) {
-    const dur = e.duration ? ` (${e.duration}틱)` : ''
+    const dur = e.duration ? ` (${fmtSec(e.duration)})` : ''
     lines.push(`[${statusName(e.type, e.value)}] ${describeEffect(e, mult)}${dur}`)
   }
   return lines

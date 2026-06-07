@@ -2,6 +2,8 @@
 // 전투 인스턴스(값 확정)·스킬 스펙 표기 양쪽의 단일 출처. 배율형(dmgTaken/dmgDealt/speed)은 1 기준 방향으로 이름이 갈림.
 const pctDelta = (mult) => `${mult >= 1 ? '+' : '-'}${Math.round(Math.abs(mult - 1) * 100)}%`
 
+import { fmtSec } from './time.js'
+
 // (type, value) → 공용 키워드 이름. 배율형만 value(방향) 사용, 나머지는 무관.
 export function statusName(type, value = 1) {
   switch (type) {
@@ -40,8 +42,8 @@ export function instanceDesc(inst) {
     case 'dmgDealt':  return `주는 데미지 ${pctDelta(v)}`
     case 'speed':     return `행동 속도 ${pctDelta(v)}`
     case 'stun':      return '게이지 정지 · 행동 불가'
-    case 'dot':       return `${inst.interval}틱마다 ${v} 피해`
-    case 'hot':       return `${inst.interval}틱마다 ${v} 회복`
+    case 'dot':       return `${fmtSec(inst.interval)}마다 ${v} 피해`
+    case 'hot':       return `${fmtSec(inst.interval)}마다 ${v} 회복`
     case 'mark':      return `피격 시 +${v} 추가 피해`
     case 'reflect':   return `받은 데미지 ${Math.round(v * 100)}% 반사`
     case 'intercept': return '최저체력 아군 대신 피격'

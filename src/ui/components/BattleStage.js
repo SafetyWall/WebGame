@@ -3,6 +3,7 @@
 import { esc } from './parts.js'
 import { TRAITS } from '../../data/traits.js'
 import { statusName, statusKind } from '../status.js'
+import { fmtSec } from '../time.js'
 
 // 버프/디버프 = 공용 키워드 이름 태그(buff=초록/debuff=빨강). click 툴팁(data-tip="status") = 정확 표기 + 남은 지속(틱).
 function effTags(effects, tick) {
@@ -71,7 +72,7 @@ export function renderBattleStage(frames, cursor, playing, speed = 1, party = nu
     <button data-action="pbNext"${atEnd ? ' disabled' : ''} title="다음 스텝">▶|</button>
     <button data-action="pbLast"${atEnd ? ' disabled' : ''} title="끝">⏭</button>
     <span class="pb-speed">${speedBtn(1, speed)}${speedBtn(2, speed)}${speedBtn(3, speed)}</span>
-    <span class="pb-count">${c + 1} / ${n} · 틱 ${f.tick}</span>
+    <span class="pb-count">${c + 1} / ${n} · ${fmtSec(f.tick)}</span>
   </div>
   <div class="pb-head">▶ ${esc(f.actor)}${badge}</div>
   <div class="pb-log">${f.log.map((l) => `<div class="log">${esc(l)}</div>`).join('') || '<div class="log dim">—</div>'}</div>
