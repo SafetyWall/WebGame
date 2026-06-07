@@ -110,12 +110,12 @@ test('skillDetail: 코어/부여효과 분리, 레벨업은 맨 밑 변화만', 
   assert.match(html, /부여 효과/)
   assert.match(html, /취약/)                    // 키워드 pill
   assert.match(html, /적에게/)                  // 대상 라벨(별도)
-  assert.match(html, /받는 데미지 \+25%/)        // 효과 문구(보유자 기준, 적 접두 없음)
+  assert.match(html, /받는 데미지 \+15%/)        // 효과 문구(보유자 기준, 적 접두 없음)
   assert.match(html, /지속 5초/)                 // 지속 라벨링(500틱=5초)
   assert.doesNotMatch(html, /\[취약\]/)          // 상단 코어엔 effect 줄 중복 없음
   // 레벨업 = 맨 밑 변화만
   assert.match(html, /위력 ×1\.7 → ×2\.13/)
-  assert.match(html, /받는 데미지 \+25% → \+31%/)   // 레벨업 줄 = 효과 문구 기반(보유자 기준)
+  assert.match(html, /받는 데미지 \+15% → \+19%/)   // 레벨업 줄 = 효과 문구 기반(보유자 기준)
   assert.match(html, /data-action="levelupSkill"[^>]*data-skill="warrior_cleave"/)
 })
 

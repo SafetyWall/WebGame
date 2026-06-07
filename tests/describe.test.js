@@ -12,12 +12,12 @@ test('describeSkill: 기본 공격 = 마나 충전·쿨 없음', () => {
 })
 
 test('describeSkill: 공격 스킬 = 위력·마나·쿨', () => {
-  const d = describeSkill(SKILLS.warrior_cleave)   // power1.7 cost50 cd450 dmgTaken enemy 1.25
+  const d = describeSkill(SKILLS.warrior_cleave)   // power1.7 cost50 cd450 dmgTaken enemy 1.15
   assert.match(d, /근접 공격/)
   assert.match(d, /위력 ×1\.7/)
   assert.match(d, /마나 50/)
   assert.match(d, /쿨 4.5초/)
-  assert.match(d, /받는 데미지 \+25%/)   // 보유자 기준(적/자신 접두 없음)
+  assert.match(d, /받는 데미지 \+15%/)   // 보유자 기준(적/자신 접두 없음)
 })
 
 test('describeSkill: 버프(power0)는 위력 라인 없음', () => {
@@ -47,8 +47,8 @@ test('describeSkill: 회복 스킬 = 회복 태그', () => {
 })
 
 test('describeSkill: 스킬 레벨로 위력·effect 스케일', () => {
-  // warrior_cleave dmgTaken 1.25 @ lv2(mult1.25) → 1+(0.25)*1.25=1.3125 → +31%
-  assert.match(describeSkill(SKILLS.warrior_cleave, 2), /받는 데미지 \+31%/)
+  // warrior_cleave dmgTaken 1.15 @ lv2(mult1.25) → 1+(0.15)*1.25=1.1875 → +19%
+  assert.match(describeSkill(SKILLS.warrior_cleave, 2), /받는 데미지 \+19%/)
 })
 
 test('describeTrait: 회피/면역/저항', () => {

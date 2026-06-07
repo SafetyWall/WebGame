@@ -62,7 +62,7 @@ test('평타: 발동 시 마나 +manaGain(25)', () => {
 
 // --- effect 부여 직접 ---
 
-test('warrior_cleave: 몹에 dmgTaken 1.25 디버프 부여 + 첫타 = damage(floor(atk×1.7), def)', () => {
+test('warrior_cleave: 몹에 dmgTaken 1.15 디버프 부여 + 첫타 = damage(floor(atk×1.7), def)', () => {
   // 전사 atk22, cleave power1.7 → floor(37)→damage(37,8)=34.2→34(첫타엔 디버프 미적용). (% 경감식)
   const w = makeUnit(JOBS.warrior, 1); w.mana = 100
   const mob = dummyMob()
@@ -70,7 +70,7 @@ test('warrior_cleave: 몹에 dmgTaken 1.25 디버프 부여 + 첫타 = damage(fl
   assert.equal(mob.hp, 100000 - 34)
   const deb = mob.effects.find(e => e.type === 'dmgTaken')
   assert.ok(deb, 'dmgTaken 디버프 존재')
-  assert.equal(deb.value, 1.25)
+  assert.equal(deb.value, 1.15)
   assert.equal(deb.source, w.id)
 })
 

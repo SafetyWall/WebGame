@@ -13,10 +13,11 @@ test('speedMult = speed effect 곱(없으면 1)', () => {
   assert.strictEqual(speedMult({ effects: [{ type: 'dmgTaken', value: 0.5 }] }), 1)  // 다른 타입 무시
 })
 
-test('강화 = 자기 dmgDealt↑ + speed↑ / 빙결 = 적 speed↓', () => {
-  assert.ok(SKILLS.warrior_might.effects.some(e => e.type === 'speed' && e.value > 1))
+test('강화 = 자기 dmgDealt↑ + speed↑(2차전직 보관) / 속박 = 적 speed↓(궁수 감속)', () => {
+  assert.ok(SKILLS.warrior_might.effects.some(e => e.type === 'speed' && e.value > 1))    // 강화 def 유지(미배치)
   assert.ok(SKILLS.warrior_might.effects.some(e => e.type === 'dmgDealt' && e.value > 1))
-  assert.ok(SKILLS.mage_frost.effects.some(e => e.type === 'speed' && e.value < 1))
+  assert.ok(SKILLS.archer_bind.effects.some(e => e.type === 'speed' && e.value < 1))       // 감속=궁수 전용
+  assert.deepStrictEqual(SKILLS.mage_frost.effects, [])                                     // 빙결=순수딜(감속 제거)
 })
 
 // 오버플로 가드: 게이지가 THRESHOLD 배수만큼 쌓이면(고속) 한 틱에 여러 번 행동(턴 유실 없음).

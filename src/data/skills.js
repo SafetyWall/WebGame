@@ -14,7 +14,7 @@ export const SKILLS = {
   guardian_strike: { id: 'guardian_strike', name: '기본 공격', kind: 'attack', range: 'melee',  power: 1.0, manaGain: MANA_GAIN, cost: 0,  cd: 0, effects: [] },  // 효과 없는 평타(주는뎀↓는 무기파괴로 이동)
   mage_nuke:       { id: 'mage_nuke',       name: '파이어볼', kind: 'attack', range: 'ranged', power: 3.0, manaGain: 0,         cost: 50, cd: 400, effects: [] },  // 유리대포 고버스트(느린 spd80과 짝)
   warrior_cleave:  { id: 'warrior_cleave',  name: '갑옷부수기', kind: 'attack', range: 'melee', power: 1.7, manaGain: 0,        cost: 50, cd: 450,
-    effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.25, duration: 500 }] },
+    effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.15, duration: 500 }] },  // 전사 시그니처(받는뎀↑·팀증폭). 약화(1.25→1.15)=필수 탈피
   priest_hot:      { id: 'priest_hot',      name: '재생',     kind: 'heal',  range: null,     power: 0,   manaGain: 0,         cost: 50, cd: 500,
     effects: [{ target: 'lowestHpAlly', type: 'hot', valueRatio: 0.5, interval: 100, duration: 500 }] },
   guardian_taunt:  { id: 'guardian_taunt',  name: '도발',     kind: 'attack', range: 'melee',  power: 1.0, manaGain: 0,         cost: 40, cd: 500,
@@ -36,8 +36,7 @@ export const SKILLS = {
     effects: [{ target: 'enemy', type: 'mark', valueRatio: 0.6, duration: 500 }] },  // 적 표식: 피격당 +floor(시전자atk×0.6)
   warrior_might:    { id: 'warrior_might',     name: '강화',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 40, cd: 700, learnCost: 6,
     effects: [{ target: 'self', type: 'dmgDealt', value: 1.3, duration: 500 }, { target: 'self', type: 'speed', value: 1.3, duration: 500 }] },
-  mage_frost:       { id: 'mage_frost',        name: '빙결',     kind: 'attack', range: 'ranged', power: 1.5, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
-    effects: [{ target: 'enemy', type: 'speed', value: 0.7, duration: 400 }] },
+  mage_frost:       { id: 'mage_frost',        name: '빙결',     kind: 'attack', range: 'ranged', power: 1.6, manaGain: 0, cost: 40, cd: 500, learnCost: 6, effects: [] },  // 감속→궁수 전용. 순수 원거리딜(저쿨 보조 너크)
   warrior_crush:    { id: 'warrior_crush',     name: '분쇄',     kind: 'attack', range: 'melee',  power: 1.5, manaGain: 0, cost: 50, cd: 700, learnCost: 6,
     effects: [{ target: 'enemy', type: 'stun', value: 1, duration: 150 }] },  // 딜 + 적 게이지 정지
   guardian_thorns:  { id: 'guardian_thorns',   name: '가시방패', kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 45, cd: 600, learnCost: 6,
@@ -60,8 +59,7 @@ export const SKILLS = {
   rogue_haste:      { id: 'rogue_haste',       name: '속도',     kind: 'attack', range: 'melee',  power: 0,   manaGain: 0, cost: 35, cd: 600, learnCost: 6,
     effects: [{ target: 'self', type: 'speed', value: 1.4, duration: 500 }] },  // 자기 속도 버프(자기만)
   archer_aim:       { id: 'archer_aim',        name: '조준사격', kind: 'attack', range: 'ranged', power: 2.5, manaGain: 0, cost: 55, cd: 600, learnCost: 6, effects: [] },  // 고단일딜
-  archer_pierce:    { id: 'archer_pierce',     name: '방어구관통', kind: 'attack', range: 'ranged', power: 1.2, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
-    effects: [{ target: 'enemy', type: 'dmgTaken', value: 1.3, duration: 500 }] },  // 딜 + 적 받는뎀↑
+  archer_pierce:    { id: 'archer_pierce',     name: '방어구관통', kind: 'attack', range: 'ranged', power: 1.7, manaGain: 0, cost: 40, cd: 500, learnCost: 6, effects: [] },  // 받는뎀↑→전사 전용. 순수 고단일딜(관통샷)
   archer_bind:      { id: 'archer_bind',       name: '속박사격', kind: 'attack', range: 'ranged', power: 1.2, manaGain: 0, cost: 40, cd: 500, learnCost: 6,
     effects: [{ target: 'enemy', type: 'speed', value: 0.7, duration: 400 }] },  // 딜 + 적 속도↓
 }
