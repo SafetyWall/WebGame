@@ -55,7 +55,7 @@ export function renderModal(run, ui) {
   const job = JOBS[r.job]
   const s = job.levels[r.level]
   const readOnly = run.phase === 'result'   // 결과화면 = 정보뷰(강화/전직/스킬 액션 비활성)
-  const stats = [`HP ${s.hp}`, `ATK ${s.atk}`, ...(job.def ? [`방어 ${job.def}`] : []), `속도 ${job.spd}`,
+  const stats = [`HP ${s.hp}`, `ATK ${s.atk}`, `방어 ${job.def ?? 0}`, `속도 ${job.spd}`,
     ...(s.heal ? [`힐 ${s.heal}`] : []), `마나 ${job.mana}`, ROLE_KO[job.role] || job.role].join(' · ')
   return `<div class="modal-overlay" data-action="closeModal">
   <div class="modal" data-stop="1">

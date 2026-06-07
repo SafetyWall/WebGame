@@ -33,15 +33,14 @@ test('prep: 카드 본문=openModal, 스킬 pill=openSkill(상세 팝업)', () =
   assert.match(html, /class="sk no"[^>]*data-action="openSkill"[^>]*data-i="0"[^>]*data-skill="warrior_heavy"/)       // 미학습=no
 })
 
-test('prep: 카드/모달에 방어(def)+속도 표기 — 탱만 방어(딜러 def0 미표기)', () => {
+test('prep: 카드/모달 능력치 — 방어·속도 전 직업 표기(딜러=방어 0)', () => {
   const g = { ...newRun(makeRng(1)), roster: [{ job: 'guardian', level: 2 }], party: [0] }
   const card = renderApp(S(g))
-  assert.match(card, /방어 100/)        // 카드 nums (가디언 def100)
-  assert.match(card, /속도 5/)          // 카드에 속도(가디언 spd5)
-  assert.match(card, /class="stat st-hp"/)  // stats = 고정 셀(열 정렬·값 중간 줄바꿈 방지)
-  assert.match(card, /class="stat st-def"><\/span>|class="stat st-def">방어/)  // def 셀 항상 렌더(딜러는 빈 셀=열 자리)
-  assert.match(renderApp(S(g, { modal: 0 })), /방어 100/) // 모달 stats
-  assert.doesNotMatch(renderApp(S(newRun(makeRng(1)))), /방어 /)  // 노비스(def0) 미표기
+  assert.match(card, /방어 100/)        // 가디언 def100
+  assert.match(card, /속도 5/)          // 가디언 spd5
+  assert.match(card, /class="stat st-hp"/)  // stats = 고정 셀(열 정렬)
+  assert.match(renderApp(S(g, { modal: 0 })), /방어 100/) // 모달
+  assert.match(renderApp(S(newRun(makeRng(1)))), /방어 0/) // 딜러(노비스)도 방어 0 표기(빈 칸 아님)
 })
 
 test('prep: 노비스 카드 = 스킬 영역 빈칸(전직 안내 미노출)', () => {

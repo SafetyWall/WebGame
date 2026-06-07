@@ -13,11 +13,11 @@ export function renderCard(run, i) {
   const full = run.party.length >= run.slots
 
   const front = isFront ? ` <span class="front">🛡️앞열</span>` : ''
-  // 고정 셀(HP·ATK·방어·속도[·힐]). 1열=grid 고정폭으로 카드 간 열 정렬, 2열=flex(빈 칸 숨김).
-  // def는 딜러도 빈 셀 렌더 → 1열서 방어 열 자리 유지(속도가 같은 열에 정렬). 힐은 있을 때만.
+  // 고정 셀(HP·ATK·방어·속도[·힐]). 1열=grid 고정폭으로 카드 간 열 정렬, 2열=flex.
+  // def는 딜러도 0으로 표기(전 직업 방어 셀 → 열 정렬 자연스럽고 빈 칸 없음). 힐은 있을 때만.
   const cell = (k, txt) => `<span class="stat st-${k}">${txt}</span>`
   const nums = cell('hp', `HP ${s.hp}`) + cell('atk', `ATK ${s.atk}`)
-    + cell('def', job.def ? `방어 ${job.def}` : '') + cell('spd', `속도 ${job.spd}`)
+    + cell('def', `방어 ${job.def ?? 0}`) + cell('spd', `속도 ${job.spd}`)
     + (s.heal ? cell('heal', `힐 ${s.heal}`) : '')
   const toggle = inParty
     ? `<button class="mini" data-action="toggle" data-i="${i}">대기</button>`
