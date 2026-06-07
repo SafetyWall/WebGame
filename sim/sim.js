@@ -8,11 +8,11 @@ import { makeRng } from '../src/engine/rng.js'
 import { STAGES } from '../src/data/stages.js'
 
 const PARTIES = {
-  '균형':   ['warrior', 'mage', 'guardian', 'priest'],
+  '균형':   ['warrior', 'mage', 'archer', 'priest'],
   '딜몰빵': ['mage', 'mage', 'warrior'],
-  '탱힐':   ['guardian', 'guardian', 'priest'],
+  '디버프': ['archer', 'rogue', 'priest'],
   '원거리': ['mage', 'mage', 'mage'],
-  '근접':   ['warrior', 'warrior', 'warrior'],
+  '근접':   ['warrior', 'rogue', 'warrior'],
 }
 const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1)
 const stageKeys = Object.keys(STAGES).map(Number)

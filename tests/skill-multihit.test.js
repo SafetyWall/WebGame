@@ -12,8 +12,8 @@ function striker(skill) {
   }
 }
 
-test('hits 필드: 더블어택=2회, 연사=3회', () => {
-  assert.strictEqual(SKILLS.rogue_double.hits, 2)
+test('hits 필드: 난무=4회, 연사=3회', () => {
+  assert.strictEqual(SKILLS.rogue_flurry.hits, 4)
   assert.strictEqual(SKILLS.archer_rapid.hits, 3)
 })
 
@@ -28,9 +28,9 @@ test('멀티히트 × 표식 시너지: 각 히트가 mark 발동', () => {
   const mob = makeMob({ name: 'M', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
   mob.effects.push({ type: 'mark', value: 100, source: 0, expireTick: 99999 })
   const before = mob.hp
-  runBattle([striker(SKILLS.rogue_double)], mob, { maxTicks: 1 })
-  // 더블어택 2히트 = (딜 floor(20×0.8)=16 + 표식100) ×2 = 232
-  assert.strictEqual(before - mob.hp, (16 + 100) * 2)
+  runBattle([striker(SKILLS.rogue_flurry)], mob, { maxTicks: 1 })
+  // 난무 4히트 = (딜 floor(20×0.6)=12 + 표식100) ×4 = 448
+  assert.strictEqual(before - mob.hp, (12 + 100) * 4)
 })
 
 test('단일타 스킬(hits 없음)은 1회', () => {

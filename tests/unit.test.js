@@ -14,7 +14,7 @@ test('makeUnit copies job stats into runtime unit', () => {
 })
 
 test('makeUnit no longer carries a static taunt field (도발=스킬)', () => {
-  assert.strictEqual(makeUnit(JOBS.guardian).taunt, undefined)
+  assert.strictEqual(makeUnit(JOBS.warrior).taunt, undefined)
   assert.strictEqual(makeUnit(JOBS.priest).heal, 30)
 })
 
@@ -29,7 +29,7 @@ test('unitSkillIds = 학습 액티브 + 평타(마지막); 미지정=전체(하�
   // 평타 = job.skills 마지막. 전사: cleave + melee_strike(평타).
   assert.deepStrictEqual(unitSkillIds(JOBS.warrior, ['warrior_cleave']), ['warrior_cleave', 'melee_strike'])
   assert.deepStrictEqual(unitSkillIds(JOBS.warrior, []), ['melee_strike'])            // 평타만(미학습)
-  assert.deepStrictEqual(unitSkillIds(JOBS.warrior, undefined), ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'guardian_barrier', 'melee_strike']) // 전체
+  assert.deepStrictEqual(unitSkillIds(JOBS.warrior, undefined), ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'warrior_thorns', 'melee_strike']) // 전체
   assert.deepStrictEqual(unitSkillIds(JOBS.novice, []), ['melee_strike'])             // 노비스=평타뿐
 })
 
@@ -40,19 +40,19 @@ test('makeUnit: 미학습 액티브는 전투 스킬에서 제외(평타만)', (
 
 test('makeUnit: manaMax = 직업별(기본100, 마법사·사제 120)', () => {
   assert.strictEqual(makeUnit(JOBS.warrior).manaMax, 100)
-  assert.strictEqual(makeUnit(JOBS.guardian).manaMax, 100)
+  assert.strictEqual(makeUnit(JOBS.rogue).manaMax, 100)
   assert.strictEqual(makeUnit(JOBS.mage).manaMax, 120)
   assert.strictEqual(makeUnit(JOBS.priest).manaMax, 120)
 })
 
 test('makeUnit: skills resolve(우선순위 보존)', () => {
   const u = makeUnit(JOBS.warrior, 1)   // learnedSkills 미지정=전체
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'guardian_barrier', 'melee_strike'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'warrior_thorns', 'melee_strike'])
 })
 
 test('makeUnit: skillOrder 재배열 반영(액티브만, 평타는 항상 끝)', () => {
   const u = makeUnit(JOBS.warrior, 1, ['warrior_crush', 'warrior_cleave'])
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'guardian_barrier', 'melee_strike'])  // 누락 액티브 뒤 + 평타 끝
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'warrior_thorns', 'melee_strike'])  // 누락 액티브 뒤 + 평타 끝
 })
 
 test('makeUnit: 평타(기본 공격)는 우선순위 끝 고정 — 위로 못 올림', () => {
@@ -63,12 +63,12 @@ test('makeUnit: 평타(기본 공격)는 우선순위 끝 고정 — 위로 못 
 
 test('makeUnit: skillOrder 보정 — 무효 id 무시 + 누락 직업스킬 append(평타 끝)', () => {
   const u = makeUnit(JOBS.warrior, 1, ['warrior_crush', 'bogus'])
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'guardian_barrier', 'melee_strike'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'warrior_thorns', 'melee_strike'])
 })
 
 test('makeUnit: skillOrder 없으면 직업 기본 순서', () => {
   const u = makeUnit(JOBS.mage, 1, null)
-  assert.deepStrictEqual(u.skills.map(s => s.id), ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'])
+  assert.deepStrictEqual(u.skills.map(s => s.id), ['mage_nuke', 'mage_focus', 'mage_lightning', 'mage_pierce', 'ranged_strike'])
 })
 
 test('makeMob: effects 빈 배열', () => {

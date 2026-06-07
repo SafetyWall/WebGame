@@ -33,25 +33,25 @@ test('selectSkill: 쿨 중 → 평타', () => {
 
 // --- 데미지 수치 직접 (1행동 격리) ---
 
-test('mage_nuke: 데미지 = damage(floor(atk×3.0), def), 평타보다 큼(고버스트)', () => {
-  // 마법사 atk32, nuke power3.0 → floor(96)→damage(96,8)=88.8→88. 평타 = damage(32,8)=29.6→29. (% 경감식)
+test('mage_nuke: 데미지 = damage(floor(atk×10.0), def), 평타보다 큼(약평타·큰스킬 버스트)', () => {
+  // 마법사 atk16(약화), nuke power10.0 → floor(160)→damage(160,8)=148.1→148. 평타 = damage(16,8)=14.8→14. (% 경감식)
   const nukeMage = makeUnit(JOBS.mage, 1); nukeMage.mana = 100
   const nm = dummyMob()
   runBattle([nukeMage], nm, { maxTicks: 125 })   // 마법사 spd90 → tick112 발동(1행동)
-  assert.equal(nm.hp, 100000 - 88)
+  assert.equal(nm.hp, 100000 - 148)
 
   const plainMage = makeUnit(JOBS.mage, 1); plainMage.mana = 0
   plainMage.cooldowns['mage_nuke'] = 999999       // 발동 봉쇄 → 평타
   const pm = dummyMob()
   runBattle([plainMage], pm, { maxTicks: 125 })
-  assert.equal(pm.hp, 100000 - 29)
+  assert.equal(pm.hp, 100000 - 14)
 })
 
-test('mage_nuke: 발동 시 마나 −50, 쿨 = tick+400', () => {
+test('mage_nuke: 발동 시 마나 −45, 쿨 = tick+350', () => {
   const m = makeUnit(JOBS.mage, 1); m.mana = 100
   runBattle([m], dummyMob(), { maxTicks: 125 })   // 마법사 spd90 → tick112 발동(10000/90)
-  assert.equal(m.mana, 50)                         // 100 − 50
-  assert.equal(m.cooldowns['mage_nuke'], 512)      // 112 + 400
+  assert.equal(m.mana, 55)                         // 100 − 45
+  assert.equal(m.cooldowns['mage_nuke'], 462)      // 112 + 350
 })
 
 test('평타: 발동 시 마나 +manaGain(25)', () => {
@@ -74,17 +74,12 @@ test('warrior_cleave: 몹에 dmgTaken 1.15 디버프 부여 + 첫타 = damage(fl
   assert.equal(deb.source, w.id)
 })
 
-test('guardian_taunt(2차전직용 메커니즘): 자기 taunt + dmgTaken 0.6 부여, 타게팅 override', () => {
-  // 도발은 가디언 기본 키트서 빠짐(엔진 메커니즘 유지) → 스킬을 직접 주입해 검증.
-  const g = makeUnit(JOBS.guardian, 1); g.mana = 100
-  g.skills = [SKILLS.guardian_taunt, SKILLS.guardian_strike]
-  runBattle([g], dummyMob(), { maxTicks: 200 })     // tick200 = 가디언 1행동(도발 발동)
-  assert.ok(g.effects.some(e => e.type === 'taunt'), 'taunt effect')
-  const buff = g.effects.find(e => e.type === 'dmgTaken')
-  assert.equal(buff.value, 0.6)                      // 받는뎀 −40%
-  // 타게팅: 도발 켜진 가디언이 최저HP 아닌데도 몹 타겟이 됨
-  const m = makeUnit(JOBS.mage, 1); m.hp = 1         // 마법사가 최저HP
-  assert.equal(selectMobTarget([g, m]).name, '가디언')
+test('도발(taunt) 메커니즘 보존: taunt 보유 유닛이 몹 강제 타겟(스킬 미배선=향후 2차전직)', () => {
+  // 도발 스킬(guardian_taunt)은 가디언과 함께 제거. taunt 엔진 메커니즘은 유지 → effect 직접 주입해 검증.
+  const g = makeUnit(JOBS.warrior, 1)
+  g.effects.push({ type: 'taunt', value: 1, source: g.id, expireTick: 99999 })
+  const m = makeUnit(JOBS.mage, 1); m.hp = 1         // 마법사가 최저HP인데도
+  assert.equal(selectMobTarget([g, m]).name, '전사')  // 도발이 어그로 강제
 })
 
 test('priest_hot: 최저HP 아군에 hot effect 부여(value=floor(heal×0.5), interval 100)', () => {

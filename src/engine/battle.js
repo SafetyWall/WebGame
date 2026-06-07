@@ -1,6 +1,6 @@
 // ATB 전투 엔진. 순수, DOM 의존 0. ui/sim 공용.
 import { applyRules, pierceFrac, lifestealFrac, metaResist, hitCap } from './traits.js'
-import { applyEffect, expireEffects, tickHoT, tickDoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus, healReceivedMult, manaSuppressMult } from './effects.js'
+import { applyEffect, expireEffects, tickHoT, tickDoT, dmgTakenMult, dmgDealtMult, speedMult, isStunned, reflectFrac, hasIntercept, markBonus, extraHitFrac, healReceivedMult, manaSuppressMult } from './effects.js'
 import { mobWeights, threatScore } from './threat.js'
 import { MANA_MAX } from '../data/skills.js'
 
@@ -110,8 +110,8 @@ function applySkillEffects(skill, u, mob, healTarget, tick, mult = 1, party = nu
         inst.value = Math.floor(u.heal * spec.valueRatio * mult)
         inst.interval = spec.interval
         inst.nextTick = tick + spec.interval
-      } else if (spec.type === 'reflect') {
-        inst.value = spec.value * mult     // 반사 비율 = 직접 ×레벨배율(0.3→0.6)
+      } else if (spec.type === 'reflect' || spec.type === 'extraHit') {
+        inst.value = spec.value * mult     // 반사 비율·추가타 비율 = 직접 ×레벨배율(0.3→0.6, 0.5→1.0)
       } else if (spec.type === 'mark' || spec.type === 'dot') {
         inst.value = Math.floor(u.atk * spec.valueRatio * mult)  // mark=피격당 추가뎀 / dot=틱당 데미지. 둘 다 시전자 atk 비례
         if (spec.type === 'dot') { inst.interval = spec.interval; inst.nextTick = tick + spec.interval }
@@ -174,6 +174,21 @@ function actUnit(u, party, mob, tick, log) {
       const mk = markBonus(mob)
       if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
     }
+    // 추가타(extraHit 버프, 평타 한정): cost0 평타일 때만 1회 추가 타격(atk×비율). 난무 등 액티브엔 미적용(곱폭증 방지).
+    const eh = (skill.cost === 0) ? extraHitFrac(u) : 0
+    if (eh > 0 && mob.hp > 0) {
+      const base = damage(Math.floor(u.atk * eh), Math.floor(mob.def * (1 - (skill.ignoreDef || 0))))
+      const t = applyRules('incomingDamage', base * dmgDealtMult(u) * dmgTakenMult(mob), ctx, mob)
+      const dmg = t === 0 ? 0 : Math.max(1, Math.floor(t))
+      mob.hp -= dmg
+      applyRules('postIncomingDamage', dmg, { ...ctx, damage: dmg }, mob)
+      log.push(`${u.name} 추가타 → ${mob.name} (-${dmg})`)
+      hit.add('mob')
+      const mk = markBonus(mob)
+      if (mk > 0) { mob.hp -= mk; log.push(`표식 → ${mob.name} (-${mk})`) }
+    }
+    // 마나절단(manaDrain): 명중 시 적 마나 차감. 현재 몹 마나 미사용 → 휴면(향후 몬스터 스킬용).
+    if (skill.manaDrain) mob.mana = Math.max(0, (mob.mana || 0) - skill.manaDrain)
   }
   for (const t of applySkillEffects(skill, u, mob, lowestHpAlly(party), tick, mult, party)) hit.add(refOf(t, party, mob))
   return [...hit]

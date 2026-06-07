@@ -6,7 +6,7 @@ import { makeUnit, makeMob } from '../src/engine/unit.js'
 import { runBattle } from '../src/engine/battle.js'
 
 test('strong party defeats weak single-target mob', () => {
-  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.priest)]
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.archer), makeUnit(JOBS.priest)]
   const mob = makeMob(SLIME)
   const r = runBattle(party, mob)
   assert.strictEqual(r.winner, 'party')

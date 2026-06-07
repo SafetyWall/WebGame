@@ -21,24 +21,23 @@ test('describeSkill: 공격 스킬 = 위력·마나·쿨', () => {
 })
 
 test('describeSkill: 버프(power0)는 위력 라인 없음', () => {
-  const d = describeSkill(SKILLS.guardian_barrier)   // power0 dmgTaken self 0.6
+  const d = describeSkill(SKILLS.mage_focus)   // power0 dmgDealt self 1.4
   assert.doesNotMatch(d, /위력/)
-  assert.match(d, /받는 데미지 -40%/)
+  assert.match(d, /주는 데미지 \+40%/)
 })
 
 test('describeSkill: effect type별 문구', () => {
   assert.match(describeSkill(SKILLS.warrior_crush), /기절 1.5초/)
-  assert.match(describeSkill(SKILLS.rogue_bleed), /지속 데미지 ATK×0\.3/)
+  assert.match(describeSkill(SKILLS.archer_poison), /지속 데미지 ATK×0\.3/)   // 독화살(구 출혈)
   assert.match(describeSkill(SKILLS.priest_party_heal), /지속 회복/)
   assert.match(describeSkill(SKILLS.mage_lightning), /표식: 피격 시 \+ATK×0\.6/)
-  assert.match(describeSkill(SKILLS.guardian_thorns), /받은 데미지 30% 반사/)
-  assert.match(describeSkill(SKILLS.guardian_guard), /최저체력 아군 대신 피격/)
-  assert.match(describeSkill(SKILLS.guardian_taunt), /도발/)
+  assert.match(describeSkill(SKILLS.warrior_thorns), /받은 데미지 30% 반사/)    // 가시방패(가디언 흡수)
+  assert.match(describeSkill(SKILLS.rogue_double), /추가타 ATK×0\.5/)           // 더블어택 버프
 })
 
 test('describeSkill: hits·ignoreDef', () => {
   assert.match(describeSkill(SKILLS.archer_rapid), /3회 타격/)
-  assert.match(describeSkill(SKILLS.rogue_pierce), /방어 100% 무시/)
+  assert.match(describeSkill(SKILLS.mage_pierce), /방어 100% 무시/)             // 관통(법사 이관)
 })
 
 test('describeSkill: 회복 스킬 = 회복 태그', () => {

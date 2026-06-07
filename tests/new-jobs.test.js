@@ -16,8 +16,8 @@ test('도적·궁수 직업 정의(10레벨·마나·스킬 5개·평타 포함)
     assert.strictEqual(j.skills.length, 5)              // 액티브4 + 평타
     for (const id of j.skills) assert.ok(SKILLS[id], `${k} ${id}`)
   }
-  assert.deepStrictEqual(JOBS.rogue.skills, ['rogue_bleed', 'rogue_haste', 'rogue_double', 'rogue_pierce', 'melee_strike'])
-  assert.deepStrictEqual(JOBS.archer.skills, ['archer_aim', 'archer_rapid', 'archer_pierce', 'archer_bind', 'ranged_strike'])
+  assert.deepStrictEqual(JOBS.rogue.skills, ['rogue_double', 'rogue_haste', 'rogue_flurry', 'rogue_manacut', 'melee_strike'])
+  assert.deepStrictEqual(JOBS.archer.skills, ['archer_aim', 'archer_rapid', 'archer_poison', 'archer_bind', 'ranged_strike'])
 })
 
 test('도적·궁수 = 노비스 전직 대상', () => {
@@ -26,14 +26,14 @@ test('도적·궁수 = 노비스 전직 대상', () => {
   const s = { ...newRun(makeRng(1)), roster: [{ job: 'novice', level: 1 }], party: [0], gold: 10 }
   const r = changeJob(s, 0, 'rogue')
   assert.strictEqual(r.roster[0].job, 'rogue')
-  assert.deepStrictEqual(r.roster[0].learnedSkills, ['rogue_bleed'])   // 기본 학습
+  assert.deepStrictEqual(r.roster[0].learnedSkills, ['rogue_double'])   // 기본 학습(키트 첫 액티브)
 })
 
-test('도적 출혈 = 전투에서 dot 부여(메커닉 배선 확인)', () => {
-  const u = makeUnit(JOBS.rogue, 1, null, {}, ['rogue_bleed']); u.mana = 100
+test('궁수 독화살 = 전투에서 dot 부여(메커닉 배선 확인)', () => {
+  const u = makeUnit(JOBS.archer, 1, null, {}, ['archer_poison']); u.mana = 100
   const mob = makeMob({ name: 'D', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
-  runBattle([u], mob, { maxTicks: 200 })
-  assert.ok(mob.effects.some(e => e.type === 'dot'), '출혈 dot 부여됨')
+  runBattle([u], mob, { maxTicks: 300 })   // 궁수 spd120 → 첫 행동 tick84(독화살)
+  assert.ok(mob.effects.some(e => e.type === 'dot'), '독화살 dot 부여됨')
 })
 
 test('궁수 연사 = 멀티히트(3타) 배선 확인', () => {
