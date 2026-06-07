@@ -88,3 +88,8 @@ export function hasIntercept(unit) {
 export function markBonus(unit) {
   return (unit.effects || []).reduce((s, e) => (e.type === 'mark' ? s + e.value : s), 0)
 }
+
+// 추가타(extraHit) 비율 합 — 평타 시 atk×비율 추가 1히트(도적 더블어택 버프). value=레벨배율 적용된 비율.
+export function extraHitFrac(unit) {
+  return (unit.effects || []).reduce((s, e) => (e.type === 'extraHit' ? s + e.value : s), 0)
+}

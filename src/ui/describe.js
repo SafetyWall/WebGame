@@ -18,6 +18,7 @@ function describeEffect(e, mult) {
     case 'hot':       return `지속 회복 회복력×${round2(e.valueRatio * mult)} (${fmtSec(e.duration)})`
     case 'mark':      return `표식: 피격 시 +ATK×${round2(e.valueRatio * mult)}`
     case 'reflect':   return `받은 데미지 ${Math.round(e.value * mult * 100)}% 반사`
+    case 'extraHit':  return `평타 시 추가타 ATK×${round2(e.value * mult)}`
     case 'intercept': return '최저체력 아군 대신 피격'
     case 'taunt':     return '도발(적 강제 타겟)'
     default:          return e.type
@@ -65,6 +66,7 @@ export function effectShortValue(e, level = 1) {
     case 'dot': case 'mark': return `ATK×${round2(e.valueRatio * mult)}`
     case 'hot':     return `회복력×${round2(e.valueRatio * mult)}`
     case 'reflect': return `${Math.round(e.value * mult * 100)}%`
+    case 'extraHit': return `ATK×${round2(e.value * mult)}`
     default:        return null
   }
 }

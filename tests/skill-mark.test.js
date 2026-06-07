@@ -13,12 +13,12 @@ test('markBonus = mark effect 값 합(없으면 0)', () => {
 
 test('라이트닝 = 적에 mark 부여(값=floor(시전자atk×ratio))', () => {
   assert.strictEqual(SKILLS.mage_lightning.effects[0].type, 'mark')
-  const m = makeUnit(JOBS.mage, 1, null, {}, ['mage_lightning']); m.mana = 100  // atk32
+  const m = makeUnit(JOBS.mage, 1, null, {}, ['mage_lightning']); m.mana = 100  // atk16(약화)
   const mob = makeMob({ name: 'D', hp: 1e6, atk: 0, def: 0, spd: 0, traits: [] })
   runBattle([m], mob, { maxTicks: 200 })
   const mk = mob.effects.find(e => e.type === 'mark')
   assert.ok(mk, '몹 mark 부여됨')
-  assert.strictEqual(mk.value, Math.floor(32 * 0.6))   // 19
+  assert.strictEqual(mk.value, Math.floor(16 * 0.6))   // 9
 })
 
 test('표식 걸린 몹은 피격 시마다 추가뎀', () => {
@@ -33,5 +33,5 @@ test('표식 걸린 몹은 피격 시마다 추가뎀', () => {
 })
 
 test('마법사 키트에 라이트닝 포함(4 액티브)', () => {
-  assert.deepStrictEqual(JOBS.mage.skills, ['mage_nuke', 'mage_focus', 'mage_frost', 'mage_lightning', 'ranged_strike'])
+  assert.deepStrictEqual(JOBS.mage.skills, ['mage_nuke', 'mage_focus', 'mage_lightning', 'mage_pierce', 'ranged_strike'])
 })

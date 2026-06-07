@@ -18,21 +18,21 @@ function firstHit(skill, mobDef) {
   return Number(m[1])
 }
 
-test('방어무시 = ignoreDef 필드', () => {
-  assert.strictEqual(SKILLS.rogue_pierce.ignoreDef, 1)
+test('방어무시 = ignoreDef 필드 (법사 관통)', () => {
+  assert.strictEqual(SKILLS.mage_pierce.ignoreDef, 1)
 })
 
 test('방어무시는 고방 적에게 def 무시 데미지', () => {
-  // 고방(def 40) 몹: 일반 스킬 power1.2 atk50 → floor(60)→damage(60,40)=42.8→42. 방무 → damage(60,0)=60. (% 경감식)
-  const normal = { id: 'n', name: 'n', kind: 'attack', range: 'melee', power: 1.2, manaGain: 25, cost: 0, cd: 0, effects: [] }
-  const dPierce = firstHit(SKILLS.rogue_pierce, 40)
+  // 고방(def 40) 몹: 일반 스킬 power4.0 atk50 → floor(200)→damage(200,40)=142.8→142. 방무(관통) → damage(200,0)=200. (% 경감식)
+  const normal = { id: 'n', name: 'n', kind: 'attack', range: 'ranged', power: 4.0, manaGain: 25, cost: 0, cd: 0, effects: [] }
+  const dPierce = firstHit(SKILLS.mage_pierce, 40)
   const dNormal = firstHit(normal, 40)
-  assert.strictEqual(dNormal, 42)
-  assert.strictEqual(dPierce, 60)
+  assert.strictEqual(dNormal, 142)
+  assert.strictEqual(dPierce, 200)
   assert.ok(dPierce > dNormal)
 })
 
 test('저방 적엔 차이 작음(방어무시 가치 = 고방 상대)', () => {
-  const normal = { id: 'n', name: 'n', kind: 'attack', range: 'melee', power: 1.2, manaGain: 25, cost: 0, cd: 0, effects: [] }
-  assert.strictEqual(firstHit(SKILLS.rogue_pierce, 0), firstHit(normal, 0))  // def0 = 동일
+  const normal = { id: 'n', name: 'n', kind: 'attack', range: 'ranged', power: 4.0, manaGain: 25, cost: 0, cd: 0, effects: [] }
+  assert.strictEqual(firstHit(SKILLS.mage_pierce, 0), firstHit(normal, 0))  // def0 = 동일
 })

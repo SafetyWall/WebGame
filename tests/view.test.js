@@ -34,12 +34,12 @@ test('prep: 카드 본문=openModal, 스킬 pill=openSkill(상세 팝업)', () =
 })
 
 test('prep: 카드/모달 능력치 — 방어·속도 전 직업 표기(딜러=방어 0)', () => {
-  const g = { ...newRun(makeRng(1)), roster: [{ job: 'guardian', level: 2 }], party: [0] }
+  const g = { ...newRun(makeRng(1)), roster: [{ job: 'warrior', level: 2 }], party: [0] }
   const card = renderApp(S(g))
-  assert.match(card, /방어 100/)        // 가디언 def100
-  assert.match(card, /속도 70/)         // 가디언 spd70(100-스케일)
+  assert.match(card, /방어 40/)         // 전사 def40
+  assert.match(card, /속도 120/)        // 전사 spd120(100-스케일)
   assert.match(card, /class="stat st-hp"/)  // stats = 고정 셀(열 정렬)
-  assert.match(renderApp(S(g, { modal: 0 })), /방어 100/) // 모달
+  assert.match(renderApp(S(g, { modal: 0 })), /방어 40/) // 모달
   assert.match(renderApp(S(newRun(makeRng(1)))), /방어 0/) // 딜러(노비스)도 방어 0 표기(빈 칸 아님)
 })
 
@@ -111,7 +111,7 @@ test('skillDetail: 코어/부여효과 분리, 레벨업은 맨 밑 변화만', 
   assert.match(html, /취약/)                    // 키워드 pill
   assert.match(html, /적에게/)                  // 대상 라벨(별도)
   assert.match(html, /받는 데미지 \+15%/)        // 효과 문구(보유자 기준, 적 접두 없음)
-  assert.match(html, /지속 5초/)                 // 지속 라벨링(500틱=5초)
+  assert.match(html, /지속 3초/)                 // 지속 라벨링(갑옷부수기 300틱=3초, 사제 버프보다 짧음)
   assert.doesNotMatch(html, /\[취약\]/)          // 상단 코어엔 effect 줄 중복 없음
   // 레벨업 = 맨 밑 변화만
   assert.match(html, /위력 ×1\.7 → ×2\.13/)
@@ -183,14 +183,14 @@ test('result: ui.frames 있으면 재생뷰(battle-stage) 노출 + 전체로그 
 
 test('result: 재생뷰 유닛 클릭→openModal + 읽기전용 모달(능력치+방어, 강화/스킬액션 없음)', () => {
   const s = { ...newRun(makeRng(1)), phase: 'result', stage: 2, party: [0],
-    roster: [{ job: 'guardian', level: 2 }],
+    roster: [{ job: 'warrior', level: 2 }],
     lastResult: { outcome: 'win', reward: 6, ticks: 100, rounds: [] } }
   const ui = { layout: '2col', modal: null, cursor: 0, playing: false, speed: 1,
-    frames: [{ tick: 5, actor: '가디언', log: ['x'], party: [{ name: '가디언', level: 2, hp: 100, maxHp: 312, mana: 0, manaMax: 100, gauge: 0, alive: true, effects: [] }], mob: { name: '슬라임', hp: 0, maxHp: 30, boss: false, effects: [] } }] }
+    frames: [{ tick: 5, actor: '전사', log: ['x'], party: [{ name: '전사', level: 2, hp: 100, maxHp: 138, mana: 0, manaMax: 100, gauge: 0, alive: true, effects: [] }], mob: { name: '슬라임', hp: 0, maxHp: 30, boss: false, effects: [] } }] }
   assert.match(renderApp({ run: s, ui }), /data-action="openModal"[^>]*data-i="0"/)   // 재생뷰 유닛=로스터0 클릭
   const opened = renderApp({ run: s, ui: { ...ui, modal: 0 } })
   assert.match(opened, /modal-overlay/)
-  assert.match(opened, /방어 100/)                       // 능력치(방어 포함)
+  assert.match(opened, /방어 40/)                        // 능력치(방어 포함)
   assert.doesNotMatch(opened, /data-action="upgrade"/)   // 읽기전용 — 강화 버튼 없음(비노비스라면 prep엔 있음)
   assert.doesNotMatch(opened, /data-action="openSkill"/) // 스킬 액션 없음
 })

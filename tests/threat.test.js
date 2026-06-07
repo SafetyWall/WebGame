@@ -32,14 +32,14 @@ test('selectMobTarget 저체력추적 몹 = 최저 hp 유닛', () => {
 })
 
 test('selectMobTarget 고공격력추적 몹 = 최고 atk 유닛(물몸 딜러 직격)', () => {
-  const party = [makeUnit(JOBS.guardian), makeUnit(JOBS.mage)]  // 가디언 atk10 < 마법사 atk32
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.archer)]  // 전사 atk22 < 궁수 atk28
   const mob = { traits: [TRAITS.atk_seek] }
-  assert.strictEqual(selectMobTarget(party, mob).name, '마법사')
+  assert.strictEqual(selectMobTarget(party, mob).name, '궁수')
 })
 
 test('selectMobTarget 도발 > 저체력추적 (도발이 어그로 강제)', () => {
-  // 가디언(고hp) 앞 도발 + 마법사(저hp). 저체력추적이면 평소 마법사지만 도발이 뺏음.
-  const party = [taunted(makeUnit(JOBS.guardian)), makeUnit(JOBS.mage)]
+  // 전사(고hp) 앞 도발 + 마법사(저hp). 저체력추적이면 평소 마법사지만 도발이 뺏음.
+  const party = [taunted(makeUnit(JOBS.warrior)), makeUnit(JOBS.mage)]
   const mob = { traits: [TRAITS.low_hp_seek] }
-  assert.strictEqual(selectMobTarget(party, mob).name, '가디언')
+  assert.strictEqual(selectMobTarget(party, mob).name, '전사')
 })

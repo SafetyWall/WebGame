@@ -41,40 +41,40 @@ test('SKILLS: 평타에 power/manaGain/cost/cd/effects 필드', () => {
   assert.deepStrictEqual(s.effects, [])
 })
 
-test('SKILLS: 발동스킬 5종 정의 + 자원/효과', () => {
-  for (const id of ['mage_nuke', 'warrior_cleave', 'priest_hot', 'guardian_taunt', 'guardian_strike']) {
+test('SKILLS: 발동스킬 정의 + 자원/효과', () => {
+  for (const id of ['mage_nuke', 'warrior_cleave', 'priest_hot', 'warrior_thorns', 'archer_bind']) {
     assert.ok(SKILLS[id], `${id} 존재`)
     assert.strictEqual(SKILLS[id].id, id)
   }
-  assert.ok(SKILLS.mage_nuke.power > 1.5)
+  assert.ok(SKILLS.mage_nuke.power > 1.5)                        // 파이어볼 고버스트
   assert.strictEqual(SKILLS.warrior_cleave.effects[0].type, 'dmgTaken')
   assert.ok(SKILLS.warrior_cleave.effects[0].value > 1)         // 받는뎀 증가(증뎀)
+  assert.ok(SKILLS.warrior_cleave.effects[0].duration < SKILLS.priest_party_buff.effects[0].duration)  // 딜 동반이라 사제 버프보다 지속 짧음
   assert.strictEqual(SKILLS.priest_hot.power, 0)                // 즉발 없음
   assert.strictEqual(SKILLS.priest_hot.effects[0].type, 'hot')
   assert.ok(SKILLS.priest_hot.effects[0].valueRatio > 0)
   assert.strictEqual(SKILLS.priest_hot.effects[0].interval, 100)
-  assert.ok(SKILLS.guardian_taunt.effects.some(e => e.type === 'taunt'))
-  assert.ok(SKILLS.guardian_taunt.effects.some(e => e.type === 'dmgTaken' && e.value < 1))
-  assert.deepStrictEqual(SKILLS.guardian_strike.effects, [])               // 평타화(주는뎀↓ 제거)
-  assert.strictEqual(SKILLS.guardian_sunder.effects[0].type, 'dmgDealt')   // 무기파괴 = 적 주는뎀↓
-  assert.ok(SKILLS.guardian_sunder.effects[0].value < 1)
+  assert.strictEqual(SKILLS.warrior_thorns.effects[0].type, 'reflect')      // 가시방패(가디언 흡수)
+  assert.ok(SKILLS.archer_bind.effects.some(e => e.type === 'speed' && e.value < 1))     // 속박 = 속도↓
+  assert.ok(SKILLS.archer_bind.effects.some(e => e.type === 'dmgDealt' && e.value < 1))  // + 주는뎀↓ 시너지
 })
 
 test('SKILLS: 모든 평타 = "기본 공격"으로 이름 통일', () => {
-  for (const id of ['melee_strike', 'ranged_strike', 'basic_heal', 'holy_bolt', 'guardian_strike']) {
+  for (const id of ['melee_strike', 'ranged_strike', 'basic_heal', 'holy_bolt']) {
     assert.strictEqual(SKILLS[id].name, '기본 공격', `${id} 이름`)
   }
 })
 
-test('SKILLS: P1 신규 액티브 정의 + learnCost', () => {
-  for (const id of ['warrior_heavy', 'mage_focus', 'guardian_sunder', 'guardian_barrier', 'priest_heal', 'holy_bolt']) {
+test('SKILLS: 신규 액티브 정의 + learnCost', () => {
+  for (const id of ['warrior_heavy', 'mage_focus', 'archer_poison', 'mage_pierce', 'priest_heal', 'holy_bolt']) {
     assert.ok(SKILLS[id], `${id} 존재`)
     assert.strictEqual(SKILLS[id].id, id)
   }
   assert.ok(SKILLS.warrior_heavy.power > 2)                       // 고위력 burst
   assert.strictEqual(SKILLS.mage_focus.effects[0].type, 'dmgDealt')
   assert.ok(SKILLS.mage_focus.effects[0].value > 1)              // 자뎀 버프
-  assert.ok(SKILLS.guardian_barrier.effects[0].value < 1)        // 받는뎀 감소
+  assert.strictEqual(SKILLS.archer_poison.effects[0].type, 'dot') // 독화살 = 지속뎀
+  assert.strictEqual(SKILLS.mage_pierce.ignoreDef, 1)            // 관통 = 방어무시
   assert.strictEqual(SKILLS.priest_heal.kind, 'heal')
   assert.strictEqual(SKILLS.holy_bolt.kind, 'attack')            // 사제 평타=원거리딜
   assert.strictEqual(SKILLS.holy_bolt.range, 'ranged')

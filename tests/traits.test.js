@@ -138,9 +138,9 @@ test('melee_evade reduces a melee attacker damage by 30% (floor, min 1)', () => 
 })
 
 test('melee_evade does not reduce a ranged (mage) attacker damage', () => {
-  // 마법사 atk32 vs def8 → damage(32,8)=29.6→29, range=ranged → 미감소 (% 경감식)
+  // 마법사 atk16(약화) vs def8 → damage(16,8)=14.8→14, range=ranged → 미감소 (% 경감식)
   const r = runBattle([makeUnit(JOBS.mage)], makeMob({ ...TURTLE, traits: ['melee_evade'] }), { maxTicks: 200 })
-  assert.match(logsOf(r).join('\n'), /마법사 공격 → 가시거북 \(-29\)/)
+  assert.match(logsOf(r).join('\n'), /마법사 공격 → 가시거북 \(-14\)/)
 })
 
 test('snapshot includes mob trait names', () => {

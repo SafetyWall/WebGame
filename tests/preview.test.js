@@ -34,7 +34,7 @@ test('skillUpPreview: 위력 배율 전후', () => {
 })
 
 test('skillUpPreview: 버프(power0)=power null', () => {
-  const p = skillUpPreview(SKILLS.guardian_barrier, 1)
+  const p = skillUpPreview(SKILLS.warrior_thorns, 1)   // power0(가시방패)
   assert.strictEqual(p.power, null)
 })
 

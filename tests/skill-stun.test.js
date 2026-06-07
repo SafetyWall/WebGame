@@ -22,7 +22,7 @@ test('분쇄 = 딜 + 적 stun effect 부여', () => {
 
 test('스턴 중 몹은 게이지 안 차오르고 행동 못 함', () => {
   // 고속 몹(spd100)에 stun 직접 부여 → 게이지 동결 → 행동 0.
-  const t = makeUnit(JOBS.guardian, 1); t.hp = 1e6
+  const t = makeUnit(JOBS.warrior, 1); t.hp = 1e6
   const mob = makeMob({ name: 'M', hp: 1e6, atk: 50, def: 0, spd: 100, traits: [] })
   mob.effects.push({ type: 'stun', value: 1, source: 0, expireTick: 99999 })
   const r = runBattle([t], mob, { maxTicks: 500 })
@@ -31,7 +31,7 @@ test('스턴 중 몹은 게이지 안 차오르고 행동 못 함', () => {
   assert.strictEqual(mob.gauge, 0, '게이지 동결')
 })
 
-test('전사 키트 = 4 액티브(갑옷부수기/강타/분쇄/방벽) + 평타', () => {
+test('전사 키트 = 4 액티브(갑옷부수기/강타/분쇄/가시방패) + 평타', () => {
   assert.deepStrictEqual(JOBS.warrior.skills,
-    ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'guardian_barrier', 'melee_strike'])
+    ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'warrior_thorns', 'melee_strike'])
 })

@@ -19,11 +19,14 @@ const rawMob = (o) => ({
 })
 const logsOf = (r) => r.rounds.flatMap(rd => rd.log)
 
+// 고정 탱크(구 가디언 대체): def100·spd5(170틱 내 미행동)·hp260 — AOE/타겟팅 기계 검증용(직업 디커플).
+const rawTank = () => rawUnit({ name: '탱', maxHp: 260, hp: 260, def: 100, spd: 5, atk: 0 })
+
 // #4 — 광역 데미지 = base floor(atk*ratio)=floor(28*0.6)=16, 그 뒤 def % 경감. 로그도 적용값과 일치.
 test('aoe applies floor(atk*ratio) then def mitigation, logs the applied value', () => {
-  // 가디언(spd5, def100) vs 오우거(spd6, aoe). maxTicks 170: 오우거만 1회 행동(틱167), 가디언 미행동.
+  // 탱크(spd5, def100) vs 오우거(spd60, aoe). maxTicks 170: 오우거만 1회 행동(틱167), 탱크 미행동.
   // base16 → damage(16,100)=8 (def100=50% 경감).
-  const party = [makeUnit(JOBS.guardian)]
+  const party = [rawTank()]
   const mob = makeMob(OGRE)
   const r = runBattle(party, mob, { maxTicks: 170 })
   assert.strictEqual(r.rounds.at(-1).party[0].hp, 260 - 8) // 252
@@ -32,27 +35,27 @@ test('aoe applies floor(atk*ratio) then def mitigation, logs the applied value',
 
 // 스냅샷에 aoe 플래그 노출(렌더가 광역 라벨 표기에 사용).
 test('snapshot exposes mob.aoe flag', () => {
-  const r = runBattle([makeUnit(JOBS.guardian)], makeMob(OGRE), { maxTicks: 170 })
+  const r = runBattle([rawTank()], makeMob(OGRE), { maxTicks: 170 })
   assert.strictEqual(r.rounds.at(-1).mob.aoe, true)
-  const r2 = runBattle([makeUnit(JOBS.guardian)], makeMob(SLIME), { maxTicks: 50 })
+  const r2 = runBattle([rawTank()], makeMob(SLIME), { maxTicks: 50 })
   assert.strictEqual(r2.rounds.at(-1).mob.aoe, false)
 })
 
-// #5 — 몹 단일공격이 실전에서 도발 탱으로 라우팅되는지(콜사이트 통합).
-test('mob single-target routes to taunt tank inside a real battle', () => {
-  const g = makeUnit(JOBS.guardian); g.mana = 100   // 첫 행동에 도발 발동
-  const party = [g, makeUnit(JOBS.mage)]
+// #5 — 몹 단일공격이 실전에서 앞열(전사)로 라우팅되는지(콜사이트 통합).
+test('mob single-target routes to front-line tank inside a real battle', () => {
+  const w = makeUnit(JOBS.warrior); w.mana = 100
+  const party = [w, makeUnit(JOBS.mage)]   // 전사 앞열(위치 지배) → 몹 타겟
   const mob = makeMob(SLIME) // aoe:false
   const r = runBattle(party, mob, { maxTicks: 400 })
   const log = logsOf(r).join('\n')
-  assert.match(log, /→ 가디언/)   // 도발 발동 후 몹이 탱 때림
-  // doesNotMatch(/→ 마법사/)는 삭제 — 도발 발동 전 1~2틱 노출 가능. 도발 작동=가디언 피격으로 검증.
+  assert.match(log, /→ 전사/)   // 몹이 앞열 전사 때림
 })
 
 // #6 — 진짜 교착: 유닛이 행동하지만 못 이김 → maxTicks 도달 → 몹 승.
+// (사제 평타 강화 후엔 일반 몹은 죽임 → 1e9 hp 벽 + 저공격 몹으로 교착 구성: 사제는 힐로 생존하나 벽은 못 깸.)
 test('active stalemate (units act but cannot win) -> mob wins at maxTicks', () => {
-  const party = [makeUnit(JOBS.priest)] // 힐러는 몹 공격 안 함 → 못 죽임
-  const mob = makeMob(OGRE)
+  const party = [makeUnit(JOBS.priest)] // 힐로 버티나 1e9 벽은 못 죽임
+  const mob = makeMob({ name: '벽', hp: 1e9, atk: 5, def: 0, spd: 50, traits: [] })
   const r = runBattle(party, mob, { maxTicks: 3000 })
   assert.strictEqual(r.winner, 'mob')
   assert.strictEqual(r.ticks, 3000)
@@ -92,7 +95,7 @@ test('reflect killing-blow: attacker reduced to 0 dies and stops acting', () => 
 
 // #9 — 스냅샷 로그내용 / 플러시 / hp clamp.
 test('snapshot: log content, final flush, hp clamp', () => {
-  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.priest)]
+  const party = [makeUnit(JOBS.warrior), makeUnit(JOBS.mage), makeUnit(JOBS.archer), makeUnit(JOBS.priest)]
   const mob = makeMob(SLIME)
   const r = runBattle(party, mob)
   assert.strictEqual(r.winner, 'party')

@@ -12,9 +12,9 @@ test('damage = atk × K/(def+K) — % 경감, 스케일 불변', () => {
 })
 
 test('플레이어 def = 직업 메타 상수 (탱 레버)', () => {
-  assert.ok(JOBS.guardian.def > 0, '가디언 def > 0')
+  assert.ok(JOBS.warrior.def > 0, '전사 def > 0')
   assert.strictEqual(JOBS.mage.def ?? 0, 0, '마법사 def 0')
-  assert.strictEqual(makeUnit(JOBS.guardian).def, JOBS.guardian.def)
+  assert.strictEqual(makeUnit(JOBS.warrior).def, JOBS.warrior.def)
   assert.strictEqual(makeUnit(JOBS.mage).def, JOBS.mage.def ?? 0)
 })
 
@@ -27,12 +27,12 @@ test('lowestHpAlly picks the alive ally with the lowest hp', () => {
 })
 
 test('selectMobTarget prefers an ally with an active taunt effect', () => {
-  // step5: 도발=발동스킬 effect(상시 taunt 아님). taunt effect 있는 아군을 우선 타게팅.
-  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.guardian)]
+  // 도발=effect(상시 taunt 아님). taunt effect 있는 아군을 우선 타게팅(메커니즘 보존, 직업 무관).
+  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.warrior)]
   party[1].effects.push({ type: 'taunt', value: 1, source: party[1].id, expireTick: 9999 })
   const t = selectMobTarget(party)
-  assert.strictEqual(t.name, '가디언')
-  assert.strictEqual(t.hp, makeUnit(JOBS.guardian).hp)
+  assert.strictEqual(t.name, '전사')
+  assert.strictEqual(t.hp, makeUnit(JOBS.warrior).hp)
 })
 
 test('selectMobTarget targets the front-most (party-order first) ally when no taunt', () => {
@@ -47,10 +47,10 @@ test('selectMobTarget skips a dead front unit to the next alive', () => {
 })
 
 test('selectMobTarget with multiple taunters picks the front-most taunter', () => {
-  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.guardian), makeUnit(JOBS.warrior)]
+  const party = [makeUnit(JOBS.mage), makeUnit(JOBS.archer), makeUnit(JOBS.warrior)]
   party[1].effects.push({ type: 'taunt', value: 1, source: party[1].id, expireTick: 9999 })
   party[2].effects.push({ type: 'taunt', value: 1, source: party[2].id, expireTick: 9999 })
-  assert.strictEqual(selectMobTarget(party).name, '가디언')  // 앞열 도발자
+  assert.strictEqual(selectMobTarget(party).name, '궁수')  // 앞열 도발자(index1)
 })
 
 test('selectMobTarget returns null for empty or all-dead party', () => {

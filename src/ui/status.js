@@ -15,6 +15,7 @@ export function statusName(type, value = 1) {
     case 'hot':       return '재생'
     case 'mark':      return '표식'
     case 'reflect':   return '가시'
+    case 'extraHit':  return '연타'
     case 'intercept': return '수호'
     case 'taunt':     return '도발'
     case 'healReduce':   return value <= 0 ? '회복봉쇄' : '회복약화'   // 몹 오라(파티 디버프)
@@ -46,6 +47,7 @@ export function instanceDesc(inst) {
     case 'hot':       return `${fmtSec(inst.interval)}마다 ${v} 회복`
     case 'mark':      return `피격 시 +${v} 추가 피해`
     case 'reflect':   return `받은 데미지 ${Math.round(v * 100)}% 반사`
+    case 'extraHit':  return `평타 시 +ATK×${v} 추가타`
     case 'intercept': return '최저체력 아군 대신 피격'
     case 'taunt':     return '적이 강제로 이 유닛 공격'
     case 'healReduce':   return `받는 회복 -${Math.round((1 - v) * 100)}%`
