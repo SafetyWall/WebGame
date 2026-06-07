@@ -13,7 +13,9 @@ export function renderCard(run, i) {
   const full = run.party.length >= run.slots
 
   const front = isFront ? ` <span class="front">🛡️앞열</span>` : ''
-  const nums = `HP ${s.hp} · ATK ${s.atk}${job.def ? ` · 방어 ${job.def}` : ''}${s.heal ? ` · 힐 ${s.heal}` : ''}`
+  // 토큰별 span(nowrap) + .nums flex-wrap → 값 중간 줄바꿈 방지, 넓으면 한 줄·좁으면 토큰 경계서 줄바꿈.
+  const statTokens = [`HP ${s.hp}`, `ATK ${s.atk}`, ...(job.def ? [`방어 ${job.def}`] : []), `속도 ${job.spd}`, ...(s.heal ? [`힐 ${s.heal}`] : [])]
+  const nums = statTokens.map((t) => `<span class="stat">${t}</span>`).join('')
   const toggle = inParty
     ? `<button class="mini" data-action="toggle" data-i="${i}">대기</button>`
     : full
@@ -23,9 +25,9 @@ export function renderCard(run, i) {
 
   return `<div class="card${inParty ? ' in' : ''}${isFront ? ' front-card' : ''}" data-action="openModal" data-i="${i}"${drag}>
   <div class="card-main">
-    <div class="ctop"><span class="jb">${esc(job.name)}</span> <span class="lv">Lv${r.level}</span>${front}</div>
+    <div class="ctop"><span class="jb">${esc(job.name)}</span> <span class="lv">Lv${r.level}</span>${front}${toggle}</div>
     ${hpBar(100)}
-    <div class="numrow"><span class="nums">${nums}</span>${toggle}</div>
+    <div class="numrow"><span class="nums">${nums}</span></div>
   </div>
   <div class="skills2">${skillPills(r.job, r, i)}</div>
 </div>`

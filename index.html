@@ -31,10 +31,12 @@
     .sec-label { font-size: .72em; color: #789; letter-spacing: .5px; margin: .4rem 0 .25rem; }
     .card { border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
     .card.in { border-color: #485; background: #15211a; }
+    .ctop { display: flex; align-items: center; gap: .3rem; } .ctop .mini { margin-left: auto; }   /* 토글 버튼 우측 → stats는 아래 줄 전체 폭 */
     .ctop .jb { color: #cfc; font-weight: bold; } .ctop .lv { color: #9c9; } .front { color: var(--accent); }
     .hpbar { height: 5px; background: #252; border-radius: 3px; overflow: hidden; margin: .25rem 0; }
     .hpbar > i { display: block; height: 100%; background: var(--ok); }
-    .nums { color: #9c9; font-size: .85em; }
+    .nums { color: #9c9; font-size: .85em; flex: 1; display: flex; flex-wrap: wrap; gap: .05rem .5rem; }
+    .nums .stat { white-space: nowrap; }   /* 값 중간 줄바꿈 방지(방어 100이 쪼개지지 않음) */
     .numrow { display: flex; justify-content: space-between; align-items: center; gap: .4rem; margin-top: .15rem; }
     .card.in { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }   /* 출전 카드 = 자체 드래그(글씨 선택 대신 카드 이동) */
     .card.dragging, .prio-item.dragging { cursor: grabbing; position: relative; z-index: 50; pointer-events: none; opacity: .9; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
