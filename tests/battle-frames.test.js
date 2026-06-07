@@ -42,11 +42,11 @@ test('record: 마지막 frame = 전투 종료 상태(몹 사망)', () => {
   assert.strictEqual(r.frames[r.frames.length - 1].mob.hp, 0)
 })
 
-test('record: effect = effects 태그 노출(전사 강화 학습 시 speed/dmgDealt)', () => {
-  const w = makeUnit(JOBS.warrior, 5, ['warrior_might', 'melee_strike'], { warrior_might: 1 }, ['warrior_might'])
+test('record: effect = effects 태그 노출(마법사 마력집중 학습 시 dmgDealt)', () => {
+  const w = makeUnit(JOBS.mage, 5, ['mage_focus', 'ranged_strike'], { mage_focus: 1 }, ['mage_focus'])
   const r = runBattle([w], makeMob(SLIME), { record: true })
   const hasBuff = r.frames.some(f => f.party[0].effects.some(e => e.type === 'speed' || e.type === 'dmgDealt'))
-  assert.ok(hasBuff, '강화 effect 태그가 frame에 나와야')
+  assert.ok(hasBuff, '버프 effect 태그가 frame에 나와야')
   // 인스턴스 = 정확표기용 value/expireTick 보존
   const ef = r.frames.flatMap(f => f.party[0].effects).find(e => e.type === 'dmgDealt')
   assert.ok(ef && typeof ef.value === 'number' && typeof ef.expireTick === 'number', 'effect 인스턴스에 value·expireTick')

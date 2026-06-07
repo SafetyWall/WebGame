@@ -31,7 +31,7 @@ test('스턴 중 몹은 게이지 안 차오르고 행동 못 함', () => {
   assert.strictEqual(mob.gauge, 0, '게이지 동결')
 })
 
-test('전사 키트 = 4 액티브(갑옷부수기/강타/강화/분쇄) + 평타', () => {
+test('전사 키트 = 4 액티브(갑옷부수기/강타/분쇄/방벽) + 평타', () => {
   assert.deepStrictEqual(JOBS.warrior.skills,
-    ['warrior_cleave', 'warrior_heavy', 'warrior_might', 'warrior_crush', 'melee_strike'])
+    ['warrior_cleave', 'warrior_heavy', 'warrior_crush', 'guardian_barrier', 'melee_strike'])
 })

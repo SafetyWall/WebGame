@@ -153,7 +153,7 @@ test('fight가 roster.skillOrder를 전투에 반영(순서 다르면 결과 다
   const base = { ...fresh(), party: [0], encounter: enc }
   // cleave·crush 둘 다 cost50 → 마나50 시점 동시 사용가능 → 우선순위가 첫 액티브 가름.
   const def = fight({ ...base, roster: [{ job: 'warrior', level: 5 }] })                                         // 기본순: cleave 먼저(-74)
-  const reord = fight({ ...base, roster: [{ job: 'warrior', level: 5, skillOrder: ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'warrior_might'] }] }) // crush 먼저(-66)
+  const reord = fight({ ...base, roster: [{ job: 'warrior', level: 5, skillOrder: ['warrior_crush', 'warrior_cleave', 'warrior_heavy', 'guardian_barrier'] }] }) // crush 먼저(-66)
   const dlog = def.lastResult.rounds.flatMap(r => r.log).join('\n')
   const plog = reord.lastResult.rounds.flatMap(r => r.log).join('\n')
   assert.notStrictEqual(dlog, plog)        // 액티브 우선순위 override가 전투를 바꿈 = skillOrder 전달됨(평타는 끝 고정이라 무관)
