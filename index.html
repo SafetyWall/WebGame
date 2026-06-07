@@ -37,6 +37,7 @@
     .hpbar > i { display: block; height: 100%; background: var(--ok); }
     .nums { color: #9c9; font-size: .85em; flex: 1; display: flex; flex-wrap: wrap; gap: .05rem .5rem; }
     .nums .stat { white-space: nowrap; }   /* 값 중간 줄바꿈 방지(방어 100이 쪼개지지 않음) */
+    .nums .stat:empty { display: none; }   /* 2열(flex): 빈 셀(딜러 방어) 숨김 */
     .numrow { display: flex; justify-content: space-between; align-items: center; gap: .4rem; margin-top: .15rem; }
     .card.in { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }   /* 출전 카드 = 자체 드래그(글씨 선택 대신 카드 이동) */
     .card.dragging, .prio-item.dragging { cursor: grabbing; position: relative; z-index: 50; pointer-events: none; opacity: .9; box-shadow: 0 8px 20px rgba(0,0,0,.55); }
@@ -59,6 +60,9 @@
     .layout-1col .card .ctop { font-size: .92em; }
     .layout-1col .card .hpbar { height: 4px; margin: .15rem 0; }
     .layout-1col .card .numrow { margin-top: .1rem; }
+    /* 1col: 능력치 고정폭 grid → 카드 간 열 정렬(HP|ATK|방어|속도). 빈 def 셀도 열 자리 유지. */
+    .layout-1col .nums { display: grid; grid-template-columns: 4.8em 4.5em 4.8em 4em; gap: 0 .3rem; }
+    .layout-1col .nums .stat:empty { display: block; }
     .layout-1col .skills2 { grid-template-columns: 1fr 1fr; gap: 2px; }
     .layout-1col .sk { padding: 0 5px; }
 

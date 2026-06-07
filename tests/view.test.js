@@ -38,7 +38,8 @@ test('prep: 카드/모달에 방어(def)+속도 표기 — 탱만 방어(딜러 
   const card = renderApp(S(g))
   assert.match(card, /방어 100/)        // 카드 nums (가디언 def100)
   assert.match(card, /속도 5/)          // 카드에 속도(가디언 spd5)
-  assert.match(card, /class="stat"/)    // stats = 토큰(값 중간 줄바꿈 방지)
+  assert.match(card, /class="stat st-hp"/)  // stats = 고정 셀(열 정렬·값 중간 줄바꿈 방지)
+  assert.match(card, /class="stat st-def"><\/span>|class="stat st-def">방어/)  // def 셀 항상 렌더(딜러는 빈 셀=열 자리)
   assert.match(renderApp(S(g, { modal: 0 })), /방어 100/) // 모달 stats
   assert.doesNotMatch(renderApp(S(newRun(makeRng(1)))), /방어 /)  // 노비스(def0) 미표기
 })
